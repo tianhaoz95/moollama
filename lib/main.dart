@@ -88,18 +88,18 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                 children: const <Widget>[
                   DrawerHeader(
                     child: Text(
-                      'Conversations',
+                      'Agents',
                       style: TextStyle(fontSize: 24),
                     ),
                   ),
-                  _ConversationItem(
-                    title: 'Conversation 1',
+                  _AgentItem(
+                    title: 'Agent 1',
                   ),
-                  _ConversationItem(
-                    title: 'Conversation 2',
+                  _AgentItem(
+                    title: 'Agent 2',
                   ),
-                  _ConversationItem(
-                    title: 'Conversation 3',
+                  _AgentItem(
+                    title: 'Agent 3',
                   ),
                 ],
               ),
@@ -294,10 +294,10 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   }
 }
 
-class _ConversationItem extends StatelessWidget {
+class _AgentItem extends StatelessWidget {
   final String title;
 
-  const _ConversationItem({required this.title});
+  const _AgentItem({required this.title});
 
   @override
   Widget build(BuildContext context) {
