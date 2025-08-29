@@ -21,7 +21,10 @@ void main() async {
 
   themeNotifier.addListener(() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('themeMode', themeNotifier.value.toString().split('.').last);
+    await prefs.setString(
+      'themeMode',
+      themeNotifier.value.toString().split('.').last,
+    );
   });
 }
 
@@ -65,11 +68,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   final List<String> _messages = [];
   final DatabaseHelper _dbHelper = DatabaseHelper();
   late Future<List<String>> _messagesFuture;
-  List<Agent> _agents = [
-    Agent('Agent 1'),
-    Agent('Agent 2'),
-    Agent('Agent 3'),
-  ];
+  List<Agent> _agents = [Agent('Agent 1'), Agent('Agent 2'), Agent('Agent 3')];
 
   @override
   void initState() {
@@ -110,7 +109,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   }
 
   Future<void> _showRenameDialog(BuildContext context, int index) async {
-    final TextEditingController renameController = TextEditingController(text: _agents[index].name);
+    final TextEditingController renameController = TextEditingController(
+      text: _agents[index].name,
+    );
     final newName = await showDialog<String>(
       context: context,
       builder: (BuildContext context) {
@@ -154,10 +155,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                 padding: EdgeInsets.zero,
                 children: <Widget>[
                   const DrawerHeader(
-                    child: Text(
-                      'Agents',
-                      style: TextStyle(fontSize: 24),
-                    ),
+                    child: Text('Agents', style: TextStyle(fontSize: 24)),
                   ),
                   ..._agents.asMap().entries.map((entry) {
                     int idx = entry.key;
@@ -329,7 +327,10 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        _BottomBarButton(icon: Icons.refresh, onPressed: _resetChat),
+                        _BottomBarButton(
+                          icon: Icons.refresh,
+                          onPressed: _resetChat,
+                        ),
                         const SizedBox(width: 8),
                         _BottomBarButton(
                           icon: Icons.send,
@@ -357,10 +358,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           color: Colors.blue,
           borderRadius: BorderRadius.circular(20.0),
         ),
-        child: Text(
-          message,
-          style: const TextStyle(color: Colors.white),
-        ),
+        child: Text(message, style: const TextStyle(color: Colors.white)),
       ),
     );
   }
@@ -377,10 +375,7 @@ class _AgentItem extends StatelessWidget {
     return ListTile(
       leading: const Icon(Icons.message),
       title: Text(title),
-      trailing: IconButton(
-        icon: const Icon(Icons.edit),
-        onPressed: onRename,
-      ),
+      trailing: IconButton(icon: const Icon(Icons.edit), onPressed: onRename),
     );
   }
 }
