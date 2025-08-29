@@ -1,5 +1,16 @@
 PODS:
+  - cactus (0.0.3):
+    - Flutter
+  - device_info_plus (0.0.1):
+    - Flutter
   - Flutter (1.0.0)
+  - flutter_js (0.1.0):
+    - Flutter
+  - package_info_plus (0.4.5):
+    - Flutter
+  - path_provider_foundation (0.0.1):
+    - Flutter
+    - FlutterMacOS
   - restart_app (0.0.1):
     - Flutter
   - shared_preferences_foundation (0.0.1):
@@ -10,14 +21,29 @@ PODS:
     - FlutterMacOS
 
 DEPENDENCIES:
+  - cactus (from `.symlinks/plugins/cactus/ios`)
+  - device_info_plus (from `.symlinks/plugins/device_info_plus/ios`)
   - Flutter (from `Flutter`)
+  - flutter_js (from `.symlinks/plugins/flutter_js/ios`)
+  - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
+  - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - restart_app (from `.symlinks/plugins/restart_app/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - sqflite_darwin (from `.symlinks/plugins/sqflite_darwin/darwin`)
 
 EXTERNAL SOURCES:
+  cactus:
+    :path: ".symlinks/plugins/cactus/ios"
+  device_info_plus:
+    :path: ".symlinks/plugins/device_info_plus/ios"
   Flutter:
     :path: Flutter
+  flutter_js:
+    :path: ".symlinks/plugins/flutter_js/ios"
+  package_info_plus:
+    :path: ".symlinks/plugins/package_info_plus/ios"
+  path_provider_foundation:
+    :path: ".symlinks/plugins/path_provider_foundation/darwin"
   restart_app:
     :path: ".symlinks/plugins/restart_app/ios"
   shared_preferences_foundation:
@@ -26,7 +52,12 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/sqflite_darwin/darwin"
 
 SPEC CHECKSUMS:
+  cactus: 0d3c05edd35f3f3f6af1d182b0bed43e8713fab2
+  device_info_plus: 71ffc6ab7634ade6267c7a93088ed7e4f74e5896
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  flutter_js: 867813c1830e1d9b2c5d547cdb6f61801e2f2145
+  package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
+  path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
   restart_app: 9cda5378aacc5000e3f66ee76a9201534e7d3ecf
   shared_preferences_foundation: 9e1978ff2562383bd5676f64ec4e9aa8fa06a6f7
   sqflite_darwin: 20b2a3a3b70e43edae938624ce550a3cbf66a3d0
