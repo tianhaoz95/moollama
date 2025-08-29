@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-final ValueNotifier<ThemeMode> themeNotifier =
-    ValueNotifier(ThemeMode.dark);
+final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.dark);
 
 void main() {
   runApp(const MyApp());
@@ -41,25 +40,76 @@ class SecretAgentHome extends StatelessWidget {
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
-                children: const <Widget>[
-                  DrawerHeader(
+                children: <Widget>[
+                  const DrawerHeader(
                     decoration: BoxDecoration(color: Colors.grey),
                     child: Text(
                       'Conversations',
                       style: TextStyle(color: Colors.white, fontSize: 24),
                     ),
                   ),
-                  ListTile(
-                    leading: Icon(Icons.message),
-                    title: Text('Conversation 1'),
+                  Column(
+                    children: [
+                      const ListTile(
+                        leading: Icon(Icons.message),
+                        title: Text('Conversation 1'),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left: 16.0),
+                            child: OutlinedButton.icon(
+                              icon: const Icon(Icons.folder),
+                              label: const Text('~/conversation_1/'),
+                              onPressed: () {},
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  ListTile(
-                    leading: Icon(Icons.message),
-                    title: Text('Conversation 2'),
+                  Column(
+                    children: [
+                      const ListTile(
+                        leading: Icon(Icons.message),
+                        title: Text('Conversation 2'),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left: 16.0),
+                            child: OutlinedButton.icon(
+                              icon: const Icon(Icons.folder),
+                              label: const Text('~/conversation_2/'),
+                              onPressed: () {},
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  ListTile(
-                    leading: Icon(Icons.message),
-                    title: Text('Conversation 3'),
+                  Column(
+                    children: [
+                      const ListTile(
+                        leading: Icon(Icons.message),
+                        title: Text('Conversation 3'),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left: 16.0),
+                            child: OutlinedButton.icon(
+                              icon: const Icon(Icons.folder),
+                              label: const Text('~/conversation_3/'),
+                              onPressed: () {},
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -118,8 +168,8 @@ class SecretAgentHome extends StatelessWidget {
                     onPressed: () {
                       themeNotifier.value =
                           themeNotifier.value == ThemeMode.light
-                              ? ThemeMode.dark
-                              : ThemeMode.light;
+                          ? ThemeMode.dark
+                          : ThemeMode.light;
                     },
                   ),
                 ],
@@ -163,8 +213,9 @@ class SecretAgentHome extends StatelessWidget {
                       maxLines: 2,
                       decoration: InputDecoration(
                         hintText: 'Ask Secret Agent',
-                        hintStyle:
-                            TextStyle(color: Theme.of(context).hintColor),
+                        hintStyle: TextStyle(
+                          color: Theme.of(context).hintColor,
+                        ),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(
                           vertical: 8,
@@ -172,8 +223,8 @@ class SecretAgentHome extends StatelessWidget {
                         ),
                       ),
                       style: TextStyle(
-                          color:
-                              Theme.of(context).textTheme.bodyLarge?.color),
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     Row(
@@ -217,12 +268,15 @@ class _BottomBarButton extends StatelessWidget {
               ? Text(
                   label!,
                   style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSecondary,
-                      fontSize: 14),
+                    color: Theme.of(context).colorScheme.onSecondary,
+                    fontSize: 14,
+                  ),
                 )
-              : Icon(icon,
+              : Icon(
+                  icon,
                   color: Theme.of(context).colorScheme.onSecondary,
-                  size: 20),
+                  size: 20,
+                ),
         ),
       ),
     );
