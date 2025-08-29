@@ -53,4 +53,9 @@ class DatabaseHelper {
       return maps[i]['text'];
     });
   }
+
+  Future<void> clearMessages() async {
+    final db = await database;
+    await db.delete('messages');
+  }
 }

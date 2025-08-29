@@ -69,6 +69,13 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     }
   }
 
+  void _resetChat() async {
+    await _dbHelper.clearMessages();
+    setState(() {
+      _messages.clear();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -288,7 +295,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        _BottomBarButton(icon: Icons.refresh),
+                        _BottomBarButton(icon: Icons.refresh, onPressed: _resetChat),
                         const SizedBox(width: 8),
                         _BottomBarButton(
                           icon: Icons.send,
