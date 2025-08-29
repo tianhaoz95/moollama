@@ -176,6 +176,48 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     }
   }
 
+  void _showAddAgentDialog(BuildContext context) async {
+    final TextEditingController addAgentController = TextEditingController();
+    final newAgentName = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Add New Agent'),
+          content: TextField(
+            controller: addAgentController,
+            decoration: const InputDecoration(hintText: "Enter new agent name"),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Add'),
+              onPressed: () {
+                Navigator.of(context).pop(addAgentController.text);
+              },
+            ),
+          ],
+        );
+      },
+    );
+
+    if (newAgentName != null && newAgentName.isNotEmpty) {
+      _addAgent(newAgentName);
+    }
+  }
+
+  void _addAgent(String name) async {
+    final newAgent = Agent(name: name);
+    final id = await _dbHelper.insertAgent(newAgent.toMap());
+    setState(() {
+      _agents.add(Agent(id: id, name: name));
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -205,7 +247,12 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  IconButton(icon: const Icon(Icons.add), onPressed: () {}),
+                  IconButton(
+                    icon: const Icon(Icons.add),
+                    onPressed: () {
+                      _showAddAgentDialog(context);
+                    },
+                  ),
                   IconButton(
                     icon: const Icon(Icons.settings),
                     onPressed: () {
