@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+final ValueNotifier<ThemeMode> themeNotifier =
+    ValueNotifier(ThemeMode.dark);
+
 void main() {
   runApp(const MyApp());
 }
@@ -9,12 +12,19 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF232629),
-      ),
-      home: const SecretAgentHome(),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentMode, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData.light(),
+          darkTheme: ThemeData.dark().copyWith(
+            scaffoldBackgroundColor: const Color(0xFF232629),
+          ),
+          themeMode: currentMode,
+          home: const SecretAgentHome(),
+        );
+      },
     );
   }
 }
@@ -85,7 +95,7 @@ class SecretAgentHome extends StatelessWidget {
                   Builder(
                     builder: (context) {
                       return IconButton(
-                        icon: Icon(Icons.menu, color: Colors.white70),
+                        icon: Icon(Icons.menu),
                         onPressed: () {
                           Scaffold.of(context).openDrawer();
                         },
@@ -96,14 +106,22 @@ class SecretAgentHome extends StatelessWidget {
                   // App name
                   Text(
                     'Secret Agent',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
-
-                  Spacer(),
+                  const Spacer(),
+                  IconButton(
+                    icon: Icon(
+                      themeNotifier.value == ThemeMode.light
+                          ? Icons.dark_mode
+                          : Icons.light_mode,
+                    ),
+                    onPressed: () {
+                      themeNotifier.value =
+                          themeNotifier.value == ThemeMode.light
+                              ? ThemeMode.dark
+                              : ThemeMode.light;
+                    },
+                  ),
                 ],
               ),
             ),
@@ -130,7 +148,7 @@ class SecretAgentHome extends StatelessWidget {
               ),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.grey[900],
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(24),
                 ),
                 padding: const EdgeInsets.symmetric(
@@ -145,21 +163,24 @@ class SecretAgentHome extends StatelessWidget {
                       maxLines: 2,
                       decoration: InputDecoration(
                         hintText: 'Ask Secret Agent',
-                        hintStyle: TextStyle(color: Colors.white54),
+                        hintStyle:
+                            TextStyle(color: Theme.of(context).hintColor),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
+                        contentPadding: const EdgeInsets.symmetric(
                           vertical: 8,
                           horizontal: 0,
                         ),
                       ),
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(
+                          color:
+                              Theme.of(context).textTheme.bodyLarge?.color),
                     ),
                     const SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         _BottomBarButton(icon: Icons.refresh),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         _BottomBarButton(icon: Icons.send),
                       ],
                     ),
@@ -189,15 +210,19 @@ class _BottomBarButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: Colors.grey[800],
+            color: Theme.of(context).colorScheme.secondary,
             borderRadius: BorderRadius.circular(18),
           ),
           child: label != null
               ? Text(
                   label!,
-                  style: TextStyle(color: Colors.white, fontSize: 14),
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSecondary,
+                      fontSize: 14),
                 )
-              : Icon(icon, color: Colors.white, size: 20),
+              : Icon(icon,
+                  color: Theme.of(context).colorScheme.onSecondary,
+                  size: 20),
         ),
       ),
     );
