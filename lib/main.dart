@@ -28,8 +28,25 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class SecretAgentHome extends StatelessWidget {
+class SecretAgentHome extends StatefulWidget {
   const SecretAgentHome({super.key});
+
+  @override
+  State<SecretAgentHome> createState() => _SecretAgentHomeState();
+}
+
+class _SecretAgentHomeState extends State<SecretAgentHome> {
+  final TextEditingController _textController = TextEditingController();
+  final List<String> _messages = [];
+
+  void _sendMessage() {
+    if (_textController.text.isNotEmpty) {
+      setState(() {
+        _messages.add(_textController.text);
+        _textController.clear();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -144,7 +161,7 @@ class SecretAgentHome extends StatelessWidget {
                   Builder(
                     builder: (context) {
                       return IconButton(
-                        icon: Icon(Icons.menu),
+                        icon: const Icon(Icons.menu),
                         onPressed: () {
                           Scaffold.of(context).openDrawer();
                         },
@@ -175,17 +192,25 @@ class SecretAgentHome extends StatelessWidget {
               ),
             ),
             Expanded(
-              child: Center(
-                child: Text(
-                  'Hello!',
-                  style: TextStyle(
-                    color: Colors.blue[400],
-                    fontSize: 32,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
+              child: _messages.isEmpty
+                  ? Center(
+                      child: Text(
+                        'Hello!',
+                        style: TextStyle(
+                          color: Colors.blue[400],
+                          fontSize: 32,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(8.0),
+                      itemCount: _messages.length,
+                      itemBuilder: (context, index) {
+                        return _buildMessageBubble(_messages[index]);
+                      },
+                    ),
             ),
             // Bottom bar
             Padding(
@@ -208,6 +233,7 @@ class SecretAgentHome extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextField(
+                      controller: _textController,
                       minLines: 2,
                       maxLines: 2,
                       decoration: InputDecoration(
@@ -224,6 +250,7 @@ class SecretAgentHome extends StatelessWidget {
                       style: TextStyle(
                         color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
+                      onSubmitted: (_) => _sendMessage(),
                     ),
                     const SizedBox(height: 10),
                     Row(
@@ -231,7 +258,10 @@ class SecretAgentHome extends StatelessWidget {
                       children: [
                         _BottomBarButton(icon: Icons.refresh),
                         const SizedBox(width: 8),
-                        _BottomBarButton(icon: Icons.send),
+                        _BottomBarButton(
+                          icon: Icons.send,
+                          onPressed: _sendMessage,
+                        ),
                       ],
                     ),
                   ],
@@ -243,12 +273,28 @@ class SecretAgentHome extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildMessageBubble(String message) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+        decoration: BoxDecoration(
+          color: Colors.blue,
+          borderRadius: BorderRadius.circular(20.0),
+        ),
+        child: Text(message, style: const TextStyle(color: Colors.white)),
+      ),
+    );
+  }
 }
 
 class _BottomBarButton extends StatelessWidget {
   final String? label;
   final IconData? icon;
-  const _BottomBarButton({this.label, this.icon});
+  final VoidCallback? onPressed;
+  const _BottomBarButton({this.label, this.icon, this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -256,7 +302,7 @@ class _BottomBarButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        onTap: () {},
+        onTap: onPressed,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
