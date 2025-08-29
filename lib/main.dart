@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:secret_agent/database_helper.dart';
 
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.dark);
 
-void main() {
+void main() async {
+  await DatabaseHelper().init();
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -38,11 +41,29 @@ class SecretAgentHome extends StatefulWidget {
 class _SecretAgentHomeState extends State<SecretAgentHome> {
   final TextEditingController _textController = TextEditingController();
   final List<String> _messages = [];
+  final DatabaseHelper _dbHelper = DatabaseHelper();
+  late Future<List<String>> _messagesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _messagesFuture = _loadMessages();
+  }
+
+  Future<List<String>> _loadMessages() async {
+    final messages = await _dbHelper.getMessages();
+    setState(() {
+      _messages.addAll(messages);
+    });
+    return messages;
+  }
 
   void _sendMessage() {
     if (_textController.text.isNotEmpty) {
+      final message = _textController.text;
+      _dbHelper.insertMessage(message);
       setState(() {
-        _messages.add(_textController.text);
+        _messages.add(message);
         _textController.clear();
       });
     }
@@ -184,16 +205,23 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     onPressed: () {
                       themeNotifier.value =
                           themeNotifier.value == ThemeMode.light
-                          ? ThemeMode.dark
-                          : ThemeMode.light;
+                              ? ThemeMode.dark
+                              : ThemeMode.light;
                     },
                   ),
                 ],
               ),
             ),
             Expanded(
-              child: _messages.isEmpty
-                  ? Center(
+              child: FutureBuilder<List<String>>(
+                future: _messagesFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (_messages.isEmpty) {
+                    return Center(
                       child: Text(
                         'Hello!',
                         style: TextStyle(
@@ -203,14 +231,18 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                         ),
                         textAlign: TextAlign.center,
                       ),
-                    )
-                  : ListView.builder(
+                    );
+                  } else {
+                    return ListView.builder(
                       padding: const EdgeInsets.all(8.0),
                       itemCount: _messages.length,
                       itemBuilder: (context, index) {
                         return _buildMessageBubble(_messages[index]);
                       },
-                    ),
+                    );
+                  }
+                },
+              ),
             ),
             // Bottom bar
             Padding(
@@ -284,7 +316,10 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           color: Colors.blue,
           borderRadius: BorderRadius.circular(20.0),
         ),
-        child: Text(message, style: const TextStyle(color: Colors.white)),
+        child: Text(
+          message,
+          style: const TextStyle(color: Colors.white),
+        ),
       ),
     );
   }
