@@ -93,6 +93,12 @@ class DatabaseHelper {
     );
   }
 
+  Future<void> clearAllData() async {
+    final db = await database;
+    await db.delete('messages');
+    await db.delete('agents');
+  }
+
   // Agent related methods
   Future<int> insertAgent(Map<String, dynamic> agent) async {
     final db = await database;
