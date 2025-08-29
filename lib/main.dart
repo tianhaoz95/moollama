@@ -53,11 +53,22 @@ class SecretAgentHome extends StatefulWidget {
   State<SecretAgentHome> createState() => _SecretAgentHomeState();
 }
 
+class Agent {
+  String name;
+
+  Agent(this.name);
+}
+
 class _SecretAgentHomeState extends State<SecretAgentHome> {
   final TextEditingController _textController = TextEditingController();
   final List<String> _messages = [];
   final DatabaseHelper _dbHelper = DatabaseHelper();
   late Future<List<String>> _messagesFuture;
+  List<Agent> _agents = [
+    Agent('Agent 1'),
+    Agent('Agent 2'),
+    Agent('Agent 3'),
+  ];
 
   @override
   void initState() {
@@ -91,6 +102,46 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     });
   }
 
+  void _renameAgent(int index, String newName) {
+    setState(() {
+      _agents[index].name = newName;
+    });
+  }
+
+  Future<void> _showRenameDialog(BuildContext context, int index) async {
+    final TextEditingController renameController = TextEditingController(text: _agents[index].name);
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Rename Agent'),
+          content: TextField(
+            controller: renameController,
+            decoration: const InputDecoration(hintText: "Enter new agent name"),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Rename'),
+              onPressed: () {
+                Navigator.of(context).pop(renameController.text);
+              },
+            ),
+          ],
+        );
+      },
+    );
+
+    if (newName != null && newName.isNotEmpty) {
+      _renameAgent(index, newName);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -100,22 +151,21 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
-                children: const <Widget>[
-                  DrawerHeader(
+                children: <Widget>[
+                  const DrawerHeader(
                     child: Text(
                       'Agents',
                       style: TextStyle(fontSize: 24),
                     ),
                   ),
-                  _AgentItem(
-                    title: 'Agent 1',
-                  ),
-                  _AgentItem(
-                    title: 'Agent 2',
-                  ),
-                  _AgentItem(
-                    title: 'Agent 3',
-                  ),
+                  ..._agents.asMap().entries.map((entry) {
+                    int idx = entry.key;
+                    Agent agent = entry.value;
+                    return _AgentItem(
+                      title: agent.name,
+                      onRename: () => _showRenameDialog(context, idx),
+                    );
+                  }).toList(),
                 ],
               ),
             ),
@@ -311,14 +361,19 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
 
 class _AgentItem extends StatelessWidget {
   final String title;
+  final VoidCallback onRename;
 
-  const _AgentItem({required this.title});
+  const _AgentItem({required this.title, required this.onRename});
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       leading: const Icon(Icons.message),
       title: Text(title),
+      trailing: IconButton(
+        icon: const Icon(Icons.edit),
+        onPressed: onRename,
+      ),
     );
   }
 }
