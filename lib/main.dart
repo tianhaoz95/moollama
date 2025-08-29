@@ -42,10 +42,9 @@ class SecretAgentHome extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 children: <Widget>[
                   const DrawerHeader(
-                    decoration: BoxDecoration(color: Colors.grey),
                     child: Text(
                       'Conversations',
-                      style: TextStyle(color: Colors.white, fontSize: 24),
+                      style: TextStyle(fontSize: 24),
                     ),
                   ),
                   Column(
