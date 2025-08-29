@@ -58,9 +58,18 @@ class SecretAgentHome extends StatefulWidget {
 }
 
 class Agent {
+  int? id;
   String name;
 
-  Agent(this.name);
+  Agent({this.id, required this.name});
+
+  Map<String, dynamic> toMap() {
+    return {'id': id, 'name': name};
+  }
+
+  static Agent fromMap(Map<String, dynamic> map) {
+    return Agent(id: map['id'], name: map['name']);
+  }
 }
 
 class _SecretAgentHomeState extends State<SecretAgentHome> {
@@ -68,12 +77,28 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   final List<String> _messages = [];
   final DatabaseHelper _dbHelper = DatabaseHelper();
   late Future<List<String>> _messagesFuture;
-  List<Agent> _agents = [Agent('Agent 1'), Agent('Agent 2'), Agent('Agent 3')];
+  List<Agent> _agents = [];
 
   @override
   void initState() {
     super.initState();
     _messagesFuture = _loadMessages();
+    _loadAgents();
+  }
+
+  Future<void> _loadAgents() async {
+    final agentsFromDb = await _dbHelper.getAgents();
+    if (agentsFromDb.isEmpty) {
+      final defaultAgent = Agent(name: 'Default');
+      final id = await _dbHelper.insertAgent(defaultAgent.toMap());
+      setState(() {
+        _agents.add(Agent(id: id, name: 'Default'));
+      });
+    } else {
+      setState(() {
+        _agents = agentsFromDb.map((map) => Agent.fromMap(map)).toList();
+      });
+    }
   }
 
   Future<List<String>> _loadMessages() async {
@@ -102,15 +127,18 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     });
   }
 
-  void _renameAgent(int index, String newName) {
+  void _renameAgent(int index, String newName) async {
+    final agentToRename = _agents[index];
+    agentToRename.name = newName;
+    await _dbHelper.updateAgent(agentToRename.toMap());
     setState(() {
-      _agents[index].name = newName;
+      _agents[index] = agentToRename;
     });
   }
 
-  Future<void> _showRenameDialog(BuildContext context, int index) async {
+  Future<void> _showRenameDialog(BuildContext context, Agent agent) async {
     final TextEditingController renameController = TextEditingController(
-      text: _agents[index].name,
+      text: agent.name,
     );
     final newName = await showDialog<String>(
       context: context,
@@ -140,7 +168,11 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     );
 
     if (newName != null && newName.isNotEmpty) {
-      _renameAgent(index, newName);
+      // Find the index of the agent in the _agents list
+      final index = _agents.indexOf(agent);
+      if (index != -1) {
+        _renameAgent(index, newName);
+      }
     }
   }
 
@@ -161,10 +193,10 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     int idx = entry.key;
                     Agent agent = entry.value;
                     return _AgentItem(
-                      title: agent.name,
-                      onRename: () => _showRenameDialog(context, idx),
+                      agent: agent,
+                      onRename: () => _showRenameDialog(context, agent),
                     );
-                  }).toList(),
+                  }),
                 ],
               ),
             ),
@@ -365,16 +397,16 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
 }
 
 class _AgentItem extends StatelessWidget {
-  final String title;
+  final Agent agent;
   final VoidCallback onRename;
 
-  const _AgentItem({required this.title, required this.onRename});
+  const _AgentItem({required this.agent, required this.onRename});
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       leading: const Icon(Icons.message),
-      title: Text(title),
+      title: Text(agent.name),
       trailing: IconButton(icon: const Icon(Icons.edit), onPressed: onRename),
     );
   }
