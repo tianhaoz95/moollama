@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:secret_agent/database_helper.dart';
 
-final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.dark);
+final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
 
 void main() async {
   await DatabaseHelper().init();
@@ -149,17 +149,31 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const Spacer(),
-                  IconButton(
-                    icon: Icon(
-                      themeNotifier.value == ThemeMode.light
-                          ? Icons.dark_mode
-                          : Icons.light_mode,
-                    ),
-                    onPressed: () {
-                      themeNotifier.value =
-                          themeNotifier.value == ThemeMode.light
-                              ? ThemeMode.dark
-                              : ThemeMode.light;
+                  ValueListenableBuilder<ThemeMode>(
+                    valueListenable: themeNotifier,
+                    builder: (context, currentMode, child) {
+                      return DropdownButton<ThemeMode>(
+                        value: currentMode,
+                        onChanged: (ThemeMode? newValue) {
+                          if (newValue != null) {
+                            themeNotifier.value = newValue;
+                          }
+                        },
+                        items: const [
+                          DropdownMenuItem(
+                            value: ThemeMode.light,
+                            child: Icon(Icons.light_mode),
+                          ),
+                          DropdownMenuItem(
+                            value: ThemeMode.dark,
+                            child: Icon(Icons.dark_mode),
+                          ),
+                          DropdownMenuItem(
+                            value: ThemeMode.system,
+                            child: Icon(Icons.brightness_auto),
+                          ),
+                        ],
+                      );
                     },
                   ),
                 ],
@@ -293,10 +307,9 @@ class _ConversationItem extends StatelessWidget {
 }
 
 class _BottomBarButton extends StatelessWidget {
-  final String? label;
   final IconData? icon;
   final VoidCallback? onPressed;
-  const _BottomBarButton({this.label, this.icon, this.onPressed});
+  const _BottomBarButton({this.icon, this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -311,19 +324,11 @@ class _BottomBarButton extends StatelessWidget {
             color: Theme.of(context).colorScheme.secondary,
             borderRadius: BorderRadius.circular(18),
           ),
-          child: label != null
-              ? Text(
-                  label!,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSecondary,
-                    fontSize: 14,
-                  ),
-                )
-              : Icon(
-                  icon,
-                  color: Theme.of(context).colorScheme.onSecondary,
-                  size: 20,
-                ),
+          child: Icon(
+            icon,
+            color: Theme.of(context).colorScheme.onSecondary,
+            size: 20,
+          ),
         ),
       ),
     );
