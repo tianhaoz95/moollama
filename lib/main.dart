@@ -26,27 +26,46 @@ class GeminiHome extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: const <Widget>[
-            DrawerHeader(
-              decoration: BoxDecoration(color: Colors.grey),
-              child: Text(
-                'Conversations',
-                style: TextStyle(color: Colors.white, fontSize: 24),
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: const <Widget>[
+                  DrawerHeader(
+                    decoration: BoxDecoration(color: Colors.grey),
+                    child: Text(
+                      'Conversations',
+                      style: TextStyle(color: Colors.white, fontSize: 24),
+                    ),
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.message),
+                    title: Text('Conversation 1'),
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.message),
+                    title: Text('Conversation 2'),
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.message),
+                    title: Text('Conversation 3'),
+                  ),
+                ],
               ),
             ),
-            ListTile(
-              leading: Icon(Icons.message),
-              title: Text('Conversation 1'),
-            ),
-            ListTile(
-              leading: Icon(Icons.message),
-              title: Text('Conversation 2'),
-            ),
-            ListTile(
-              leading: Icon(Icons.message),
-              title: Text('Conversation 3'),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 32.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  IconButton(icon: const Icon(Icons.add), onPressed: () {}),
+                  IconButton(
+                    icon: const Icon(Icons.settings),
+                    onPressed: () {},
+                  ),
+                ],
+              ),
             ),
           ],
         ),
