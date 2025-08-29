@@ -154,6 +154,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     builder: (context, currentMode, child) {
                       return DropdownButton<ThemeMode>(
                         underline: const SizedBox(),
+                        icon: const SizedBox.shrink(),
                         value: currentMode,
                         onChanged: (ThemeMode? newValue) {
                           if (newValue != null) {
