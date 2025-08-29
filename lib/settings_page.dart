@@ -64,6 +64,7 @@ class SettingsPage extends StatelessWidget {
               onPressed: () async {
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.clear();
+                if (!context.mounted) return;
                 Navigator.of(context).pop(); // Dismiss the dialog
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('All preferences deleted.')),
@@ -95,6 +96,7 @@ class SettingsPage extends StatelessWidget {
               onPressed: () async {
                 final dbHelper = DatabaseHelper();
                 await dbHelper.clearMessages();
+                if (!context.mounted) return;
                 Navigator.of(context).pop(); // Dismiss the dialog
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('All data deleted.')),
