@@ -153,6 +153,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     valueListenable: themeNotifier,
                     builder: (context, currentMode, child) {
                       return DropdownButton<ThemeMode>(
+                        underline: const SizedBox(),
                         value: currentMode,
                         onChanged: (ThemeMode? newValue) {
                           if (newValue != null) {
