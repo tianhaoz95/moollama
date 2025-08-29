@@ -50,12 +50,6 @@ class GeminiHome extends StatelessWidget {
                   ),
 
                   Spacer(),
-                  // Avatar
-                  CircleAvatar(
-                    radius: 18,
-                    backgroundColor: Colors.orange,
-                    child: Icon(Icons.person, color: Colors.white),
-                  ),
                 ],
               ),
             ),
@@ -108,17 +102,8 @@ class GeminiHome extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     Row(
-                      children: [
-                        _BottomBarButton(label: 'Video'),
-                        const SizedBox(width: 4),
-                        _BottomBarButton(label: 'Research'),
-                        const SizedBox(width: 4),
-                        _BottomBarButton(icon: Icons.more_horiz),
-                        const SizedBox(width: 4),
-                        _BottomBarButton(icon: Icons.mic_none),
-                        const SizedBox(width: 4),
-                        _BottomBarButton(icon: Icons.auto_graph),
-                      ],
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [_BottomBarButton(icon: Icons.send)],
                     ),
                   ],
                 ),
