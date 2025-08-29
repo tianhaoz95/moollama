@@ -14,13 +14,13 @@ class MyApp extends StatelessWidget {
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF232629),
       ),
-      home: const GeminiHome(),
+      home: const SecretAgentHome(),
     );
   }
 }
 
-class GeminiHome extends StatelessWidget {
-  const GeminiHome({super.key});
+class SecretAgentHome extends StatelessWidget {
+  const SecretAgentHome({super.key});
 
   @override
   Widget build(BuildContext context) {
