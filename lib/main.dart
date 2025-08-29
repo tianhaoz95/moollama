@@ -1,12 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:secret_agent/database_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
 
 void main() async {
-  await DatabaseHelper().init();
   WidgetsFlutterBinding.ensureInitialized();
+  await DatabaseHelper().init();
+  final prefs = await SharedPreferences.getInstance();
+  final themeModeString = prefs.getString('themeMode');
+  if (themeModeString == 'light') {
+    themeNotifier.value = ThemeMode.light;
+  } else if (themeModeString == 'dark') {
+    themeNotifier.value = ThemeMode.dark;
+  } else {
+    themeNotifier.value = ThemeMode.system;
+  }
   runApp(const MyApp());
+
+  themeNotifier.addListener(() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('themeMode', themeNotifier.value.toString().split('.').last);
+  });
 }
 
 class MyApp extends StatelessWidget {
