@@ -85,75 +85,21 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
-                children: <Widget>[
-                  const DrawerHeader(
+                children: const <Widget>[
+                  DrawerHeader(
                     child: Text(
                       'Conversations',
                       style: TextStyle(fontSize: 24),
                     ),
                   ),
-                  Column(
-                    children: [
-                      const ListTile(
-                        leading: Icon(Icons.message),
-                        title: Text('Conversation 1'),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(left: 16.0),
-                            child: OutlinedButton.icon(
-                              icon: const Icon(Icons.folder),
-                              label: const Text('~/conversation_1/'),
-                              onPressed: () {},
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                  _ConversationItem(
+                    title: 'Conversation 1',
                   ),
-                  Column(
-                    children: [
-                      const ListTile(
-                        leading: Icon(Icons.message),
-                        title: Text('Conversation 2'),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(left: 16.0),
-                            child: OutlinedButton.icon(
-                              icon: const Icon(Icons.folder),
-                              label: const Text('~/conversation_2/'),
-                              onPressed: () {},
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                  _ConversationItem(
+                    title: 'Conversation 2',
                   ),
-                  Column(
-                    children: [
-                      const ListTile(
-                        leading: Icon(Icons.message),
-                        title: Text('Conversation 3'),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(left: 16.0),
-                            child: OutlinedButton.icon(
-                              icon: const Icon(Icons.folder),
-                              label: const Text('~/conversation_3/'),
-                              onPressed: () {},
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                  _ConversationItem(
+                    title: 'Conversation 3',
                   ),
                 ],
               ),
@@ -328,6 +274,20 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           style: const TextStyle(color: Colors.white),
         ),
       ),
+    );
+  }
+}
+
+class _ConversationItem extends StatelessWidget {
+  final String title;
+
+  const _ConversationItem({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: const Icon(Icons.message),
+      title: Text(title),
     );
   }
 }
