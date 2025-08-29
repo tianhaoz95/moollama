@@ -25,6 +25,32 @@ class GeminiHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: const <Widget>[
+            DrawerHeader(
+              decoration: BoxDecoration(color: Colors.grey),
+              child: Text(
+                'Conversations',
+                style: TextStyle(color: Colors.white, fontSize: 24),
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.message),
+              title: Text('Conversation 1'),
+            ),
+            ListTile(
+              leading: Icon(Icons.message),
+              title: Text('Conversation 2'),
+            ),
+            ListTile(
+              leading: Icon(Icons.message),
+              title: Text('Conversation 3'),
+            ),
+          ],
+        ),
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -37,7 +63,16 @@ class GeminiHome extends StatelessWidget {
               child: Row(
                 children: [
                   // Hamburger menu
-                  Icon(Icons.menu, color: Colors.white70),
+                  Builder(
+                    builder: (context) {
+                      return IconButton(
+                        icon: Icon(Icons.menu, color: Colors.white70),
+                        onPressed: () {
+                          Scaffold.of(context).openDrawer();
+                        },
+                      );
+                    },
+                  ),
                   const SizedBox(width: 16),
                   // App name
                   Text(
