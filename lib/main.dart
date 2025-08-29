@@ -83,8 +83,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   @override
   void initState() {
     super.initState();
-    _messagesFuture = _loadMessages();
-    _loadAgents();
+    _messagesFuture = Future.value([]); // Initialize with an empty future
+    _loadAgents(); // Load agents, which will then load messages
   }
 
   Future<void> _loadAgents() async {
@@ -102,20 +102,26 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         _selectedAgent = _agents.first;
       });
     }
+    // After agents are loaded and a default/selected agent is set, load messages
+    _messagesFuture = _loadMessages();
   }
 
   Future<List<String>> _loadMessages() async {
-    final messages = await _dbHelper.getMessages();
+    if (_selectedAgent == null || _selectedAgent!.id == null) {
+      return [];
+    }
+    final messages = await _dbHelper.getMessages(_selectedAgent!.id!); 
     setState(() {
+      _messages.clear();
       _messages.addAll(messages);
     });
     return messages;
   }
 
   void _sendMessage() {
-    if (_textController.text.isNotEmpty) {
+    if (_textController.text.isNotEmpty && _selectedAgent != null && _selectedAgent!.id != null) {
       final message = _textController.text;
-      _dbHelper.insertMessage(message);
+      _dbHelper.insertMessage(_selectedAgent!.id!, message);
       setState(() {
         _messages.add(message);
         _textController.clear();
@@ -124,10 +130,12 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   }
 
   void _resetChat() async {
-    await _dbHelper.clearMessages();
-    setState(() {
-      _messages.clear();
-    });
+    if (_selectedAgent != null && _selectedAgent!.id != null) {
+      await _dbHelper.clearMessages(_selectedAgent!.id!); 
+      setState(() {
+        _messages.clear();
+      });
+    }
   }
 
   void _renameAgent(int index, String newName) async {
@@ -224,6 +232,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   void _selectAgent(Agent agent) {
     setState(() {
       _selectedAgent = agent;
+      _messagesFuture = _loadMessages(); // Reload messages for the new agent
     });
     Navigator.of(context).pop(); // Close the drawer
   }
@@ -269,7 +278,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) => const SettingsPage(),
+                          builder: (context) => SettingsPage(agentId: _selectedAgent?.id),
                         ),
                       );
                     },

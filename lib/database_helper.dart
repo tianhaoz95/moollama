@@ -25,10 +25,10 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    String path = join(await getDatabasesPath(), 'chat_history.db');
+    String path = join(await getDatabasesPath(), 'secret_agent_data.db');
     return await openDatabase(
       path,
-      version: 2, // Increment version to trigger onCreate/onUpgrade
+      version: 3, // Increment version to trigger onCreate/onUpgrade
       onCreate: _onCreate,
       onUpgrade: _onUpgrade, // Add onUpgrade for schema changes
     );
@@ -38,6 +38,7 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE messages(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        agent_id INTEGER,
         text TEXT
       )
     ''');
@@ -58,26 +59,38 @@ class DatabaseHelper {
         )
       ''');
     }
+    if (oldVersion < 3) {
+      await db.execute('ALTER TABLE messages ADD COLUMN agent_id INTEGER');
+    }
   }
 
-  Future<int> insertMessage(String message) async {
+  Future<int> insertMessage(int agentId, String message) async {
     final db = await database;
     return await db.insert('messages', {
+      'agent_id': agentId,
       'text': message,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  Future<List<String>> getMessages() async {
+  Future<List<String>> getMessages(int agentId) async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('messages');
+    final List<Map<String, dynamic>> maps = await db.query(
+      'messages',
+      where: 'agent_id = ?',
+      whereArgs: [agentId],
+    );
     return List.generate(maps.length, (i) {
       return maps[i]['text'];
     });
   }
 
-  Future<void> clearMessages() async {
+  Future<void> clearMessages(int agentId) async {
     final db = await database;
-    await db.delete('messages');
+    await db.delete(
+      'messages',
+      where: 'agent_id = ?',
+      whereArgs: [agentId],
+    );
   }
 
   // Agent related methods

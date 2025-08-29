@@ -3,7 +3,9 @@ import 'package:secret_agent/database_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsPage extends StatelessWidget {
-  const SettingsPage({super.key});
+  final int? agentId;
+
+  const SettingsPage({super.key, this.agentId});
 
   @override
   Widget build(BuildContext context) {
@@ -95,7 +97,14 @@ class SettingsPage extends StatelessWidget {
             TextButton(
               onPressed: () async {
                 final dbHelper = DatabaseHelper();
-                await dbHelper.clearMessages();
+                if (agentId != null) {
+                  await dbHelper.clearMessages(agentId!); // Pass agentId
+                } else {
+                  // Handle case where agentId is null, e.g., clear all messages or show an error
+                  // For now, let's assume agentId will always be passed.
+                  // Or, if the intention is to clear all messages if no agent is selected,
+                  // you might need a separate clearAllMessages method in DatabaseHelper.
+                }
                 if (!context.mounted) return;
                 Navigator.of(context).pop(); // Dismiss the dialog
                 ScaffoldMessenger.of(context).showSnackBar(
