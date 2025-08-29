@@ -78,6 +78,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   final DatabaseHelper _dbHelper = DatabaseHelper();
   late Future<List<String>> _messagesFuture;
   List<Agent> _agents = [];
+  Agent? _selectedAgent;
 
   @override
   void initState() {
@@ -93,10 +94,12 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       final id = await _dbHelper.insertAgent(defaultAgent.toMap());
       setState(() {
         _agents.add(Agent(id: id, name: 'Default'));
+        _selectedAgent = _agents.first;
       });
     } else {
       setState(() {
         _agents = agentsFromDb.map((map) => Agent.fromMap(map)).toList();
+        _selectedAgent = _agents.first;
       });
     }
   }
@@ -218,6 +221,13 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     });
   }
 
+  void _selectAgent(Agent agent) {
+    setState(() {
+      _selectedAgent = agent;
+    });
+    Navigator.of(context).pop(); // Close the drawer
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -237,6 +247,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     return _AgentItem(
                       agent: agent,
                       onRename: () => _showRenameDialog(context, agent),
+                      onTap: () => _selectAgent(agent),
                     );
                   }),
                 ],
@@ -294,7 +305,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                   const SizedBox(width: 16),
                   // App name
                   Text(
-                    'Secret Agent',
+                    _selectedAgent?.name ?? 'Secret Agent',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const Spacer(),
@@ -446,8 +457,13 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
 class _AgentItem extends StatelessWidget {
   final Agent agent;
   final VoidCallback onRename;
+  final VoidCallback onTap;
 
-  const _AgentItem({required this.agent, required this.onRename});
+  const _AgentItem({
+    required this.agent,
+    required this.onRename,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -455,6 +471,7 @@ class _AgentItem extends StatelessWidget {
       leading: const Icon(Icons.message),
       title: Text(agent.name),
       trailing: IconButton(icon: const Icon(Icons.edit), onPressed: onRename),
+      onTap: onTap,
     );
   }
 }
