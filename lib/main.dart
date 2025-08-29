@@ -157,7 +157,11 @@ class SecretAgentHome extends StatelessWidget {
                     const SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
-                      children: [_BottomBarButton(icon: Icons.send)],
+                      children: [
+                        _BottomBarButton(icon: Icons.refresh),
+                        SizedBox(width: 8),
+                        _BottomBarButton(icon: Icons.send),
+                      ],
                     ),
                   ],
                 ),
