@@ -72,11 +72,18 @@ class Agent {
   }
 }
 
+class Message {
+  final String text;
+  final bool isUser;
+
+  Message({required this.text, required this.isUser});
+}
+
 class _SecretAgentHomeState extends State<SecretAgentHome> {
   final TextEditingController _textController = TextEditingController();
-  final List<String> _messages = [];
+  final List<Message> _messages = [];
   final DatabaseHelper _dbHelper = DatabaseHelper();
-  late Future<List<String>> _messagesFuture;
+  late Future<List<Message>> _messagesFuture;
   List<Agent> _agents = [];
   Agent? _selectedAgent;
 
@@ -106,24 +113,28 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     _messagesFuture = _loadMessages();
   }
 
-  Future<List<String>> _loadMessages() async {
+  Future<List<Message>> _loadMessages() async {
     if (_selectedAgent == null || _selectedAgent!.id == null) {
       return [];
     }
-    final messages = await _dbHelper.getMessages(_selectedAgent!.id!); 
+    final List<Map<String, dynamic>> maps = await _dbHelper.getMessages(_selectedAgent!.id!); 
     setState(() {
       _messages.clear();
-      _messages.addAll(messages);
+      _messages.addAll(maps.map((map) => Message(
+        text: map['text'],
+        isUser: map['is_user'] == 1,
+      )));
     });
-    return messages;
+    return _messages; // Return List<Message>
   }
 
   void _sendMessage() {
     if (_textController.text.isNotEmpty && _selectedAgent != null && _selectedAgent!.id != null) {
-      final message = _textController.text;
-      _dbHelper.insertMessage(_selectedAgent!.id!, message);
+      final userMessageText = _textController.text;
+      _dbHelper.insertMessage(_selectedAgent!.id!, userMessageText, true); // isUser: true
       setState(() {
-        _messages.add(message);
+        _messages.add(Message(text: userMessageText, isUser: true));
+        _messages.add(Message(text: 'hi', isUser: false)); // System replies "hi"
         _textController.clear();
       });
     }
@@ -351,7 +362,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
               ),
             ),
             Expanded(
-              child: FutureBuilder<List<String>>(
+              child: FutureBuilder<List<Message>>(
                 future: _messagesFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -448,68 +459,63 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     );
   }
 
-  Widget _buildMessageBubble(String message) {
+  Widget _buildMessageBubble(Message message) {
+    final alignment = message.isUser ? Alignment.centerRight : Alignment.centerLeft;
+    final color = message.isUser ? Colors.blue : Colors.grey[300];
+    final textColor = message.isUser ? Colors.white : Colors.black;
+
     return Align(
-      alignment: Alignment.centerRight,
+      alignment: alignment,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4.0),
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
         decoration: BoxDecoration(
-          color: Colors.blue,
+          color: color,
           borderRadius: BorderRadius.circular(20.0),
         ),
-        child: Text(message, style: const TextStyle(color: Colors.white)),
+        child: Text(message.text, style: TextStyle(color: textColor)),
       ),
     );
   }
 }
 
-class _AgentItem extends StatelessWidget {
-  final Agent agent;
-  final VoidCallback onRename;
-  final VoidCallback onTap;
-
-  const _AgentItem({
-    required this.agent,
-    required this.onRename,
-    required this.onTap,
+class _BottomBarButton extends StatelessWidget {
+  const _BottomBarButton({
+    required this.icon,
+    this.onPressed,
   });
+
+  final IconData icon;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: const Icon(Icons.message),
-      title: Text(agent.name),
-      trailing: IconButton(icon: const Icon(Icons.edit), onPressed: onRename),
-      onTap: onTap,
+    return IconButton(
+      icon: Icon(icon),
+      onPressed: onPressed,
     );
   }
 }
 
-class _BottomBarButton extends StatelessWidget {
-  final IconData? icon;
-  final VoidCallback? onPressed;
-  const _BottomBarButton({this.icon, this.onPressed});
+class _AgentItem extends StatelessWidget {
+  const _AgentItem({
+    required this.agent,
+    this.onRename,
+    this.onTap,
+  });
+
+  final Agent agent;
+  final VoidCallback? onRename;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: onPressed,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.secondary,
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Icon(
-            icon,
-            color: Theme.of(context).colorScheme.onSecondary,
-            size: 20,
-          ),
-        ),
+    return ListTile(
+      title: Text(agent.name),
+      onTap: onTap,
+      trailing: IconButton(
+        icon: const Icon(Icons.edit),
+        onPressed: onRename,
       ),
     );
   }
