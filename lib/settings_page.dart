@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:secret_agent/database_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:restart_app/restart_app.dart';
 
 class SettingsPage extends StatelessWidget {
   final int? agentId;
@@ -66,6 +67,7 @@ class SettingsPage extends StatelessWidget {
               onPressed: () async {
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.clear();
+                Restart.restartApp();
                 if (!context.mounted) return;
                 Navigator.of(context).pop(); // Dismiss the dialog
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -98,6 +100,7 @@ class SettingsPage extends StatelessWidget {
               onPressed: () async {
                 final dbHelper = DatabaseHelper();
                 await dbHelper.clearAllData(); // Call clearAllData()
+                Restart.restartApp();
                 if (!context.mounted) return;
                 Navigator.of(context).pop(); // Dismiss the dialog
                 ScaffoldMessenger.of(context).showSnackBar(
