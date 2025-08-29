@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:secret_agent/database_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:secret_agent/settings_page.dart';
 
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
 
@@ -177,7 +178,13 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                   IconButton(icon: const Icon(Icons.add), onPressed: () {}),
                   IconButton(
                     icon: const Icon(Icons.settings),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const SettingsPage(),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
