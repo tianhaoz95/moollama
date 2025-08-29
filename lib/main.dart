@@ -406,6 +406,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                       controller: _textController,
                       minLines: 2,
                       maxLines: 2,
+                      textInputAction: TextInputAction.send, // Add this line
                       decoration: InputDecoration(
                         hintText: 'Ask Secret Agent',
                         hintStyle: TextStyle(
