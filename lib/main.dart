@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:secret_agent/database_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:secret_agent/settings_page.dart';
+import 'package:cactus/cactus.dart';
 
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
 
@@ -86,12 +87,35 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   late Future<List<Message>> _messagesFuture;
   List<Agent> _agents = [];
   Agent? _selectedAgent;
+  bool _isLoading = true;
+  CactusLM? _lm;
 
   @override
   void initState() {
     super.initState();
     _messagesFuture = Future.value([]); // Initialize with an empty future
     _loadAgents(); // Load agents, which will then load messages
+    _initializeCactusModel();
+  }
+
+  Future<void> _initializeCactusModel() async {
+    try {
+      _lm = CactusLM();
+      await _lm!.download(
+        modelUrl:
+            'https://huggingface.co/Cactus-Compute/Qwen3-600m-Instruct-GGUF/resolve/main/Qwen3-0.6B-Q8_0.gguf',
+      );
+      await _lm!.init();
+      setState(() {
+        _isLoading = false;
+      });
+    } catch (e) {
+      // Handle error, e.g., show a snackbar or an error message
+      print('Error initializing Cactus model: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _loadAgents() async {
@@ -117,32 +141,61 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     if (_selectedAgent == null || _selectedAgent!.id == null) {
       return [];
     }
-    final List<Map<String, dynamic>> maps = await _dbHelper.getMessages(_selectedAgent!.id!); 
+    final List<Map<String, dynamic>> maps = await _dbHelper.getMessages(
+      _selectedAgent!.id!,
+    );
     setState(() {
       _messages.clear();
-      _messages.addAll(maps.map((map) => Message(
-        text: map['text'],
-        isUser: map['is_user'] == 1,
-      )));
+      _messages.addAll(
+        maps.map(
+          (map) => Message(text: map['text'], isUser: map['is_user'] == 1),
+        ),
+      );
     });
     return _messages; // Return List<Message>
   }
 
-  void _sendMessage() {
-    if (_textController.text.isNotEmpty && _selectedAgent != null && _selectedAgent!.id != null) {
+  void _sendMessage() async {
+    // Make it async
+    if (_textController.text.isNotEmpty &&
+        _selectedAgent != null &&
+        _selectedAgent!.id != null) {
       final userMessageText = _textController.text;
-      _dbHelper.insertMessage(_selectedAgent!.id!, userMessageText, true); // isUser: true
+      _dbHelper.insertMessage(
+        _selectedAgent!.id!,
+        userMessageText,
+        true,
+      ); // isUser: true
       setState(() {
         _messages.add(Message(text: userMessageText, isUser: true));
-        _messages.add(Message(text: 'hi', isUser: false)); // System replies "hi"
         _textController.clear();
       });
+
+      // Generate response using CactusLM
+      if (_lm != null) {
+        final messages = [ChatMessage(role: 'user', content: userMessageText)];
+        final response = await _lm!.completion(
+          messages,
+          maxTokens: 100,
+          temperature: 0.7,
+        );
+        final systemMessageText = response.text;
+
+        _dbHelper.insertMessage(
+          _selectedAgent!.id!,
+          systemMessageText,
+          false,
+        ); // isUser: false
+        setState(() {
+          _messages.add(Message(text: systemMessageText, isUser: false));
+        });
+      }
     }
   }
 
   void _resetChat() async {
     if (_selectedAgent != null && _selectedAgent!.id != null) {
-      await _dbHelper.clearMessages(_selectedAgent!.id!); 
+      await _dbHelper.clearMessages(_selectedAgent!.id!);
       setState(() {
         _messages.clear();
       });
@@ -289,7 +342,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) => SettingsPage(agentId: _selectedAgent?.id),
+                          builder: (context) =>
+                              SettingsPage(agentId: _selectedAgent?.id),
                         ),
                       );
                     },
@@ -362,36 +416,43 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
               ),
             ),
             Expanded(
-              child: FutureBuilder<List<Message>>(
-                future: _messagesFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  } else if (_messages.isEmpty) {
-                    return Center(
-                      child: Text(
-                        'Hello!',
-                        style: TextStyle(
-                          color: Colors.blue[400],
-                          fontSize: 32,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    );
-                  } else {
-                    return ListView.builder(
-                      padding: const EdgeInsets.all(8.0),
-                      itemCount: _messages.length,
-                      itemBuilder: (context, index) {
-                        return _buildMessageBubble(_messages[index]);
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : FutureBuilder<List<Message>>(
+                      future: _messagesFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        } else if (snapshot.hasError) {
+                          return Center(
+                            child: Text('Error: ${snapshot.error}'),
+                          );
+                        } else if (_messages.isEmpty) {
+                          return Center(
+                            child: Text(
+                              'Hello!',
+                              style: TextStyle(
+                                color: Colors.blue[400],
+                                fontSize: 32,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          );
+                        } else {
+                          return ListView.builder(
+                            padding: const EdgeInsets.all(8.0),
+                            itemCount: _messages.length,
+                            itemBuilder: (context, index) {
+                              return _buildMessageBubble(_messages[index]);
+                            },
+                          );
+                        }
                       },
-                    );
-                  }
-                },
-              ),
+                    ),
             ),
             // Bottom bar
             Padding(
@@ -460,7 +521,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   }
 
   Widget _buildMessageBubble(Message message) {
-    final alignment = message.isUser ? Alignment.centerRight : Alignment.centerLeft;
+    final alignment = message.isUser
+        ? Alignment.centerRight
+        : Alignment.centerLeft;
     final color = message.isUser ? Colors.blue : Colors.grey[300];
     final textColor = message.isUser ? Colors.white : Colors.black;
 
@@ -480,29 +543,19 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
 }
 
 class _BottomBarButton extends StatelessWidget {
-  const _BottomBarButton({
-    required this.icon,
-    this.onPressed,
-  });
+  const _BottomBarButton({required this.icon, this.onPressed});
 
   final IconData icon;
   final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      icon: Icon(icon),
-      onPressed: onPressed,
-    );
+    return IconButton(icon: Icon(icon), onPressed: onPressed);
   }
 }
 
 class _AgentItem extends StatelessWidget {
-  const _AgentItem({
-    required this.agent,
-    this.onRename,
-    this.onTap,
-  });
+  const _AgentItem({required this.agent, this.onRename, this.onTap});
 
   final Agent agent;
   final VoidCallback? onRename;
@@ -513,10 +566,7 @@ class _AgentItem extends StatelessWidget {
     return ListTile(
       title: Text(agent.name),
       onTap: onTap,
-      trailing: IconButton(
-        icon: const Icon(Icons.edit),
-        onPressed: onRename,
-      ),
+      trailing: IconButton(icon: const Icon(Icons.edit), onPressed: onRename),
     );
   }
 }
