@@ -89,6 +89,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   Agent? _selectedAgent;
   bool _isLoading = true;
   CactusLM? _lm;
+  double? _downloadProgress;
+  String _downloadStatus = 'Initializing...';
 
   @override
   void initState() {
@@ -100,10 +102,23 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
 
   Future<void> _initializeCactusModel() async {
     try {
+      setState(() {
+        _downloadProgress = 0.0;
+        _downloadStatus = 'Downloading model...';
+      });
       _lm = CactusLM();
       await _lm!.download(
         modelUrl:
             'https://huggingface.co/Cactus-Compute/Qwen3-600m-Instruct-GGUF/resolve/main/Qwen3-0.6B-Q8_0.gguf',
+        onProgress: (progress, statusMessage, isError) {
+          setState(() {
+            _downloadProgress = progress;
+            _downloadStatus = statusMessage;
+            if (isError) {
+              _downloadStatus = 'Error: $statusMessage';
+            }
+          });
+        },
       );
       await _lm!.init();
       setState(() {
@@ -433,7 +448,26 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             ),
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const CircularProgressIndicator(),
+                          const SizedBox(height: 16),
+                          if (_downloadProgress != null)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 32.0,
+                              ),
+                              child: LinearProgressIndicator(
+                                value: _downloadProgress,
+                              ),
+                            ),
+                          const SizedBox(height: 8),
+                          Text(_downloadStatus),
+                        ],
+                      ),
+                    )
                   : FutureBuilder<List<Message>>(
                       future: _messagesFuture,
                       builder: (context, snapshot) {
