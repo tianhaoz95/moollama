@@ -626,12 +626,18 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (message.thinkingText != null && message.thinkingText!.isNotEmpty)
-              ExpansionTile(
-                title: Text('Thinking...', style: TextStyle(color: textColor)),
-                initiallyExpanded: false,
-                children: <Widget>[
-                  Text(message.thinkingText!, style: TextStyle(color: textColor)),
-                ],
+              Theme(
+                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                child: ExpansionTile(
+                  title: Text('Thinking...', style: TextStyle(color: textColor)),
+                  initiallyExpanded: false,
+                  tilePadding: EdgeInsets.zero,
+                  childrenPadding: EdgeInsets.zero,
+                  expandedCrossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(message.thinkingText!, style: TextStyle(color: textColor)),
+                  ],
+                ),
               ),
             Text(message.finalText, style: TextStyle(color: textColor)),
           ],
