@@ -399,10 +399,33 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     await showDialog<void>(
       context: context,
       builder: (BuildContext context) {
+        String selectedValue = "model a";
         return AlertDialog(
           title: const Text('Agent Settings'),
-          content: const Text(
-            'This is where the model information will be displayed.',
+          content: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return Row(
+                children: <Widget>[
+                  const Text("Agent model:"),
+                  const SizedBox(width: 8),
+                  DropdownButton<String>(
+                    value: selectedValue,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        selectedValue = newValue!;
+                      });
+                    },
+                    items: <String>['model a', 'model b', 'model c']
+                        .map<DropdownMenuItem<String>>((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              );
+            },
           ),
           actions: <Widget>[
             TextButton(
