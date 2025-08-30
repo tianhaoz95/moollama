@@ -476,6 +476,12 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.smart_toy_outlined),
+                    onPressed: () {
+                      // TODO: Implement onPressed
+                    },
+                  ),
                   ValueListenableBuilder<ThemeMode>(
                     valueListenable: themeNotifier,
                     builder: (context, currentMode, child) {
