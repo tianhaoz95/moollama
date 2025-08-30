@@ -192,7 +192,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         final messages = [ChatMessage(role: 'user', content: userMessageText)];
         final response = await _lm!.completion(
           messages,
-          maxTokens: 100,
+          maxTokens: 1024,
           temperature: 0.7,
         );
         final systemMessageText = response.text;
