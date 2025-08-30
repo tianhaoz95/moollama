@@ -99,6 +99,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   CactusLM? _lm;
   double? _downloadProgress;
   String _downloadStatus = 'Initializing...';
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -107,6 +108,14 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     _loadAgents(); // Load agents, which will then load messages
     _initializeCactusModel();
   }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // Removed duplicate and unreferenced _initializeCactusModel method
 
   Future<void> _initializeCactusModel() async {
     try {
@@ -224,6 +233,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         _messages.add(Message(finalText: '', isUser: false, isLoading: true));
         _textController.clear();
       });
+      _scrollToBottom();
 
       // Generate response using CactusLM
       if (_lm != null) {
@@ -262,6 +272,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             ),
           );
         });
+        _scrollToBottom();
       }
     }
   }
@@ -372,6 +383,16 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       _messagesFuture = _loadMessages(); // Reload messages for the new agent
     });
     Navigator.of(context).pop(); // Close the drawer
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   @override
@@ -535,6 +556,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                           );
                         } else {
                           return ListView.builder(
+                            controller: _scrollController,
                             padding: const EdgeInsets.all(8.0),
                             itemCount: _messages.length,
                             itemBuilder: (context, index) {
