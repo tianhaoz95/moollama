@@ -75,10 +75,15 @@ class Agent {
 }
 
 class Message {
-  final String text;
+  final String? thinkingText;
+  final String finalText;
   final bool isUser;
 
-  Message({required this.text, required this.isUser});
+  Message({
+    this.thinkingText,
+    required this.finalText,
+    required this.isUser,
+  });
 }
 
 class _SecretAgentHomeState extends State<SecretAgentHome> {
@@ -180,7 +185,22 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       _messages.clear();
       _messages.addAll(
         maps.map(
-          (map) => Message(text: map['text'], isUser: map['is_user'] == 1),
+          (map) {
+            final bool isUser = map['is_user'] == 1;
+            if (isUser) {
+              return Message(finalText: map['text'], isUser: true);
+            } else {
+              final ThinkingModelResponse parsedResponse = splitContentByThinkTags(map['text']);
+              final String? thinkingText = parsedResponse.thinkingSessions.isNotEmpty
+                  ? parsedResponse.thinkingSessions.join('\n')
+                  : null;
+              return Message(
+                thinkingText: thinkingText,
+                finalText: parsedResponse.finalOutput,
+                isUser: false,
+              );
+            }
+          },
         ),
       );
     });
@@ -199,7 +219,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         true,
       ); // isUser: true
       setState(() {
-        _messages.add(Message(text: userMessageText, isUser: true));
+        _messages.add(Message(finalText: userMessageText, isUser: true));
         _textController.clear();
       });
 
@@ -215,29 +235,28 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           response.text,
         );
 
-        for (final session in parsedResponse.thinkingSessions) {
-          _dbHelper.insertMessage(
-            _selectedAgent!.id!,
-            session,
-            false,
-          ); // isUser: false
-          setState(() {
-            _messages.add(Message(text: session, isUser: false));
-          });
-        }
+        final String? thinkingText = parsedResponse.thinkingSessions.isNotEmpty
+            ? parsedResponse.thinkingSessions.join('\n')
+            : null;
 
-        if (parsedResponse.finalOutput.isNotEmpty) {
-          _dbHelper.insertMessage(
-            _selectedAgent!.id!,
-            parsedResponse.finalOutput,
-            false,
-          ); // isUser: false
-          setState(() {
-            _messages.add(
-              Message(text: parsedResponse.finalOutput, isUser: false),
-            );
-          });
-        }
+        final String finalText = parsedResponse.finalOutput;
+
+        // Store the combined message in the database
+        _dbHelper.insertMessage(
+          _selectedAgent!.id!,
+          thinkingText != null ? '<think>$thinkingText</think>$finalText' : finalText,
+          false,
+        ); // isUser: false
+
+        setState(() {
+          _messages.add(
+            Message(
+              thinkingText: thinkingText,
+              finalText: finalText,
+              isUser: false,
+            ),
+          );
+        });
       }
     }
   }
@@ -364,7 +383,6 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     child: Text('Agents', style: TextStyle(fontSize: 24)),
                   ),
                   ..._agents.asMap().entries.map((entry) {
-                    int idx = entry.key;
                     Agent agent = entry.value;
                     return _AgentItem(
                       agent: agent,
@@ -604,7 +622,20 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           color: color,
           borderRadius: BorderRadius.circular(20.0),
         ),
-        child: Text(message.text, style: TextStyle(color: textColor)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (message.thinkingText != null && message.thinkingText!.isNotEmpty)
+              ExpansionTile(
+                title: Text('Thinking...', style: TextStyle(color: textColor)),
+                initiallyExpanded: false,
+                children: <Widget>[
+                  Text(message.thinkingText!, style: TextStyle(color: textColor)),
+                ],
+              ),
+            Text(message.finalText, style: TextStyle(color: textColor)),
+          ],
+        ),
       ),
     );
   }
