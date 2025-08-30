@@ -8,7 +8,11 @@ class ThinkingModelResponse {
   });
 }
 
-ThinkingModelResponse splitContentByThinkTags(String content) {
+ThinkingModelResponse splitContentByThinkTags(String? content) {
+  if (content == null) {
+    return ThinkingModelResponse(thinkingSessions: [], finalOutput: '');
+  }
+
   final List<String> thinkingSessions = [];
   String finalOutput = '';
 

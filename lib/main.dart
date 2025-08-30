@@ -7,6 +7,14 @@ import 'package:secret_agent/utils.dart'; // Import the new utility file
 
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
 
+class WeatherTool extends ToolExecutor {
+  @override
+  Future<dynamic> execute(Map<String, dynamic> args) async {
+    final location = args['location'] as String? ?? 'unknown';
+    return 'The weather in $location is sunny, 72°F';
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await DatabaseHelper().init();
@@ -96,7 +104,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   List<Agent> _agents = [];
   Agent? _selectedAgent;
   bool _isLoading = true;
-  CactusLM? _lm;
+  CactusAgent? _agent;
   double? _downloadProgress;
   String _downloadStatus = 'Initializing...';
   final ScrollController _scrollController = ScrollController();
@@ -123,8 +131,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         _downloadProgress = 0.0;
         _downloadStatus = 'Downloading model...';
       });
-      _lm = CactusLM();
-      await _lm!.download(
+      _agent = CactusAgent();
+      await _agent!.download(
         modelUrl:
             'https://huggingface.co/Cactus-Compute/Qwen3-600m-Instruct-GGUF/resolve/main/Qwen3-0.6B-Q8_0.gguf',
         onProgress: (progress, statusMessage, isError) {
@@ -137,7 +145,19 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           });
         },
       );
-      await _lm!.init();
+      await _agent!.init();
+      _agent!.addTool(
+        'get_weather',
+        WeatherTool(),
+        'Get current weather information for a location',
+        {
+          'location': Parameter(
+            type: 'string',
+            description: 'The location to get weather for',
+            required: true,
+          ),
+        },
+      );
       setState(() {
         _isLoading = false;
       });
@@ -236,15 +256,15 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       _scrollToBottom();
 
       // Generate response using CactusLM
-      if (_lm != null) {
+      if (_agent != null) {
         final messages = [ChatMessage(role: 'user', content: userMessageText)];
-        final response = await _lm!.completion(
+        final response = await _agent!.completionWithTools(
           messages,
-          maxTokens: 1024,
+          maxTokens: 2048,
           temperature: 0.7,
         );
         final ThinkingModelResponse parsedResponse = splitContentByThinkTags(
-          response.text,
+          response.result,
         );
 
         final String? thinkingText = parsedResponse.thinkingSessions.isNotEmpty
@@ -415,16 +435,17 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                         selectedValue = newValue!;
                       });
                     },
-                    items: <String>[
-                      'Qwen3 0.6B',
-                      'Phi-3-mini-4k-instruct',
-                      'Llama-3-8B-Instruct'
-                    ].map<DropdownMenuItem<String>>((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
+                    items:
+                        <String>[
+                          'Qwen3 0.6B',
+                          'Phi-3-mini-4k-instruct',
+                          'Llama-3-8B-Instruct',
+                        ].map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
                   ),
                 ],
               );
