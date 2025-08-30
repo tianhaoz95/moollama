@@ -3,6 +3,7 @@ import 'package:secret_agent/database_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:secret_agent/settings_page.dart';
 import 'package:cactus/cactus.dart';
+import 'package:secret_agent/utils.dart'; // Import the new utility file
 
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
 
@@ -210,16 +211,33 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           maxTokens: 1024,
           temperature: 0.7,
         );
-        final systemMessageText = response.text;
+        final ThinkingModelResponse parsedResponse = splitContentByThinkTags(
+          response.text,
+        );
 
-        _dbHelper.insertMessage(
-          _selectedAgent!.id!,
-          systemMessageText,
-          false,
-        ); // isUser: false
-        setState(() {
-          _messages.add(Message(text: systemMessageText, isUser: false));
-        });
+        for (final session in parsedResponse.thinkingSessions) {
+          _dbHelper.insertMessage(
+            _selectedAgent!.id!,
+            session,
+            false,
+          ); // isUser: false
+          setState(() {
+            _messages.add(Message(text: session, isUser: false));
+          });
+        }
+
+        if (parsedResponse.finalOutput.isNotEmpty) {
+          _dbHelper.insertMessage(
+            _selectedAgent!.id!,
+            parsedResponse.finalOutput,
+            false,
+          ); // isUser: false
+          setState(() {
+            _messages.add(
+              Message(text: parsedResponse.finalOutput, isUser: false),
+            );
+          });
+        }
       }
     }
   }
