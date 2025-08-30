@@ -78,11 +78,13 @@ class Message {
   final String? thinkingText;
   final String finalText;
   final bool isUser;
+  final bool isLoading;
 
   Message({
     this.thinkingText,
     required this.finalText,
     required this.isUser,
+    this.isLoading = false,
   });
 }
 
@@ -184,31 +186,30 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     setState(() {
       _messages.clear();
       _messages.addAll(
-        maps.map(
-          (map) {
-            final bool isUser = map['is_user'] == 1;
-            if (isUser) {
-              return Message(finalText: map['text'], isUser: true);
-            } else {
-              final ThinkingModelResponse parsedResponse = splitContentByThinkTags(map['text']);
-              final String? thinkingText = parsedResponse.thinkingSessions.isNotEmpty
-                  ? parsedResponse.thinkingSessions.join('\n')
-                  : null;
-              return Message(
-                thinkingText: thinkingText,
-                finalText: parsedResponse.finalOutput,
-                isUser: false,
-              );
-            }
-          },
-        ),
+        maps.map((map) {
+          final bool isUser = map['is_user'] == 1;
+          if (isUser) {
+            return Message(finalText: map['text'], isUser: true);
+          } else {
+            final ThinkingModelResponse parsedResponse =
+                splitContentByThinkTags(map['text']);
+            final String? thinkingText =
+                parsedResponse.thinkingSessions.isNotEmpty
+                ? parsedResponse.thinkingSessions.join('\n')
+                : null;
+            return Message(
+              thinkingText: thinkingText,
+              finalText: parsedResponse.finalOutput,
+              isUser: false,
+            );
+          }
+        }),
       );
     });
     return _messages; // Return List<Message>
   }
 
   void _sendMessage() async {
-    // Make it async
     if (_textController.text.isNotEmpty &&
         _selectedAgent != null &&
         _selectedAgent!.id != null) {
@@ -220,6 +221,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       ); // isUser: true
       setState(() {
         _messages.add(Message(finalText: userMessageText, isUser: true));
+        _messages.add(Message(finalText: '', isUser: false, isLoading: true));
         _textController.clear();
       });
 
@@ -244,11 +246,14 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         // Store the combined message in the database
         _dbHelper.insertMessage(
           _selectedAgent!.id!,
-          thinkingText != null ? '<think>$thinkingText</think>$finalText' : finalText,
-          false,
-        ); // isUser: false
+          thinkingText != null
+              ? '<think>$thinkingText</think>$finalText'
+              : finalText,
+          false, // isUser: false
+        );
 
         setState(() {
+          _messages.removeLast();
           _messages.add(
             Message(
               thinkingText: thinkingText,
@@ -607,6 +612,21 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   }
 
   Widget _buildMessageBubble(Message message) {
+    if (message.isLoading) {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 4.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+          decoration: BoxDecoration(
+            color: Colors.grey[300],
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          child: const CircularProgressIndicator(),
+        ),
+      );
+    }
+
     final alignment = message.isUser
         ? Alignment.centerRight
         : Alignment.centerLeft;
@@ -625,17 +645,26 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (message.thinkingText != null && message.thinkingText!.isNotEmpty)
+            if (message.thinkingText != null &&
+                message.thinkingText!.isNotEmpty)
               Theme(
-                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                data: Theme.of(
+                  context,
+                ).copyWith(dividerColor: Colors.transparent),
                 child: ExpansionTile(
-                  title: Text('Thinking...', style: TextStyle(color: textColor)),
+                  title: Text(
+                    'Thinking...',
+                    style: TextStyle(color: textColor),
+                  ),
                   initiallyExpanded: false,
                   tilePadding: EdgeInsets.zero,
                   childrenPadding: EdgeInsets.zero,
                   expandedCrossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text(message.thinkingText!, style: TextStyle(color: textColor)),
+                    Text(
+                      message.thinkingText!,
+                      style: TextStyle(color: textColor),
+                    ),
                   ],
                 ),
               ),
