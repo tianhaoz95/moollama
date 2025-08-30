@@ -399,7 +399,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     await showDialog<void>(
       context: context,
       builder: (BuildContext context) {
-        String selectedValue = "model a";
+        String selectedValue = "Qwen3 0.6B";
         return AlertDialog(
           title: const Text('Agent Settings'),
           content: StatefulBuilder(
@@ -415,8 +415,11 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                         selectedValue = newValue!;
                       });
                     },
-                    items: <String>['model a', 'model b', 'model c']
-                        .map<DropdownMenuItem<String>>((String value) {
+                    items: <String>[
+                      'Qwen3 0.6B',
+                      'Phi-3-mini-4k-instruct',
+                      'Llama-3-8B-Instruct'
+                    ].map<DropdownMenuItem<String>>((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
                         child: Text(value),
