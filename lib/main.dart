@@ -110,8 +110,24 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         _isLoading = false;
       });
     } catch (e) {
-      // Handle error, e.g., show a snackbar or an error message
-      print('Error initializing Cactus model: $e');
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Error'),
+            content: Text('Error initializing Cactus model: $e'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
       setState(() {
         _isLoading = false;
       });
