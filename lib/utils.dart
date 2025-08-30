@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class ThinkingModelResponse {
   final List<String> thinkingSessions;
   final String finalOutput;
@@ -55,4 +57,20 @@ String getModelUrl(String modelId) {
       // Default to Qwen3 0.6B if the modelId is not found
       return 'https://huggingface.co/Cactus-Compute/Qwen3-600m-Instruct-GGUF/resolve/main/Qwen3-0.6B-Q8_0.gguf';
   }
+}
+
+String extractResponseFromJson(String text) {
+  try {
+    final decodedJson = jsonDecode(text);
+    if (decodedJson is Map<String, dynamic> && decodedJson.containsKey('response')) {
+      final responseValue = decodedJson['response'];
+      if (responseValue is String) {
+        return responseValue;
+      }
+    }
+  } catch (e) {
+    // Not a valid JSON or doesn't contain 'response' key as a String
+    // Do nothing, return original text
+  }
+  return text;
 }

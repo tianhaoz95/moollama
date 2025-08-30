@@ -271,7 +271,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             ? parsedResponse.thinkingSessions.join('\n')
             : null;
 
-        final String finalText = parsedResponse.finalOutput;
+        final String finalText = extractResponseFromJson(parsedResponse.finalOutput);
 
         // Store the combined message in the database
         _dbHelper.insertMessage(
