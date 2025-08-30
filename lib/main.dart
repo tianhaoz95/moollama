@@ -395,6 +395,28 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     });
   }
 
+  Future<void> _showCactusModelInfo(BuildContext context) async {
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Agent Settings'),
+          content: const Text(
+            'This is where the model information will be displayed.',
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -479,7 +501,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                   IconButton(
                     icon: const Icon(Icons.smart_toy_outlined),
                     onPressed: () {
-                      // TODO: Implement onPressed
+                      _showCactusModelInfo(context);
                     },
                   ),
                   ValueListenableBuilder<ThemeMode>(
