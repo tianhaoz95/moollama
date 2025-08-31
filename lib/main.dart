@@ -788,26 +788,26 @@ class _AgentSettingsDrawerContentState
             padding: const EdgeInsets.all(16.0),
             child: Row(
               children: <Widget>[
-                const Text("Agent model:"),
-                const SizedBox(width: 8),
-                DropdownButton<String>(
-                  value: selectedValue,
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      selectedValue = newValue!;
-                    });
-                  },
-                  items:
-                      <String>[
-                        'Qwen3 0.6B',
-                        'Phi-3-mini-4k-instruct',
-                        'Llama-3-8B-Instruct',
-                      ].map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
+                Expanded(
+                  child: DropdownButton<String>(
+                    value: selectedValue,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        selectedValue = newValue!;
+                      });
+                    },
+                    items:
+                        <String>[
+                          'Qwen3 0.6B',
+                          'Phi-3-mini-4k-instruct',
+                          'Llama-3-8B-Instruct',
+                        ].map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                  ),
                 ),
               ],
             ),
