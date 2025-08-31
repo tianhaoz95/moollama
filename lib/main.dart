@@ -840,7 +840,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                 ).copyWith(dividerColor: Colors.transparent),
                 child: ExpansionTile(
                   title: Text(
-                    'Thinking...',
+                    'Thinking... 🤔 🤔 🤔',
                     style: TextStyle(color: textColor),
                   ),
                   initiallyExpanded: false,
