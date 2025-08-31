@@ -97,12 +97,14 @@ class Message {
   final String finalText;
   final bool isUser;
   final bool isLoading;
+  final List<Map<String, dynamic>>? toolCalls; // Add this field
 
   Message({
     this.thinkingText,
     required this.finalText,
     required this.isUser,
     this.isLoading = false,
+    this.toolCalls, // Add this parameter
   });
 }
 
@@ -390,12 +392,16 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           temperature: 0.7,
         );
         final ThinkingModelResponse parsedResponse = splitContentByThinkTags(
-          response.result,
+          response.result ?? '',
         );
 
         final String? thinkingText = parsedResponse.thinkingSessions.isNotEmpty
             ? parsedResponse.thinkingSessions.join('\n')
             : null;
+
+        final List<Map<String, dynamic>> toolCalls = extractToolCallsFromJson(
+          parsedResponse.finalOutput,
+        );
 
         final String finalText = extractResponseFromJson(
           parsedResponse.finalOutput,
@@ -404,9 +410,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         // Store the combined message in the database
         _dbHelper.insertMessage(
           _selectedAgent!.id!,
-          thinkingText != null
-              ? '<think>$thinkingText</think>$finalText'
-              : finalText,
+          response.result ?? '',
           false, // isUser: false
         );
 
@@ -415,6 +419,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           _messages.add(
             Message(
               thinkingText: thinkingText,
+              toolCalls: toolCalls,
               finalText: finalText,
               isUser: false,
             ),
