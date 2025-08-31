@@ -834,9 +834,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                 top: 8.0,
               ),
               child: Container(
-                                decoration: BoxDecoration(
+                decoration: BoxDecoration(
                   color: Theme.of(context).cardColor,
-                                    borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(24),
                   border: Border.all(
                     color: Theme.of(context).brightness == Brightness.dark
                         ? Colors.grey[800]!
@@ -935,7 +935,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                 ).copyWith(dividerColor: Colors.transparent),
                 child: ExpansionTile(
                   title: Text(
-                    'Thinking... 🤔 🤔 🤔',
+                    '🤔 Thinking...',
                     style: TextStyle(color: textColor),
                   ),
                   initiallyExpanded: false,
