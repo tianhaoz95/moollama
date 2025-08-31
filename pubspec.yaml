@@ -41,6 +41,7 @@ dependencies:
   restart_app: ^1.3.2
   cactus: ^0.2.7
   siri_wave: ^2.0.0
+  speech_to_text: ^7.3.0
 
 dev_dependencies:
   flutter_test:

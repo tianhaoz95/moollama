@@ -6,6 +6,7 @@ import 'package:cactus/cactus.dart';
 import 'package:secret_agent/utils.dart'; // Import the new utility file
 import 'package:secret_agent/tools.dart'; // Import the new tools file
 import 'package:siri_wave/siri_wave.dart'; // Ensure this package is added in pubspec.yaml
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
 
@@ -119,6 +120,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   final ScrollController _scrollController = ScrollController();
   bool _isListening = false;
   OverlayEntry? _listeningPopupEntry;
+  final stt.SpeechToText _speechToText = stt.SpeechToText();
+  String _lastWords = '';
 
   final Map<String, String> _modelUrls = {
     'Qwen3 0.6B':
@@ -153,11 +156,11 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     }
   }
 
-  void _showListeningPopup(BuildContext context) {
+  void _showListeningPopup(BuildContext context) async {
     _listeningPopupEntry = OverlayEntry(
       builder: (context) => Center(
         child: Card(
-          color: Colors.black.withOpacity(0.7),
+          color: Color.fromRGBO(0, 0, 0, 0.7),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30.0),
           ),
@@ -172,6 +175,10 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                   'Listening...',
                   style: TextStyle(color: Colors.white, fontSize: 24),
                 ),
+                Text(
+                  _lastWords,
+                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                ),
               ],
             ),
           ),
@@ -181,14 +188,32 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     Overlay.of(context).insert(_listeningPopupEntry!);
     setState(() {
       _isListening = true;
+      _lastWords = '';
     });
+
+    if (_speechToText.isAvailable) {
+      await _speechToText.listen(
+        onResult: (result) {
+          setState(() {
+            _lastWords = result.recognizedWords;
+          });
+        },
+        listenFor: const Duration(seconds: 30),
+        pauseFor: const Duration(seconds: 5),
+        listenOptions: stt.SpeechListenOptions(partialResults: true),
+      );
+    } else {
+      print('Speech recognition not available');
+    }
   }
 
   void _hideListeningPopup() {
+    _speechToText.stop();
     _listeningPopupEntry?.remove();
     _listeningPopupEntry = null;
     setState(() {
       _isListening = false;
+      _lastWords = '';
     });
   }
 
@@ -197,6 +222,11 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     super.initState();
     _messagesFuture = Future.value([]); // Initialize with an empty future
     _loadAgents(); // Load agents, which will then load messages
+    _speechToText.initialize(
+      onStatus: (status) => print('Speech recognition status: $status'),
+      onError: (errorNotification) =>
+          print('Speech recognition error: $errorNotification'),
+    );
   }
 
   @override
