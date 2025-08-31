@@ -1,3 +1,4 @@
+import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:secret_agent/database_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -894,14 +895,11 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     if (message.isLoading) {
       return Align(
         alignment: Alignment.centerLeft,
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 4.0),
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-          decoration: BoxDecoration(
-            color: Colors.grey[300],
-            borderRadius: BorderRadius.circular(20.0),
-          ),
-          child: const CircularProgressIndicator(),
+        child: const CardLoading(
+          height: 50,
+          width: 150,
+          borderRadius: BorderRadius.all(Radius.circular(20)),
+          margin: EdgeInsets.symmetric(vertical: 4.0),
         ),
       );
     }
