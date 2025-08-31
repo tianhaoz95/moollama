@@ -5,6 +5,7 @@ import 'package:secret_agent/settings_page.dart';
 import 'package:cactus/cactus.dart';
 import 'package:secret_agent/utils.dart'; // Import the new utility file
 import 'package:secret_agent/tools.dart'; // Import the new tools file
+import 'package:siri_wave/siri_wave.dart'; // Ensure this package is added in pubspec.yaml
 
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
 
@@ -157,11 +158,21 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       builder: (context) => Center(
         child: Card(
           color: Colors.black.withOpacity(0.7),
-          child: const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text(
-              'Listening...',
-              style: TextStyle(color: Colors.white, fontSize: 24),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30.0),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SiriWaveform.ios9(),
+                const SizedBox(height: 10),
+                const Text(
+                  'Listening...',
+                  style: TextStyle(color: Colors.white, fontSize: 24),
+                ),
+              ],
             ),
           ),
         ),
