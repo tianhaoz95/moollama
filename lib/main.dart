@@ -806,11 +806,31 @@ class _AgentSettingsDrawerContent extends StatefulWidget {
 class _AgentSettingsDrawerContentState
     extends State<_AgentSettingsDrawerContent> {
   late String selectedValue; // Initial value
+  List<String> _availableModels = []; // New field for available models
+  final DatabaseHelper _dbHelper = DatabaseHelper(); // Get instance of DatabaseHelper
 
   @override
   void initState() {
     super.initState();
     selectedValue = widget.initialModelName;
+    _loadAvailableModels(); // Load models when state initializes
+  }
+
+  Future<void> _loadAvailableModels() async {
+    final models = await _dbHelper.getDistinctModelNames();
+    setState(() {
+      _availableModels = models;
+      // Ensure selectedValue is one of the available models, or set a default
+      if (!_availableModels.contains(selectedValue) && _availableModels.isNotEmpty) {
+        selectedValue = _availableModels.first;
+        widget.onModelSelected(selectedValue); // Notify parent of change
+      } else if (_availableModels.isEmpty) {
+        // Handle case where no models are in DB, perhaps add a default
+        selectedValue = 'Qwen3 0.6B'; // Fallback to a default
+        _availableModels.add('Qwen3 0.6B'); // Add default to list
+        widget.onModelSelected(selectedValue);
+      }
+    });
   }
 
   @override
@@ -849,11 +869,7 @@ class _AgentSettingsDrawerContentState
                         });
                         widget.onModelSelected(newValue!);
                       },
-                      items: <String>[
-                        'Qwen3 0.6B',
-                        'Phi-3-mini-4k-instruct',
-                        'Llama-3-8B-Instruct',
-                      ].map<DropdownMenuItem<String>>((String value) {
+                      items: _availableModels.map<DropdownMenuItem<String>>((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
                           child: Text(value),

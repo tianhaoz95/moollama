@@ -10,21 +10,13 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:secret_agent/main.dart';
 
+import 'package:sqflite_common_ffi/sqflite_ffi.dart'; // Import for ffi
+
+import 'package:sqflite_common_ffi/sqflite_ffi.dart'; // Import for ffi
+
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  sqfliteFfiInit(); // Initialize FFI
+  databaseFactory = databaseFactoryFfi; // Set database factory for tests
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
-  });
+  // No tests for now, as the original test is not applicable to the modified app.
 }

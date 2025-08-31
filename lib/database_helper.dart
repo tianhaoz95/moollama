@@ -140,4 +140,14 @@ class DatabaseHelper {
     final db = await database;
     await db.delete('agents');
   }
+
+  Future<List<String>> getDistinctModelNames() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'agents',
+      distinct: true,
+      columns: ['model_name'],
+    );
+    return maps.map((map) => map['model_name'] as String).toList();
+  }
 }
