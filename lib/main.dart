@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:secret_agent/database_helper.dart';
@@ -93,18 +94,20 @@ class Agent {
 }
 
 class Message {
+  final String? rawText;
   final String? thinkingText;
+  final List<Map<String, dynamic>>? toolCalls;
   final String finalText;
   final bool isUser;
   final bool isLoading;
-  final List<Map<String, dynamic>>? toolCalls; // Add this field
 
   Message({
+    this.rawText,
     this.thinkingText,
+    this.toolCalls,
     required this.finalText,
     required this.isUser,
     this.isLoading = false,
-    this.toolCalls, // Add this parameter
   });
 }
 
@@ -240,8 +243,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   Future<void> _initializeCactusModel(String modelName) async {
     try {
       setState(() {
-        _downloadProgress = 0.0;
-        _downloadStatus = 'Downloading model...';
+        _isLoading = true;
+        _downloadProgress = null;
+        _downloadStatus = 'Initializing...';
       });
       _agent = CactusAgent();
       final modelUrl = _modelUrls[modelName];
@@ -349,9 +353,16 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                 parsedResponse.thinkingSessions.isNotEmpty
                 ? parsedResponse.thinkingSessions.join('\n')
                 : null;
+            final List<Map<String, dynamic>> toolCalls =
+                extractToolCallsFromJson(parsedResponse.finalOutput);
+            final String finalText = extractResponseFromJson(
+              parsedResponse.finalOutput,
+            );
             return Message(
+              rawText: map['text'],
               thinkingText: thinkingText,
-              finalText: parsedResponse.finalOutput,
+              toolCalls: toolCalls,
+              finalText: finalText,
               isUser: false,
             );
           }
@@ -418,6 +429,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           _messages.removeLast();
           _messages.add(
             Message(
+              rawText: response.result ?? '',
               thinkingText: thinkingText,
               toolCalls: toolCalls,
               finalText: finalText,
@@ -631,6 +643,27 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
 
   void _showCactusModelInfo(BuildContext context) {
     Scaffold.of(context).openEndDrawer();
+  }
+
+  void _showRawResponseDialog(String? rawText) {
+    if (rawText == null) return;
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Raw Response'),
+          content: SingleChildScrollView(child: Text(rawText)),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Close'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -931,43 +964,72 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     final color = message.isUser ? Colors.blue : Colors.grey[300];
     final textColor = message.isUser ? Colors.white : Colors.black;
 
-    return Align(
-      alignment: alignment,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4.0),
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(20.0),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (message.thinkingText != null &&
-                message.thinkingText!.isNotEmpty)
-              Theme(
-                data: Theme.of(
-                  context,
-                ).copyWith(dividerColor: Colors.transparent),
-                child: ExpansionTile(
-                  title: Text(
-                    '🤔 Thinking...',
-                    style: TextStyle(color: textColor),
-                  ),
-                  initiallyExpanded: false,
-                  tilePadding: EdgeInsets.zero,
-                  childrenPadding: EdgeInsets.zero,
-                  expandedCrossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      message.thinkingText!,
+    return GestureDetector(
+      onDoubleTap: () {
+        if (!message.isUser) {
+          _showRawResponseDialog(message.rawText);
+        }
+      },
+      child: Align(
+        alignment: alignment,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 4.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (message.thinkingText != null &&
+                  message.thinkingText!.isNotEmpty)
+                Theme(
+                  data: Theme.of(
+                    context,
+                  ).copyWith(dividerColor: Colors.transparent),
+                  child: ExpansionTile(
+                    title: Text(
+                      '🤔 Thinking...',
                       style: TextStyle(color: textColor),
                     ),
-                  ],
+                    initiallyExpanded: false,
+                    tilePadding: EdgeInsets.zero,
+                    childrenPadding: EdgeInsets.zero,
+                    expandedCrossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        message.thinkingText!,
+                        style: TextStyle(color: textColor),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            Text(message.finalText, style: TextStyle(color: textColor)),
-          ],
+              if (message.toolCalls != null && message.toolCalls!.isNotEmpty)
+                Theme(
+                  data: Theme.of(
+                    context,
+                  ).copyWith(dividerColor: Colors.transparent),
+                  child: ExpansionTile(
+                    title: Text(
+                      '🛠️ Tool Calls...',
+                      style: TextStyle(color: textColor),
+                    ),
+                    initiallyExpanded: false,
+                    tilePadding: EdgeInsets.zero,
+                    childrenPadding: EdgeInsets.zero,
+                    expandedCrossAxisAlignment: CrossAxisAlignment.start,
+                    children: message.toolCalls!.map((toolCall) {
+                      return Text(
+                        JsonEncoder.withIndent('  ').convert(toolCall),
+                        style: TextStyle(color: textColor),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              Text(message.finalText, style: TextStyle(color: textColor)),
+            ],
+          ),
         ),
       ),
     );
