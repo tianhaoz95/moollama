@@ -171,13 +171,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
               children: [
                 SiriWaveform.ios9(),
                 const SizedBox(height: 10),
-                const Text(
-                  'Listening...',
-                  style: TextStyle(color: Colors.white, fontSize: 24),
-                ),
                 Text(
-                  _lastWords,
-                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                  _lastWords.isEmpty ? 'Listening...' : _lastWords,
+                  style: TextStyle(color: Colors.white, fontSize: 24),
                 ),
               ],
             ),
