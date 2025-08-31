@@ -431,6 +431,11 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       setState(() {
         _messages.clear();
       });
+      // Dispose and re-initialize the agent
+      _agent?.unload();
+      if (_selectedAgent != null) {
+        _initializeCactusModel(_selectedAgent!.modelName);
+      }
     }
   }
 
