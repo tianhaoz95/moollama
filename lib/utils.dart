@@ -94,19 +94,4 @@ String extractResponseFromJson(String text) {
   return text;
 }
 
-List<Map<String, dynamic>> extractToolCallsFromJson(String text) {
-  try {
-    final decodedJson = jsonDecode(text);
-    if (decodedJson is Map<String, dynamic> &&
-        decodedJson.containsKey('tool_calls')) {
-      final toolCalls = decodedJson['tool_calls'];
-      if (toolCalls is List) {
-        return toolCalls.cast<Map<String, dynamic>>();
-      }
-    }
-  } catch (e) {
-    // Not a valid JSON or doesn't contain the expected structure
-    // Do nothing, return empty list
-  }
-  return [];
-}
+

@@ -96,7 +96,7 @@ class Agent {
 class Message {
   final String? rawText;
   final String? thinkingText;
-  final List<Map<String, dynamic>>? toolCalls;
+  final List<String>? toolCalls;
   final String finalText;
   final bool isUser;
   final bool isLoading;
@@ -353,8 +353,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                 parsedResponse.thinkingSessions.isNotEmpty
                 ? parsedResponse.thinkingSessions.join('\n')
                 : null;
-            final List<Map<String, dynamic>> toolCalls =
-                extractToolCallsFromJson(parsedResponse.finalOutput);
+            final List<String> toolCalls = [];
             final String finalText = extractResponseFromJson(
               parsedResponse.finalOutput,
             );
@@ -410,9 +409,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             ? parsedResponse.thinkingSessions.join('\n')
             : null;
 
-        final List<Map<String, dynamic>> toolCalls = extractToolCallsFromJson(
-          parsedResponse.finalOutput,
-        );
+        final List<String> toolCalls = [];
 
         final String finalText = extractResponseFromJson(
           parsedResponse.finalOutput,
@@ -1006,25 +1003,11 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                   ),
                 ),
               if (message.toolCalls != null && message.toolCalls!.isNotEmpty)
-                Theme(
-                  data: Theme.of(
-                    context,
-                  ).copyWith(dividerColor: Colors.transparent),
-                  child: ExpansionTile(
-                    title: Text(
-                      '🛠️ Tool Calls...',
-                      style: TextStyle(color: textColor),
-                    ),
-                    initiallyExpanded: false,
-                    tilePadding: EdgeInsets.zero,
-                    childrenPadding: EdgeInsets.zero,
-                    expandedCrossAxisAlignment: CrossAxisAlignment.start,
-                    children: message.toolCalls!.map((toolCall) {
-                      return Text(
-                        JsonEncoder.withIndent('  ').convert(toolCall),
-                        style: TextStyle(color: textColor),
-                      );
-                    }).toList(),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    '🛠️ Tool Calls: ${message.toolCalls!.join(', ')}',
+                    style: TextStyle(color: textColor),
                   ),
                 ),
               Text(message.finalText, style: TextStyle(color: textColor)),
