@@ -126,6 +126,11 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         'https://huggingface.co/QuantFactory/Meta-Llama-3-8B-Instruct-GGUF/resolve/main/Meta-Llama-3-8B-Instruct.Q4_K_M.gguf',
   };
 
+  void _handleAgentLongPress(Agent agent) async {
+    // Show a dialog to confirm deletion of the agent
+    _deleteAgent(agent);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -349,6 +354,80 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     });
   }
 
+  void _deleteAgent(Agent agentToDelete) async {
+    if (agentToDelete.id == null) return;
+
+    if (_agents.length == 1) {
+      // If it's the last agent, show a message and disable deletion
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Cannot Delete Last Agent'),
+            content: const Text('You cannot delete the last remaining agent.'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+      return; // Exit the function
+    }
+
+    // Show confirmation dialog
+    final bool confirmDelete =
+        await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Delete Agent'),
+              content: Text(
+                'Are you sure you want to delete agent "${agentToDelete.name}"?',
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop(false); // User cancelled
+                  },
+                ),
+                TextButton(
+                  child: const Text('Delete'),
+                  onPressed: () {
+                    Navigator.of(context).pop(true); // User confirmed
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
+        false; // Default to false if dialog is dismissed
+
+    if (confirmDelete) {
+      await _dbHelper.deleteAgent(agentToDelete.id!);
+      setState(() {
+        _agents.removeWhere((agent) => agent.id == agentToDelete.id);
+        // If the deleted agent was the selected one, select the first available agent
+        if (_selectedAgent?.id == agentToDelete.id) {
+          _selectedAgent = _agents.isNotEmpty ? _agents.first : null;
+          _messages.clear(); // Clear messages for the deleted agent
+          if (_selectedAgent != null) {
+            _messagesFuture =
+                _loadMessages(); // Load messages for the new selected agent
+            _initializeCactusModel(
+              _selectedAgent!.modelName,
+            ); // Initialize model for new selected agent
+          }
+        }
+      });
+    }
+  }
+
   Future<void> _showRenameDialog(BuildContext context, Agent agent) async {
     final TextEditingController renameController = TextEditingController(
       text: agent.name,
@@ -470,10 +549,14 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                   ),
                   ..._agents.asMap().entries.map((entry) {
                     Agent agent = entry.value;
+                    final bool isLastAgent = _agents.length == 1;
                     return _AgentItem(
                       agent: agent,
                       onRename: () => _showRenameDialog(context, agent),
                       onTap: () => _selectAgent(agent),
+                      onLongPress: () => _handleAgentLongPress(
+                        agent,
+                      ), // Always call the handler
                     );
                   }),
                 ],
@@ -793,17 +876,24 @@ class _BottomBarButton extends StatelessWidget {
 }
 
 class _AgentItem extends StatelessWidget {
-  const _AgentItem({required this.agent, this.onRename, this.onTap});
+  const _AgentItem({
+    required this.agent,
+    this.onRename,
+    this.onTap,
+    this.onLongPress,
+  });
 
   final Agent agent;
   final VoidCallback? onRename;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress; // New callback for long press
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       title: Text(agent.name),
       onTap: onTap,
+      onLongPress: onLongPress, // Assign the new callback
       trailing: IconButton(icon: const Icon(Icons.edit), onPressed: onRename),
     );
   }
