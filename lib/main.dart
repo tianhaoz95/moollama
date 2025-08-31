@@ -834,9 +834,14 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                 top: 8.0,
               ),
               child: Container(
-                decoration: BoxDecoration(
+                                decoration: BoxDecoration(
                   color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(24),
+                                    borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[800]!
+                        : Colors.grey[300]!,
+                  ),
                 ),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
