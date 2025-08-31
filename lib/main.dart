@@ -4,16 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:secret_agent/settings_page.dart';
 import 'package:cactus/cactus.dart';
 import 'package:secret_agent/utils.dart'; // Import the new utility file
+import 'package:secret_agent/tools.dart'; // Import the new tools file
 
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
-
-class WeatherTool extends ToolExecutor {
-  @override
-  Future<dynamic> execute(Map<String, dynamic> args) async {
-    final location = args['location'] as String? ?? 'unknown';
-    return 'The weather in $location is sunny, 72°F';
-  }
-}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
