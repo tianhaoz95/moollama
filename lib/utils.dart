@@ -62,14 +62,33 @@ String getModelUrl(String modelId) {
 String extractResponseFromJson(String text) {
   try {
     final decodedJson = jsonDecode(text);
-    if (decodedJson is Map<String, dynamic> && decodedJson.containsKey('response')) {
-      final responseValue = decodedJson['response'];
-      if (responseValue is String) {
-        return responseValue;
+    if (decodedJson is Map<String, dynamic>) {
+      // Handle the original 'response' key
+      if (decodedJson.containsKey('response')) {
+        final responseValue = decodedJson['response'];
+        if (responseValue is String) {
+          return responseValue;
+        }
+      }
+      // Handle the new 'tool_calls' structure
+      if (decodedJson.containsKey('tool_calls')) {
+        final toolCalls = decodedJson['tool_calls'];
+        if (toolCalls is List) {
+          for (final call in toolCalls) {
+            if (call is Map<String, dynamic> && call['name'] == 'response') {
+              if (call.containsKey('content')) {
+                final content = call['content'];
+                if (content is String) {
+                  return content;
+                }
+              }
+            }
+          }
+        }
       }
     }
   } catch (e) {
-    // Not a valid JSON or doesn't contain 'response' key as a String
+    // Not a valid JSON or doesn't contain the expected structure
     // Do nothing, return original text
   }
   return text;
