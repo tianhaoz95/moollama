@@ -28,7 +28,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'secret_agent_data.db');
     return await openDatabase(
       path,
-      version: 4, // Increment version to trigger onCreate/onUpgrade
+      version: 5, // Increment version to trigger onCreate/onUpgrade
       onCreate: _onCreate,
       onUpgrade: _onUpgrade, // Add onUpgrade for schema changes
     );
@@ -46,7 +46,8 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE agents(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT
+        name TEXT,
+        model_name TEXT
       )
     ''');
   }
@@ -64,7 +65,14 @@ class DatabaseHelper {
       await db.execute('ALTER TABLE messages ADD COLUMN agent_id INTEGER');
     }
     if (oldVersion < 4) {
-      await db.execute('ALTER TABLE messages ADD COLUMN is_user INTEGER DEFAULT 1');
+      await db.execute(
+        'ALTER TABLE messages ADD COLUMN is_user INTEGER DEFAULT 1',
+      );
+    }
+    if (oldVersion < 5) {
+      await db.execute(
+        'ALTER TABLE agents ADD COLUMN model_name TEXT DEFAULT "Qwen3 0.6B"',
+      );
     }
   }
 
@@ -89,11 +97,7 @@ class DatabaseHelper {
 
   Future<void> clearMessages(int agentId) async {
     final db = await database;
-    await db.delete(
-      'messages',
-      where: 'agent_id = ?',
-      whereArgs: [agentId],
-    );
+    await db.delete('messages', where: 'agent_id = ?', whereArgs: [agentId]);
   }
 
   Future<void> clearAllData() async {
@@ -105,7 +109,11 @@ class DatabaseHelper {
   // Agent related methods
   Future<int> insertAgent(Map<String, dynamic> agent) async {
     final db = await database;
-    return await db.insert('agents', agent, conflictAlgorithm: ConflictAlgorithm.replace);
+    return await db.insert(
+      'agents',
+      agent,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   Future<List<Map<String, dynamic>>> getAgents() async {
@@ -125,11 +133,7 @@ class DatabaseHelper {
 
   Future<int> deleteAgent(int id) async {
     final db = await database;
-    return await db.delete(
-      'agents',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.delete('agents', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<void> clearAgents() async {

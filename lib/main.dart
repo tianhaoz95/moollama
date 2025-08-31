@@ -70,15 +70,20 @@ class SecretAgentHome extends StatefulWidget {
 class Agent {
   int? id;
   String name;
+  String modelName; // New field
 
-  Agent({this.id, required this.name});
+  Agent({this.id, required this.name, this.modelName = 'Qwen3 0.6B'}); // Default value
 
   Map<String, dynamic> toMap() {
-    return {'id': id, 'name': name};
+    return {'id': id, 'name': name, 'model_name': modelName}; // Include new field
   }
 
   static Agent fromMap(Map<String, dynamic> map) {
-    return Agent(id: map['id'], name: map['name']);
+    return Agent(
+      id: map['id'],
+      name: map['name'],
+      modelName: map['model_name'] ?? 'Qwen3 0.6B', // Handle null for old entries
+    );
   }
 }
 
@@ -103,18 +108,24 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   late Future<List<Message>> _messagesFuture;
   List<Agent> _agents = [];
   Agent? _selectedAgent;
+  String _selectedModelName = 'Qwen3 0.6B'; // New field for selected model name
   bool _isLoading = true;
   CactusAgent? _agent;
   double? _downloadProgress;
   String _downloadStatus = 'Initializing...';
   final ScrollController _scrollController = ScrollController();
 
+  final Map<String, String> _modelUrls = {
+    'Qwen3 0.6B': 'https://huggingface.co/Cactus-Compute/Qwen3-600m-Instruct-GGUF/resolve/main/Qwen3-0.6B-Q8_0.gguf',
+    'Phi-3-mini-4k-instruct': 'https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf',
+    'Llama-3-8B-Instruct': 'https://huggingface.co/QuantFactory/Meta-Llama-3-8B-Instruct-GGUF/resolve/main/Meta-Llama-3-8B-Instruct.Q4_K_M.gguf',
+  };
+
   @override
   void initState() {
     super.initState();
     _messagesFuture = Future.value([]); // Initialize with an empty future
     _loadAgents(); // Load agents, which will then load messages
-    _initializeCactusModel();
   }
 
   @override
@@ -125,16 +136,19 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
 
   // Removed duplicate and unreferenced _initializeCactusModel method
 
-  Future<void> _initializeCactusModel() async {
+  Future<void> _initializeCactusModel(String modelName) async {
     try {
       setState(() {
         _downloadProgress = 0.0;
         _downloadStatus = 'Downloading model...';
       });
       _agent = CactusAgent();
+      final modelUrl = _modelUrls[modelName];
+      if (modelUrl == null) {
+        throw Exception('Model URL not found for $modelName');
+      }
       await _agent!.download(
-        modelUrl:
-            'https://huggingface.co/Cactus-Compute/Qwen3-600m-Instruct-GGUF/resolve/main/Qwen3-0.6B-Q8_0.gguf',
+        modelUrl: modelUrl,
         onProgress: (progress, statusMessage, isError) {
           setState(() {
             _downloadProgress = progress;
@@ -189,10 +203,10 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   Future<void> _loadAgents() async {
     final agentsFromDb = await _dbHelper.getAgents();
     if (agentsFromDb.isEmpty) {
-      final defaultAgent = Agent(name: 'Default');
+      final defaultAgent = Agent(name: 'Default', modelName: _selectedModelName);
       final id = await _dbHelper.insertAgent(defaultAgent.toMap());
       setState(() {
-        _agents.add(Agent(id: id, name: 'Default'));
+        _agents.add(Agent(id: id, name: 'Default', modelName: _selectedModelName));
         _selectedAgent = _agents.first;
       });
     } else {
@@ -203,6 +217,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     }
     // After agents are loaded and a default/selected agent is set, load messages
     _messagesFuture = _loadMessages();
+    if (_selectedAgent != null) {
+      _initializeCactusModel(_selectedAgent!.modelName);
+    }
   }
 
   Future<List<Message>> _loadMessages() async {
@@ -387,15 +404,15 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     );
 
     if (newAgentName != null && newAgentName.isNotEmpty) {
-      _addAgent(newAgentName);
+      _addAgent(newAgentName, _selectedModelName);
     }
   }
 
-  void _addAgent(String name) async {
-    final newAgent = Agent(name: name);
+  void _addAgent(String name, String modelName) async {
+    final newAgent = Agent(name: name, modelName: modelName);
     final id = await _dbHelper.insertAgent(newAgent.toMap());
     setState(() {
-      _agents.add(Agent(id: id, name: name));
+      _agents.add(Agent(id: id, name: name, modelName: modelName));
     });
   }
 
@@ -404,7 +421,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       _selectedAgent = agent;
       _messagesFuture = _loadMessages(); // Reload messages for the new agent
     });
-    Navigator.of(context).pop(); // Close the drawer
+    _initializeCactusModel(_selectedAgent!.modelName); // Initialize model for the new agent
   }
 
   void _scrollToBottom() {
@@ -473,7 +490,18 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           ],
         ),
       ),
-      endDrawer: const _AgentSettingsDrawerContent(),
+      endDrawer: _AgentSettingsDrawerContent(
+        initialModelName: _selectedModelName,
+        onModelSelected: (modelName) {
+          setState(() {
+            _selectedModelName = modelName;
+            if (_selectedAgent != null) {
+              _selectedAgent!.modelName = modelName;
+              _dbHelper.updateAgent(_selectedAgent!.toMap());
+            }
+          });
+        },
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -765,7 +793,10 @@ class _AgentItem extends StatelessWidget {
 }
 
 class _AgentSettingsDrawerContent extends StatefulWidget {
-  const _AgentSettingsDrawerContent({super.key});
+  const _AgentSettingsDrawerContent({super.key, required this.initialModelName, required this.onModelSelected});
+
+  final String initialModelName;
+  final ValueChanged<String> onModelSelected;
 
   @override
   State<_AgentSettingsDrawerContent> createState() =>
@@ -774,7 +805,13 @@ class _AgentSettingsDrawerContent extends StatefulWidget {
 
 class _AgentSettingsDrawerContentState
     extends State<_AgentSettingsDrawerContent> {
-  String selectedValue = "Qwen3 0.6B"; // Initial value
+  late String selectedValue; // Initial value
+
+  @override
+  void initState() {
+    super.initState();
+    selectedValue = widget.initialModelName;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -810,18 +847,18 @@ class _AgentSettingsDrawerContentState
                         setState(() {
                           selectedValue = newValue!;
                         });
+                        widget.onModelSelected(newValue!);
                       },
-                      items:
-                          <String>[
-                            'Qwen3 0.6B',
-                            'Phi-3-mini-4k-instruct',
-                            'Llama-3-8B-Instruct',
-                          ].map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
+                      items: <String>[
+                        'Qwen3 0.6B',
+                        'Phi-3-mini-4k-instruct',
+                        'Llama-3-8B-Instruct',
+                      ].map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
                       underline: const SizedBox(),
                       isExpanded: true,
                     ),
