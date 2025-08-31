@@ -271,7 +271,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             ? parsedResponse.thinkingSessions.join('\n')
             : null;
 
-        final String finalText = extractResponseFromJson(parsedResponse.finalOutput);
+        final String finalText = extractResponseFromJson(
+          parsedResponse.finalOutput,
+        );
 
         // Store the combined message in the database
         _dbHelper.insertMessage(
@@ -415,53 +417,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     });
   }
 
-  Future<void> _showCactusModelInfo(BuildContext context) async {
-    await showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        String selectedValue = "Qwen3 0.6B";
-        return AlertDialog(
-          title: const Text('Agent Settings'),
-          content: StatefulBuilder(
-            builder: (BuildContext context, StateSetter setState) {
-              return Row(
-                children: <Widget>[
-                  const Text("Agent model:"),
-                  const SizedBox(width: 8),
-                  DropdownButton<String>(
-                    value: selectedValue,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        selectedValue = newValue!;
-                      });
-                    },
-                    items:
-                        <String>[
-                          'Qwen3 0.6B',
-                          'Phi-3-mini-4k-instruct',
-                          'Llama-3-8B-Instruct',
-                        ].map<DropdownMenuItem<String>>((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        }).toList(),
-                  ),
-                ],
-              );
-            },
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
+  void _showCactusModelInfo(BuildContext context) {
+    Scaffold.of(context).openEndDrawer();
   }
 
   @override
@@ -516,6 +473,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           ],
         ),
       ),
+      endDrawer: const _AgentSettingsDrawerContent(),
       body: SafeArea(
         child: Column(
           children: [
@@ -545,10 +503,14 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.smart_toy_outlined),
-                    onPressed: () {
-                      _showCactusModelInfo(context);
+                  Builder(
+                    builder: (BuildContext innerContext) {
+                      return IconButton(
+                        icon: const Icon(Icons.smart_toy_outlined),
+                        onPressed: () {
+                          _showCactusModelInfo(innerContext);
+                        },
+                      );
                     },
                   ),
                   ValueListenableBuilder<ThemeMode>(
@@ -798,6 +760,71 @@ class _AgentItem extends StatelessWidget {
       title: Text(agent.name),
       onTap: onTap,
       trailing: IconButton(icon: const Icon(Icons.edit), onPressed: onRename),
+    );
+  }
+}
+
+class _AgentSettingsDrawerContent extends StatefulWidget {
+  const _AgentSettingsDrawerContent({super.key});
+
+  @override
+  State<_AgentSettingsDrawerContent> createState() =>
+      _AgentSettingsDrawerContentState();
+}
+
+class _AgentSettingsDrawerContentState
+    extends State<_AgentSettingsDrawerContent> {
+  String selectedValue = "Qwen3 0.6B"; // Initial value
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      child: Column(
+        children: [
+          DrawerHeader(
+            child: Text('Agent Settings', style: TextStyle(fontSize: 24)),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: <Widget>[
+                const Text("Agent model:"),
+                const SizedBox(width: 8),
+                DropdownButton<String>(
+                  value: selectedValue,
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      selectedValue = newValue!;
+                    });
+                  },
+                  items:
+                      <String>[
+                        'Qwen3 0.6B',
+                        'Phi-3-mini-4k-instruct',
+                        'Llama-3-8B-Instruct',
+                      ].map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                ),
+              ],
+            ),
+          ),
+          // Add any other content here if needed
+          const Spacer(), // Pushes the button to the bottom
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextButton(
+              child: const Text('Close'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the drawer
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
