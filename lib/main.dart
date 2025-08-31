@@ -265,6 +265,12 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         weatherAgentTool.description,
         weatherAgentTool.parameters,
       );
+      _agent!.addTool(
+        fetchWebpageTool.name,
+        fetchWebpageTool.executor,
+        fetchWebpageTool.description,
+        fetchWebpageTool.parameters,
+      );
       setState(() {
         _isLoading = false;
       });
