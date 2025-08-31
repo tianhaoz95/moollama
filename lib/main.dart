@@ -757,7 +757,14 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             Expanded(
               child: GestureDetector(
                 onLongPressStart: (_) => _showListeningPopup(context),
-                onLongPressEnd: (_) => _hideListeningPopup(),
+                onLongPressEnd: (_) {
+                  final transcript = _lastWords;
+                  _hideListeningPopup();
+                  if (transcript.isNotEmpty) {
+                    _textController.text = transcript;
+                    _sendMessage();
+                  }
+                },
                 child: _isLoading
                     ? Center(
                         child: Column(
