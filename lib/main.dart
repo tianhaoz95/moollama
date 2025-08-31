@@ -781,9 +781,18 @@ class _AgentSettingsDrawerContentState
     return Drawer(
       child: Column(
         children: [
-          DrawerHeader(
+          Container(
+            height: 160.0,
+            padding: const EdgeInsetsDirectional.only(
+              start: 16.0,
+              top: 16.0,
+              end: 16.0,
+              bottom: 8.0,
+            ),
+            alignment: AlignmentDirectional.bottomStart,
             child: Text('Agent Settings', style: TextStyle(fontSize: 24)),
           ),
+          const Divider(height: 1, thickness: 1, indent: 0, endIndent: 0),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
