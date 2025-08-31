@@ -831,16 +831,6 @@ class _AgentSettingsDrawerContentState
             ),
           ),
           // Add any other content here if needed
-          const Spacer(), // Pushes the button to the bottom
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextButton(
-              child: const Text('Close'),
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the drawer
-              },
-            ),
-          ),
         ],
       ),
     );
