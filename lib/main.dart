@@ -798,24 +798,33 @@ class _AgentSettingsDrawerContentState
             child: Row(
               children: <Widget>[
                 Expanded(
-                  child: DropdownButton<String>(
-                    value: selectedValue,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        selectedValue = newValue!;
-                      });
-                    },
-                    items:
-                        <String>[
-                          'Qwen3 0.6B',
-                          'Phi-3-mini-4k-instruct',
-                          'Llama-3-8B-Instruct',
-                        ].map<DropdownMenuItem<String>>((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        }).toList(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: DropdownButton<String>(
+                      value: selectedValue,
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          selectedValue = newValue!;
+                        });
+                      },
+                      items:
+                          <String>[
+                            'Qwen3 0.6B',
+                            'Phi-3-mini-4k-instruct',
+                            'Llama-3-8B-Instruct',
+                          ].map<DropdownMenuItem<String>>((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                      underline: const SizedBox(),
+                      isExpanded: true,
+                    ),
                   ),
                 ),
               ],
