@@ -127,8 +127,27 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   };
 
   void _handleAgentLongPress(Agent agent) async {
-    // Show a dialog to confirm deletion of the agent
-    _deleteAgent(agent);
+    if (_agents.length == 1) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Cannot Delete Last Agent'),
+            content: const Text('You cannot delete the last remaining agent.'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      _deleteAgent(agent); // Call the existing delete logic
+    }
   }
 
   @override
@@ -171,16 +190,10 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       );
       await _agent!.init(contextSize: 8 * 1024);
       _agent!.addTool(
-        'get_weather',
-        WeatherTool(),
-        'Get current weather information for a location',
-        {
-          'location': Parameter(
-            type: 'string',
-            description: 'The location to get weather for',
-            required: true,
-          ),
-        },
+        weatherAgentTool.name,
+        weatherAgentTool.executor,
+        weatherAgentTool.description,
+        weatherAgentTool.parameters,
       );
       setState(() {
         _isLoading = false;
@@ -549,7 +562,6 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                   ),
                   ..._agents.asMap().entries.map((entry) {
                     Agent agent = entry.value;
-                    final bool isLastAgent = _agents.length == 1;
                     return _AgentItem(
                       agent: agent,
                       onRename: () => _showRenameDialog(context, agent),
