@@ -28,9 +28,9 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'secret_agent_data.db');
     return await openDatabase(
       path,
-      version: 5, // Increment version to trigger onCreate/onUpgrade
+      version: 1,
       onCreate: _onCreate,
-      onUpgrade: _onUpgrade, // Add onUpgrade for schema changes
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -53,27 +53,7 @@ class DatabaseHelper {
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
-      await db.execute('''
-        CREATE TABLE agents(
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT
-        )
-      ''');
-    }
-    if (oldVersion < 3) {
-      await db.execute('ALTER TABLE messages ADD COLUMN agent_id INTEGER');
-    }
-    if (oldVersion < 4) {
-      await db.execute(
-        'ALTER TABLE messages ADD COLUMN is_user INTEGER DEFAULT 1',
-      );
-    }
-    if (oldVersion < 5) {
-      await db.execute(
-        'ALTER TABLE agents ADD COLUMN model_name TEXT DEFAULT "Qwen3 0.6B"',
-      );
-    }
+    // No migrations yet.
   }
 
   Future<int> insertMessage(int agentId, String message, bool isUser) async {
