@@ -209,7 +209,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         listenOptions: stt.SpeechListenOptions(partialResults: true),
       );
     } else {
-      print('Speech recognition not available');
+      talker.info('Speech recognition not available');
     }
   }
 
@@ -229,9 +229,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     _messagesFuture = Future.value([]); // Initialize with an empty future
     _loadAgents(); // Load agents, which will then load messages
     _speechToText.initialize(
-      onStatus: (status) => print('Speech recognition status: $status'),
+      onStatus: (status) => talker.info('Speech recognition status: $status'),
       onError: (errorNotification) =>
-          print('Speech recognition error: $errorNotification'),
+          talker.info('Speech recognition error: $errorNotification'),
     );
   }
 
