@@ -10,6 +10,7 @@ import 'package:secret_agent/tools.dart'; // Import the new tools file
 import 'package:siri_wave/siri_wave.dart'; // Ensure this package is added in pubspec.yaml
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:talker_flutter/talker_flutter.dart';
+import 'package:secret_agent/agent_helper.dart'; // Import the new agent_helper file
 
 final talker = TalkerFlutter.init();
 
@@ -269,18 +270,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         },
       );
       await _agent!.init(contextSize: 8 * 1024);
-      _agent!.addTool(
-        weatherAgentTool.name,
-        weatherAgentTool.executor,
-        weatherAgentTool.description,
-        weatherAgentTool.parameters,
-      );
-      _agent!.addTool(
-        fetchWebpageTool.name,
-        fetchWebpageTool.executor,
-        fetchWebpageTool.description,
-        fetchWebpageTool.parameters,
-      );
+      addAgentTools(_agent!);
       setState(() {
         _isLoading = false;
       });
