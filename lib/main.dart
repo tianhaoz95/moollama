@@ -406,7 +406,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             ? parsedResponse.thinkingSessions.join('\n')
             : null;
 
-        final List<String> toolCalls = [];
+        final List<String> toolCalls = response.toolCalls ?? [];
 
         final String finalText = extractResponseFromJson(
           parsedResponse.finalOutput,
