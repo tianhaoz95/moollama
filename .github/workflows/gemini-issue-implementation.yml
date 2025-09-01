@@ -1,0 +1,184 @@
+name: '✨ Gemini Issue Implementation PR'
+
+on:
+  schedule:
+    - cron: '0 */6 * * *' # Runs every 6 hours
+  workflow_dispatch:
+
+concurrency:
+  group: '${{ github.workflow }}-${{ github.ref }}'
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: 'bash'
+
+jobs:
+  find_issues_to_implement:
+    runs-on: 'ubuntu-latest'
+    outputs:
+      issues_to_implement: '${{ steps.find_issues.outputs.issues_to_implement }}'
+    steps:
+      - name: 'Find issues needing implementation'
+        id: 'find_issues'
+        env:
+          GITHUB_REPOSITORY: '${{ github.repository }}'
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN || github.token }}'
+        run: |
+          echo '🔍 Finding open issues that need implementation...'
+          # Search for issues that are open and do not have a 'status/implemented' or 'status/pr-created' label
+          # This is a placeholder. A more robust check would involve checking for linked PRs.
+          ISSUES=$(gh issue list \
+            --state 'open' \
+            --search 'no:label status/implemented no:label status/pr-created' \
+            --json number,title,body \
+            --limit '10' \
+            --repo "${GITHUB_REPOSITORY}"
+          )
+
+          echo '📝 Setting output for GitHub Actions...'
+          echo "issues_to_implement=${ISSUES}" >> "${GITHUB_OUTPUT}"
+
+          ISSUE_COUNT=$(echo "${ISSUES}" | jq 'length')
+          echo "✅ Found ${ISSUE_COUNT} issue(s) to implement!"
+
+  implement_and_create_pr:
+    runs-on: 'ubuntu-latest'
+    needs: 'find_issues_to_implement'
+    if: |
+      needs.find_issues_to_implement.outputs.issues_to_implement != '[]'
+    permissions:
+      contents: 'write'
+      pull-requests: 'write'
+      issues: 'write' # To add labels like 'status/pr-created'
+    strategy:
+      matrix:
+        issue: ${{ fromJSON(needs.find_issues_to_implement.outputs.issues_to_implement) }}
+    steps:
+      - name: 'Checkout repository'
+        uses: 'actions/checkout@v4'
+        with:
+          token: '${{ secrets.GITHUB_TOKEN }}' # Use GITHUB_TOKEN for checkout
+
+      - name: 'Configure Git'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: 'Run Gemini for implementation and PR creation'
+        id: 'gemini_implementation'
+        uses: 'google-github-actions/run-gemini-cli@v0' # ratchet:exclude
+        env:
+          GITHUB_TOKEN: '' # Do not pass any auth token here since this runs on untrusted inputs
+          ISSUE_NUMBER: '${{ matrix.issue.number }}'
+          ISSUE_TITLE: '${{ matrix.issue.title }}'
+          ISSUE_BODY: '${{ matrix.issue.body }}'
+          REPOSITORY: '${{ github.repository }}'
+        with:
+          gemini_cli_version: '${{ vars.GEMINI_CLI_VERSION }}'
+          gcp_workload_identity_provider: '${{ vars.GCP_WIF_PROVIDER }}'
+          gcp_project_id: '${{ vars.GOOGLE_CLOUD_PROJECT }}'
+          gcp_location: '${{ vars.GOOGLE_CLOUD_LOCATION }}'
+          gcp_service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'
+          gemini_api_key: '${{ secrets.GEMINI_API_KEY }}'
+          use_vertex_ai: '${{ vars.GOOGLE_GENAI_USE_VERTEXAI }}'
+          google_api_key: '${{ secrets.GOOGLE_API_KEY }}'
+          use_gemini_code_assist: '${{ vars.GOOGLE_GENAI_USE_GCA }}'
+          gemini_debug: '${{ fromJSON(vars.DEBUG || vars.ACTIONS_STEP_DEBUG || false) }}'
+          gemini_model: '${{ vars.GEMINI_MODEL }}'
+          settings: |
+            {
+              "maxSessionTurns": 50, # Increased turns for complex tasks
+              "telemetry": {
+                "enabled": ${{ vars.GOOGLE_CLOUD_PROJECT != '' }},
+                "target": "gcp"
+              },
+              "coreTools": [
+                "run_shell_command",
+                "read_file",
+                "write_file",
+                "replace",
+                "glob",
+                "search_file_content"
+              ]
+            }
+          prompt: |
+            ## Role
+
+            You are an autonomous Software Engineer. Your task is to implement the requirements specified in a GitHub issue and create a pull request.
+
+            ## Primary Directive
+
+            You will receive the issue number, title, and body as environment variables. Your goal is to:
+            1. Understand the requirements from the issue.
+            2. Plan the necessary code changes.
+            3. Use the provided tools to read existing files, make modifications (write new files or replace content), and execute shell commands for Git operations.
+            4. Create a new Git branch.
+            5. Commit the changes.
+            6. Prepare a pull request.
+
+            ## Critical Constraints
+
+            1. **Autonomy:** You must operate autonomously. Do not ask for confirmation for each step.
+            2. **Idempotency:** Before making changes, check if the issue has already been implemented or if a PR for it already exists. You can use `run_shell_command(command='gh pr list --search "issue:${ISSUE_NUMBER}"')` to check for existing PRs. If a PR exists, or if the issue has a label like 'status/implemented' or 'status/pr-created', then exit.
+            3. **Git Operations:** You must use `run_shell_command` for all Git operations.
+            4. **Output:** Your final output should be a JSON object containing the branch name and the pull request URL.
+
+            ## Input Data Description
+
+            You will work with the following environment variables:
+            - `ISSUE_NUMBER`: The number of the GitHub issue.
+            - `ISSUE_TITLE`: The title of the GitHub issue.
+            - `ISSUE_BODY`: The body/description of the GitHub issue.
+
+            ## Execution Workflow
+
+            Follow these steps:
+
+            ### Step 1: Check for existing implementation/PR
+
+            Before starting, check if a pull request for this issue already exists or if the issue is already marked as implemented. You can use `run_shell_command(command='gh pr list --search "issue:${ISSUE_NUMBER}"')` to check for existing PRs. If a PR exists, or if the issue has a label like 'status/implemented' or 'status/pr-created', then exit.
+
+            ### Step 2: Plan Implementation
+
+            Analyze the `ISSUE_TITLE` and `ISSUE_BODY` to understand the requirements. Formulate a plan for how to implement these requirements. This plan should include:
+            - Which files need to be modified or created.
+            - What specific changes need to be made.
+            - How to verify the changes (e.g., running tests, linting).
+
+            ### Step 3: Implement Changes
+
+            Execute your plan using the available `coreTools`.
+            - Use `read_file`, `glob`, `search_file_content` to understand the existing codebase.
+            - Use `write_file` to create new files or `replace` to modify existing ones.
+            - Use `run_shell_command` for any necessary build steps or other shell interactions.
+
+            ### Step 4: Git Operations
+
+            1. **Create a new branch:**
+               `run_shell_command(command='git checkout -b "feature/issue-${ISSUE_NUMBER}"')`
+            2. **Stage changes:**
+               `run_shell_command(command='git add .')`
+            3. **Commit changes:**
+               `run_shell_command(command='git commit -m "feat: Implement ${{ env.ISSUE_TITLE }} (fixes #${{ env.ISSUE_NUMBER }})"')`
+            4. **Push branch:**
+               `run_shell_command(command='git push origin "feature/issue-${ISSUE_NUMBER}"')`
+
+            ### Step 5: Create Pull Request
+
+            Use `run_shell_command` to create the pull request.
+            `run_shell_command(command='gh pr create --base main --head "feature/issue-${ISSUE_NUMBER}" --title "feat: Implement ${{ env.ISSUE_TITLE }}" --body "Closes #${{ env.ISSUE_NUMBER }}\n\n${{ env.ISSUE_BODY }}"')`
+
+            ### Step 6: Output Result
+
+            Output a JSON object with the branch name and the PR URL.
+            Example: `{"branch_name": "feature/issue-123", "pr_url": "https://github.com/owner/repo/pull/456"}`
+            You can use `echo "output_json_string" >> "${GITHUB_OUTPUT}"` to set an output.
+
+      - name: 'Add label to issue'
+        if: success() # Only add label if PR creation was successful
+        env:
+          ISSUE_NUMBER: '${{ matrix.issue.number }}'
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+        run: |
+          gh issue edit ${{ env.ISSUE_NUMBER }} --add-label "status/pr-created"
