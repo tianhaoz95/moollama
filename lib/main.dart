@@ -1288,6 +1288,7 @@ class _AgentSettingsDrawerContentState
             child: SizedBox(
               width: double.infinity, // Make the button fill the width
               child: ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
                 onPressed: () {
                   widget.onApply(
                     _selectedModelName,
