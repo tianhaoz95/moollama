@@ -9,6 +9,9 @@ import 'package:secret_agent/utils.dart'; // Import the new utility file
 import 'package:secret_agent/tools.dart'; // Import the new tools file
 import 'package:siri_wave/siri_wave.dart'; // Ensure this package is added in pubspec.yaml
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:talker_flutter/talker_flutter.dart';
+
+final talker = TalkerFlutter.init();
 
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
 
@@ -577,23 +580,10 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   }
 
   void _debugAction() {
-    // Example debug action: show a simple dialog
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Debug Action'),
-          content: const Text('Debug action triggered!'),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => TalkerScreen(talker: talker),
+      ),
     );
   }
 
