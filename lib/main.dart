@@ -582,7 +582,14 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   void _debugAction() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => TalkerScreen(talker: talker),
+        builder: (context) => TalkerScreen(
+          talker: talker,
+          theme: TalkerScreenTheme(
+            cardColor: Theme.of(context).cardColor,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            textColor: Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white,
+          ),
+        ),
       ),
     );
   }
