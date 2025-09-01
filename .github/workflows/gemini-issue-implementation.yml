@@ -26,14 +26,16 @@ jobs:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN || github.token }}"
         run: |
           echo '🔍 Finding open issues that need implementation...'
-          # Search for issues that are open and do not have a 'status/implemented' or 'status/pr-created' label
-          # This is a placeholder. A more robust check would involve checking for linked PRs.
-          ISSUES=$(gh issue list \
-            --state 'open' \
-            --search 'no:label status/implemented no:label status/pr-created' \
-            --json number,title,body \
-            --limit '10' \
+          ALL_OPEN_ISSUES=$(gh issue list 
+            --state 'open' 
+            --json number,title,body,labels 
+            --limit '100' 
             --repo "${GITHUB_REPOSITORY}"
+          )
+
+          # Filter issues: keep only those that do NOT have 'status/implemented' or 'status/pr-created' labels
+          ISSUES=$(echo "${ALL_OPEN_ISSUES}" | jq 
+            '[.[] | select(.labels | map(.name) | (index("status/implemented") | not) and (index("status/pr-created") | not))]'
           )
 
           echo '📝 Setting output for GitHub Actions...'
