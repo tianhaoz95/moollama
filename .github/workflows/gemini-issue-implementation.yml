@@ -38,7 +38,7 @@ jobs:
           )
 
           # Filter issues: keep only those that do NOT have 'status/implemented' or 'status/pr-created' labels
-          ISSUES=$(echo "${ALL_OPEN_ISSUES}" | jq \
+          ISSUES=$(echo "${ALL_OPEN_ISSUES}" | jq -c \
             '[.[] | select(.labels | map(.name) | (index("status/implemented") | not) and (index("status/pr-created") | not))]' \
           )
 
