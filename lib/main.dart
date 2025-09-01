@@ -1020,11 +1020,25 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                   ),
                 ),
               if (message.toolCalls != null && message.toolCalls!.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    '🛠️ Tool Calls: ${message.toolCalls!.join(', ')}',
-                    style: TextStyle(color: textColor),
+                Theme(
+                  data: Theme.of(
+                    context,
+                  ).copyWith(dividerColor: Colors.transparent),
+                  child: ExpansionTile(
+                    title: Text(
+                      '🛠️ Tool Calls',
+                      style: TextStyle(color: textColor),
+                    ),
+                    initiallyExpanded: false,
+                    tilePadding: EdgeInsets.zero,
+                    childrenPadding: EdgeInsets.zero,
+                    expandedCrossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        message.toolCalls!.join('\n'),
+                        style: TextStyle(color: textColor),
+                      ),
+                    ],
                   ),
                 ),
               Text(message.finalText, style: TextStyle(color: textColor)),
