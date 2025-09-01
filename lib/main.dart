@@ -8,7 +8,8 @@ import 'package:secret_agent/utils.dart'; // Import the new utility file
 import 'package:siri_wave/siri_wave.dart'; // Ensure this package is added in pubspec.yaml
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:talker_flutter/talker_flutter.dart';
-import 'package:secret_agent/agent_helper.dart'; // Import the new agent_helper file
+import 'package:secret_agent/agent_helper.dart';
+import 'package:secret_agent/models.dart';
 
 final talker = TalkerFlutter.init();
 
@@ -131,15 +132,6 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   final stt.SpeechToText _speechToText = stt.SpeechToText();
   String _lastWords = '';
 
-  final Map<String, String> _modelUrls = {
-    'Qwen3 0.6B':
-        'https://huggingface.co/Cactus-Compute/Qwen3-600m-Instruct-GGUF/resolve/main/Qwen3-0.6B-Q8_0.gguf',
-    'Phi-3-mini-4k-instruct':
-        'https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf',
-    'Llama-3-8B-Instruct':
-        'https://huggingface.co/QuantFactory/Meta-Llama-3-8B-Instruct-GGUF/resolve/main/Meta-Llama-3-8B-Instruct.Q4_K_M.gguf',
-  };
-
   void _handleAgentLongPress(Agent agent) async {
     if (_agents.length == 1) {
       showDialog(
@@ -250,7 +242,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         _downloadStatus = 'Initializing...';
       });
       _agent = CactusAgent();
-      final modelUrl = _modelUrls[modelName];
+      final modelUrl = modelUrls[modelName];
       if (modelUrl == null) {
         talker.error('Model URL not found for $modelName');
         throw Exception('Model URL not found for $modelName');
