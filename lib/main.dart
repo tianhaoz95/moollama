@@ -122,6 +122,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   Agent? _selectedAgent;
   String _selectedModelName = 'Qwen3 0.6B'; // New field for selected model name
   double _creativity = 70.0;
+  int _contextWindowSize = 8192;
   bool _isLoading = true;
   CactusAgent? _agent;
   double? _downloadProgress;
@@ -264,7 +265,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           });
         },
       );
-      await _agent!.init(contextSize: 8 * 1024);
+      await _agent!.init(contextSize: _contextWindowSize);
       addAgentTools(_agent!);
       setState(() {
         _isLoading = false;
@@ -338,7 +339,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           } else {
             final ThinkingModelResponse parsedResponse =
                 splitContentByThinkTags(map['text']);
-            final String? thinkingText =
+            final String? thinkingText = 
                 parsedResponse.thinkingSessions.isNotEmpty
                 ? parsedResponse.thinkingSessions.join('\n')
                 : null;
@@ -517,7 +518,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           _selectedAgent = _agents.isNotEmpty ? _agents.first : null;
           _messages.clear(); // Clear messages for the deleted agent
           if (_selectedAgent != null) {
-            _messagesFuture =
+            _messagesFuture = 
                 _loadMessages(); // Load messages for the new selected agent
             _initializeCactusModel(
               _selectedAgent!.modelName,
@@ -747,6 +748,13 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           setState(() {
             _creativity = value;
           });
+        },
+        initialContextWindowSize: _contextWindowSize,
+        onContextWindowSizeChanged: (value) {
+          setState(() {
+            _contextWindowSize = value;
+          });
+          _initializeCactusModel(_selectedModelName);
         },
       ),
       body: SafeArea(
@@ -1016,7 +1024,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                   ).copyWith(dividerColor: Colors.transparent),
                   child: ExpansionTile(
                     title: Text(
-                      '🤔 Thinking...',
+                      '🤔 Thinking...', 
                       style: TextStyle(color: textColor),
                     ),
                     initiallyExpanded: false,
@@ -1119,12 +1127,16 @@ class _AgentSettingsDrawerContent extends StatefulWidget {
     required this.onModelSelected,
     required this.initialCreativity,
     required this.onCreativityChanged,
+    required this.initialContextWindowSize,
+    required this.onContextWindowSizeChanged,
   });
 
   final String initialModelName;
   final ValueChanged<String> onModelSelected;
   final double initialCreativity;
   final ValueChanged<double> onCreativityChanged;
+  final int initialContextWindowSize;
+  final ValueChanged<int> onContextWindowSizeChanged;
 
   @override
   State<_AgentSettingsDrawerContent> createState() =>
@@ -1138,12 +1150,17 @@ class _AgentSettingsDrawerContentState
   final DatabaseHelper _dbHelper =
       DatabaseHelper(); // Get instance of DatabaseHelper
   late double _creativityValue;
+  late double _contextWindowSliderValue;
+  final List<int> _contextWindowSizes = [1024, 4096, 8192, 16384, 32768];
 
   @override
   void initState() {
     super.initState();
     selectedValue = widget.initialModelName;
     _creativityValue = widget.initialCreativity;
+    _contextWindowSliderValue = _contextWindowSizes
+        .indexOf(widget.initialContextWindowSize)
+        .toDouble();
     _loadAvailableModels(); // Load models when state initializes
   }
 
@@ -1203,14 +1220,15 @@ class _AgentSettingsDrawerContentState
                             });
                             widget.onModelSelected(newValue!);
                           },
-                          items: _availableModels.map<DropdownMenuItem<String>>(
-                            (String value) {
-                              return DropdownMenuItem<String>(
-                                value: value,
-                                child: Text(value),
-                              );
-                            },
-                          ).toList(),
+                          items:
+                              _availableModels.map<DropdownMenuItem<String>>((
+                            String value,
+                          ) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
                           underline: const SizedBox(),
                           isExpanded: true,
                         ),
@@ -1241,6 +1259,36 @@ class _AgentSettingsDrawerContentState
                           ),
                         ),
                         Text(_creativityValue.round().toString()),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Context Window'),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Slider(
+                            value: _contextWindowSliderValue,
+                            min: 0,
+                            max: (_contextWindowSizes.length - 1).toDouble(),
+                            divisions: _contextWindowSizes.length - 1,
+                            label:
+                                '${(_contextWindowSizes[_contextWindowSliderValue.round()] / 1024).round()}k',
+                            onChanged: (double value) {
+                              setState(() {
+                                _contextWindowSliderValue = value;
+                              });
+                              widget.onContextWindowSizeChanged(
+                                  _contextWindowSizes[value.round()]);
+                            },
+                          ),
+                        ),
+                        Text(
+                            '${(_contextWindowSizes[_contextWindowSliderValue.round()] / 1024).round()}k'),
                       ],
                     ),
                   ],
