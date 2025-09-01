@@ -91,7 +91,7 @@ jobs:
           use_gemini_code_assist: "${{ vars.GOOGLE_GENAI_USE_GCA }}"
           settings: |
             {
-              "maxSessionTurns": 50, # Increased turns for complex tasks
+              "maxSessionTurns": 50,
               "telemetry": {
                 "enabled": ${{ vars.GOOGLE_CLOUD_PROJECT != '' }},
                 "target": "gcp"
