@@ -576,6 +576,27 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     }
   }
 
+  void _debugAction() {
+    // Example debug action: show a simple dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Debug Action'),
+          content: const Text('Debug action triggered!'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _showAddAgentDialog(BuildContext context) async {
     final TextEditingController addAgentController = TextEditingController();
     final newAgentName = await showDialog<String>(
@@ -700,6 +721,10 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     onPressed: () {
                       _showAddAgentDialog(context);
                     },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.bug_report_outlined),
+                    onPressed: _debugAction,
                   ),
                   IconButton(
                     icon: const Icon(Icons.settings),
