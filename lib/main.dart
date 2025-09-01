@@ -121,6 +121,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   List<Agent> _agents = [];
   Agent? _selectedAgent;
   String _selectedModelName = 'Qwen3 0.6B'; // New field for selected model name
+  double _creativity = 70.0;
   bool _isLoading = true;
   CactusAgent? _agent;
   double? _downloadProgress;
@@ -387,7 +388,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         final response = await _agent!.completionWithTools(
           messages,
           maxTokens: 2048,
-          temperature: 0.7,
+          temperature: _creativity / 100.0,
         );
         talker.info(
           'Response result: ${response.result}, tool calls: ${response.toolCalls}',
@@ -739,6 +740,12 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
               _dbHelper.updateAgent(_selectedAgent!.toMap());
               _initializeCactusModel(modelName);
             }
+          });
+        },
+        initialCreativity: _creativity,
+        onCreativityChanged: (value) {
+          setState(() {
+            _creativity = value;
           });
         },
       ),
@@ -1110,10 +1117,14 @@ class _AgentSettingsDrawerContent extends StatefulWidget {
     super.key,
     required this.initialModelName,
     required this.onModelSelected,
+    required this.initialCreativity,
+    required this.onCreativityChanged,
   });
 
   final String initialModelName;
   final ValueChanged<String> onModelSelected;
+  final double initialCreativity;
+  final ValueChanged<double> onCreativityChanged;
 
   @override
   State<_AgentSettingsDrawerContent> createState() =>
@@ -1126,11 +1137,13 @@ class _AgentSettingsDrawerContentState
   List<String> _availableModels = []; // New field for available models
   final DatabaseHelper _dbHelper =
       DatabaseHelper(); // Get instance of DatabaseHelper
+  late double _creativityValue;
 
   @override
   void initState() {
     super.initState();
     selectedValue = widget.initialModelName;
+    _creativityValue = widget.initialCreativity;
     _loadAvailableModels(); // Load models when state initializes
   }
 
@@ -1171,35 +1184,66 @@ class _AgentSettingsDrawerContentState
           const Divider(height: 1, thickness: 1, indent: 0, endIndent: 0),
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Row(
+            child: Column(
               children: <Widget>[
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(8.0),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        child: DropdownButton<String>(
+                          value: selectedValue,
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedValue = newValue!;
+                            });
+                            widget.onModelSelected(newValue!);
+                          },
+                          items: _availableModels.map<DropdownMenuItem<String>>(
+                            (String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            },
+                          ).toList(),
+                          underline: const SizedBox(),
+                          isExpanded: true,
+                        ),
+                      ),
                     ),
-                    child: DropdownButton<String>(
-                      value: selectedValue,
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          selectedValue = newValue!;
-                        });
-                        widget.onModelSelected(newValue!);
-                      },
-                      items: _availableModels.map<DropdownMenuItem<String>>((
-                        String value,
-                      ) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                      underline: const SizedBox(),
-                      isExpanded: true,
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Creativity'),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Slider(
+                            value: _creativityValue,
+                            min: 0,
+                            max: 100,
+                            divisions: 100,
+                            label: _creativityValue.round().toString(),
+                            onChanged: (double value) {
+                              setState(() {
+                                _creativityValue = value;
+                              });
+                              widget.onCreativityChanged(value);
+                            },
+                          ),
+                        ),
+                        Text(_creativityValue.round().toString()),
+                      ],
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),
