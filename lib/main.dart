@@ -395,6 +395,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           maxTokens: 2048,
           temperature: 0.7,
         );
+        talker.info(
+          'Response result: ${response.result}, tool calls: ${response.toolCalls}',
+        );
         final ThinkingModelResponse parsedResponse = splitContentByThinkTags(
           response.result ?? '',
         );
@@ -578,7 +581,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           theme: TalkerScreenTheme(
             cardColor: Theme.of(context).cardColor,
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            textColor: Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white,
+            textColor:
+                Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white,
           ),
         ),
       ),
