@@ -339,10 +339,10 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           } else {
             final ThinkingModelResponse parsedResponse =
                 splitContentByThinkTags(map['text']);
-            final String? thinkingText = 
+            final String? thinkingText =
                 parsedResponse.thinkingSessions.isNotEmpty
-                ? parsedResponse.thinkingSessions.join('\n')
-                : null;
+                    ? parsedResponse.thinkingSessions.join('\n')
+                    : null;
             final List<String> toolCalls = [];
             final String finalText = extractResponseFromJson(
               parsedResponse.finalOutput,
@@ -518,7 +518,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           _selectedAgent = _agents.isNotEmpty ? _agents.first : null;
           _messages.clear(); // Clear messages for the deleted agent
           if (_selectedAgent != null) {
-            _messagesFuture = 
+            _messagesFuture =
                 _loadMessages(); // Load messages for the new selected agent
             _initializeCactusModel(
               _selectedAgent!.modelName,
@@ -733,28 +733,25 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       ),
       endDrawer: _AgentSettingsDrawerContent(
         initialModelName: _selectedModelName,
-        onModelSelected: (modelName) {
+        initialCreativity: _creativity,
+        initialContextWindowSize: _contextWindowSize,
+        onApply: (modelName, creativity, contextWindowSize) {
+          bool needsReinitialization =
+              _selectedModelName != modelName || _contextWindowSize != contextWindowSize;
+
           setState(() {
             _selectedModelName = modelName;
+            _creativity = creativity;
+            _contextWindowSize = contextWindowSize;
             if (_selectedAgent != null) {
               _selectedAgent!.modelName = modelName;
               _dbHelper.updateAgent(_selectedAgent!.toMap());
-              _initializeCactusModel(modelName);
             }
           });
-        },
-        initialCreativity: _creativity,
-        onCreativityChanged: (value) {
-          setState(() {
-            _creativity = value;
-          });
-        },
-        initialContextWindowSize: _contextWindowSize,
-        onContextWindowSizeChanged: (value) {
-          setState(() {
-            _contextWindowSize = value;
-          });
-          _initializeCactusModel(_selectedModelName);
+
+          if (needsReinitialization) {
+            _initializeCactusModel(modelName);
+          }
         },
       ),
       body: SafeArea(
@@ -1046,7 +1043,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                   ).copyWith(dividerColor: Colors.transparent),
                   child: ExpansionTile(
                     title: Text(
-                      '🛠️ Tool Calls',
+                      '🛠️ Tool Calls', 
                       style: TextStyle(color: textColor),
                     ),
                     initiallyExpanded: false,
@@ -1124,19 +1121,15 @@ class _AgentSettingsDrawerContent extends StatefulWidget {
   const _AgentSettingsDrawerContent({
     super.key,
     required this.initialModelName,
-    required this.onModelSelected,
     required this.initialCreativity,
-    required this.onCreativityChanged,
     required this.initialContextWindowSize,
-    required this.onContextWindowSizeChanged,
+    required this.onApply,
   });
 
   final String initialModelName;
-  final ValueChanged<String> onModelSelected;
   final double initialCreativity;
-  final ValueChanged<double> onCreativityChanged;
   final int initialContextWindowSize;
-  final ValueChanged<int> onContextWindowSizeChanged;
+  final Function(String, double, int) onApply;
 
   @override
   State<_AgentSettingsDrawerContent> createState() =>
@@ -1145,39 +1138,34 @@ class _AgentSettingsDrawerContent extends StatefulWidget {
 
 class _AgentSettingsDrawerContentState
     extends State<_AgentSettingsDrawerContent> {
-  late String selectedValue; // Initial value
-  List<String> _availableModels = []; // New field for available models
-  final DatabaseHelper _dbHelper =
-      DatabaseHelper(); // Get instance of DatabaseHelper
+  late String _selectedModelName;
   late double _creativityValue;
   late double _contextWindowSliderValue;
   final List<int> _contextWindowSizes = [1024, 4096, 8192, 16384, 32768];
+  List<String> _availableModels = [];
+  final DatabaseHelper _dbHelper = DatabaseHelper();
 
   @override
   void initState() {
     super.initState();
-    selectedValue = widget.initialModelName;
+    _selectedModelName = widget.initialModelName;
     _creativityValue = widget.initialCreativity;
     _contextWindowSliderValue = _contextWindowSizes
         .indexOf(widget.initialContextWindowSize)
         .toDouble();
-    _loadAvailableModels(); // Load models when state initializes
+    _loadAvailableModels();
   }
 
   Future<void> _loadAvailableModels() async {
     final models = await _dbHelper.getDistinctModelNames();
     setState(() {
       _availableModels = models;
-      // Ensure selectedValue is one of the available models, or set a default
-      if (!_availableModels.contains(selectedValue) &&
+      if (!_availableModels.contains(_selectedModelName) &&
           _availableModels.isNotEmpty) {
-        selectedValue = _availableModels.first;
-        widget.onModelSelected(selectedValue); // Notify parent of change
+        _selectedModelName = _availableModels.first;
       } else if (_availableModels.isEmpty) {
-        // Handle case where no models are in DB, perhaps add a default
-        selectedValue = 'Qwen3 0.6B'; // Fallback to a default
-        _availableModels.add('Qwen3 0.6B'); // Add default to list
-        widget.onModelSelected(selectedValue);
+        _selectedModelName = 'Qwen3 0.6B';
+        _availableModels.add('Qwen3 0.6B');
       }
     });
   }
@@ -1199,104 +1187,117 @@ class _AgentSettingsDrawerContentState
             child: Text('Agent Settings', style: TextStyle(fontSize: 24)),
           ),
           const Divider(height: 1, thickness: 1, indent: 0, endIndent: 0),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: <Widget>[
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: DropdownButton<String>(
-                          value: selectedValue,
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              selectedValue = newValue!;
-                            });
-                            widget.onModelSelected(newValue!);
-                          },
-                          items:
-                              _availableModels.map<DropdownMenuItem<String>>((
-                            String value,
-                          ) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                          underline: const SizedBox(),
-                          isExpanded: true,
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: <Widget>[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 12.0),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          child: DropdownButton<String>(
+                            value: _selectedModelName,
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                _selectedModelName = newValue!;
+                              });
+                            },
+                            items: _availableModels
+                                .map<DropdownMenuItem<String>>(( 
+                              String value,
+                            ) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
+                            underline: const SizedBox(),
+                            isExpanded: true,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Creativity'),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Slider(
-                            value: _creativityValue,
-                            min: 0,
-                            max: 100,
-                            divisions: 100,
-                            label: _creativityValue.round().toString(),
-                            onChanged: (double value) {
-                              setState(() {
-                                _creativityValue = value;
-                              });
-                              widget.onCreativityChanged(value);
-                            },
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Creativity'),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Slider(
+                              value: _creativityValue,
+                              min: 0,
+                              max: 100,
+                              divisions: 100,
+                              label: _creativityValue.round().toString(),
+                              onChanged: (double value) {
+                                setState(() {
+                                  _creativityValue = value;
+                                });
+                              },
+                            ),
                           ),
-                        ),
-                        Text(_creativityValue.round().toString()),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Context Window'),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Slider(
-                            value: _contextWindowSliderValue,
-                            min: 0,
-                            max: (_contextWindowSizes.length - 1).toDouble(),
-                            divisions: _contextWindowSizes.length - 1,
-                            label:
-                                '${(_contextWindowSizes[_contextWindowSliderValue.round()] / 1024).round()}k',
-                            onChanged: (double value) {
-                              setState(() {
-                                _contextWindowSliderValue = value;
-                              });
-                              widget.onContextWindowSizeChanged(
-                                  _contextWindowSizes[value.round()]);
-                            },
+                          Text(_creativityValue.round().toString()),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Context Window'),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Slider(
+                              value: _contextWindowSliderValue,
+                              min: 0,
+                              max: (_contextWindowSizes.length - 1)
+                                  .toDouble(),
+                              divisions: _contextWindowSizes.length - 1,
+                              label:
+                                  '${(_contextWindowSizes[_contextWindowSliderValue.round()] / 1024).round()}k',
+                              onChanged: (double value) {
+                                setState(() {
+                                  _contextWindowSliderValue = value;
+                                });
+                              },
+                            ),
                           ),
-                        ),
-                        Text(
-                            '${(_contextWindowSizes[_contextWindowSliderValue.round()] / 1024).round()}k'),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
+                          Text(
+                              '${(_contextWindowSizes[_contextWindowSliderValue.round()] / 1024).round()}k'),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-          // Add any other content here if needed
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton(
+              onPressed: () {
+                widget.onApply(
+                  _selectedModelName,
+                  _creativityValue,
+                  _contextWindowSizes[_contextWindowSliderValue.round()],
+                );
+                Navigator.of(context).pop(); // Close the drawer
+              },
+              child: const Text('Apply'),
+            ),
+          ),
         ],
       ),
     );
