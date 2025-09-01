@@ -9,7 +9,6 @@ import 'package:siri_wave/siri_wave.dart'; // Ensure this package is added in pu
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:secret_agent/agent_helper.dart';
-import 'package:secret_agent/models.dart';
 
 final talker = TalkerFlutter.init();
 
