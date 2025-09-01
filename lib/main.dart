@@ -242,7 +242,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         _downloadStatus = 'Initializing...';
       });
       _agent = CactusAgent();
-      final modelUrl = modelUrls[modelName];
+      final modelUrl = defaultModelUrls[modelName];
       if (modelUrl == null) {
         talker.error('Model URL not found for $modelName');
         throw Exception('Model URL not found for $modelName');

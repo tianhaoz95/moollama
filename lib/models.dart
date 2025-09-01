@@ -1,5 +1,5 @@
 
-final Map<String, String> modelUrls = {
+final Map<String, String> defaultModelUrls = {
   'Qwen3 0.6B':
       'https://huggingface.co/Cactus-Compute/Qwen3-600m-Instruct-GGUF/resolve/main/Qwen3-0.6B-Q8_0.gguf',
   'Phi-3-mini-4k-instruct':
