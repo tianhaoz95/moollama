@@ -14,4 +14,10 @@ void addAgentTools(CactusAgent agent) {
     fetchWebpageTool.description,
     fetchWebpageTool.parameters,
   );
+  agent.addTool(
+    sendEmailAgentTool.name,
+    sendEmailAgentTool.executor,
+    sendEmailAgentTool.description,
+    sendEmailAgentTool.parameters,
+  );
 }
