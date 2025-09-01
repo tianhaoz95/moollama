@@ -30,16 +30,16 @@ jobs:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN || github.token }}"
         run: |
           echo '🔍 Finding open issues that need implementation...'
-          ALL_OPEN_ISSUES=$(gh issue list 
-            --state 'open' 
-            --json number,title,body,labels 
-            --limit '100' 
-            --repo "${GITHUB_REPOSITORY}"
+          ALL_OPEN_ISSUES=$(gh issue list \
+            --state 'open' \
+            --json number,title,body,labels \
+            --limit '100' \
+            --repo "${GITHUB_REPOSITORY}" \
           )
 
           # Filter issues: keep only those that do NOT have 'status/implemented' or 'status/pr-created' labels
-          ISSUES=$(echo "${ALL_OPEN_ISSUES}" | jq 
-            '[.[] | select(.labels | map(.name) | (index("status/implemented") | not) and (index("status/pr-created") | not))]'
+          ISSUES=$(echo "${ALL_OPEN_ISSUES}" | jq \
+            '[.[] | select(.labels | map(.name) | (index("status/implemented") | not) and (index("status/pr-created") | not))]' \
           )
 
           echo '📝 Setting output for GitHub Actions...'
