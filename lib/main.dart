@@ -738,6 +738,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             if (_selectedAgent != null) {
               _selectedAgent!.modelName = modelName;
               _dbHelper.updateAgent(_selectedAgent!.toMap());
+              _initializeCactusModel(modelName);
             }
           });
         },
