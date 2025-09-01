@@ -19,11 +19,11 @@ jobs:
     outputs:
       issues_to_implement: "${{ steps.find_issues.outputs.issues_to_implement }}"
     steps:
-      - name: 'Checkout repository'
-        uses: 'actions/checkout@v4'
+      - name: "Checkout repository"
+        uses: "actions/checkout@v4"
         with:
-          token: '${{ secrets.GITHUB_TOKEN }}'
-      - name: 'Find issues needing implementation'
+          token: "${{ secrets.GITHUB_TOKEN || github.token }}"
+      - name: "Find issues needing implementation"
         id: "find_issues"
         env:
           GITHUB_REPOSITORY: "${{ github.repository }}"
