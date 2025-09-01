@@ -126,6 +126,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   bool _isLoading = true;
   CactusAgent? _agent;
   double? _downloadProgress;
+  double? _initializationProgress;
   String _downloadStatus = 'Initializing...';
   final ScrollController _scrollController = ScrollController();
   bool _isListening = false;
@@ -240,7 +241,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       setState(() {
         _isLoading = true;
         _downloadProgress = null;
-        _downloadStatus = 'Initializing...';
+        _initializationProgress = null; // Reset initialization progress
+        _downloadStatus = 'Downloading model...';
       });
       _agent = CactusAgent();
       final models = await _dbHelper.getModels();
@@ -265,10 +267,30 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           });
         },
       );
-      await _agent!.init(contextSize: _contextWindowSize);
+      // After download, start initialization
+      setState(() {
+        _downloadProgress = null; // Clear download progress
+        _initializationProgress = 0.0; // Start initialization progress
+        _downloadStatus = 'Initializing model...';
+      });
+      await _agent!.init(
+        contextSize: _contextWindowSize,
+        onProgress: (progress, statusMessage, isError) {
+          setState(() {
+            _initializationProgress = progress; // Update initialization progress
+            _downloadStatus = statusMessage;
+            if (isError) {
+              _downloadStatus = 'Error: $statusMessage';
+            }
+          });
+        },
+      );
       addAgentTools(_agent!);
       setState(() {
         _isLoading = false;
+        _downloadProgress = null; // Ensure download progress is null
+        _initializationProgress = 1.0; // Set to 1.0 after successful init
+        _downloadStatus = 'Model initialized';
       });
     } catch (e) {
       if (!mounted) return;
@@ -291,6 +313,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       );
       setState(() {
         _isLoading = false;
+        _downloadProgress = null;
+        _initializationProgress = null; // Reset initialization progress on error
+        _downloadStatus = 'Initialization failed';
       });
     }
   }
@@ -844,7 +869,16 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                           children: [
                             const CircularProgressIndicator(),
                             const SizedBox(height: 16),
-                            if (_downloadProgress != null)
+                            if (_initializationProgress != null) // Check for initialization progress
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 32.0,
+                                ),
+                                child: LinearProgressIndicator(
+                                  value: _initializationProgress, // Use initialization progress
+                                ),
+                              )
+                            else if (_downloadProgress != null) // Fallback to download progress
                               Padding(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 32.0,
