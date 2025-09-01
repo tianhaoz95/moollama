@@ -98,3 +98,18 @@ final sendEmailAgentTool = AgentTool(
     ),
   },
 );
+
+class FetchCurrentTimeTool extends ToolExecutor {
+  @override
+  Future<dynamic> execute(Map<String, dynamic> args) async {
+    final now = DateTime.now();
+    return "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
+  }
+}
+
+final fetchCurrentTimeTool = AgentTool(
+  name: 'fetch_current_time',
+  executor: FetchCurrentTimeTool(),
+  description: 'Returns the current date and time in ISO 8601 format.',
+  parameters: {},
+);

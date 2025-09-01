@@ -14,4 +14,10 @@ void addAgentTools(CactusAgent agent) {
     sendEmailAgentTool.description,
     sendEmailAgentTool.parameters,
   );
+  agent.addTool(
+    fetchCurrentTimeTool.name,
+    fetchCurrentTimeTool.executor,
+    fetchCurrentTimeTool.description,
+    fetchCurrentTimeTool.parameters,
+  );
 }
