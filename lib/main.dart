@@ -341,8 +341,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                 splitContentByThinkTags(map['text']);
             final String? thinkingText =
                 parsedResponse.thinkingSessions.isNotEmpty
-                    ? parsedResponse.thinkingSessions.join('\n')
-                    : null;
+                ? parsedResponse.thinkingSessions.join('\n')
+                : null;
             final List<String> toolCalls = [];
             final String finalText = extractResponseFromJson(
               parsedResponse.finalOutput,
@@ -737,7 +737,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         initialContextWindowSize: _contextWindowSize,
         onApply: (modelName, creativity, contextWindowSize) {
           bool needsReinitialization =
-              _selectedModelName != modelName || _contextWindowSize != contextWindowSize;
+              _selectedModelName != modelName ||
+              _contextWindowSize != contextWindowSize;
 
           setState(() {
             _selectedModelName = modelName;
@@ -1021,7 +1022,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                   ).copyWith(dividerColor: Colors.transparent),
                   child: ExpansionTile(
                     title: Text(
-                      '🤔 Thinking...', 
+                      '🤔 Thinking...',
                       style: TextStyle(color: textColor),
                     ),
                     initiallyExpanded: false,
@@ -1043,7 +1044,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                   ).copyWith(dividerColor: Colors.transparent),
                   child: ExpansionTile(
                     title: Text(
-                      '🛠️ Tool Calls', 
+                      '🛠️ Tool Calls',
                       style: TextStyle(color: textColor),
                     ),
                     initiallyExpanded: false,
@@ -1196,8 +1197,7 @@ class _AgentSettingsDrawerContentState
                     children: [
                       Expanded(
                         child: Container(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 12.0),
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.grey),
                             borderRadius: BorderRadius.circular(8.0),
@@ -1210,14 +1210,13 @@ class _AgentSettingsDrawerContentState
                               });
                             },
                             items: _availableModels
-                                .map<DropdownMenuItem<String>>(( 
-                              String value,
-                            ) {
-                              return DropdownMenuItem<String>(
-                                value: value,
-                                child: Text(value),
-                              );
-                            }).toList(),
+                                .map<DropdownMenuItem<String>>((String value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(value),
+                                  );
+                                })
+                                .toList(),
                             underline: const SizedBox(),
                             isExpanded: true,
                           ),
@@ -1262,8 +1261,7 @@ class _AgentSettingsDrawerContentState
                             child: Slider(
                               value: _contextWindowSliderValue,
                               min: 0,
-                              max: (_contextWindowSizes.length - 1)
-                                  .toDouble(),
+                              max: (_contextWindowSizes.length - 1).toDouble(),
                               divisions: _contextWindowSizes.length - 1,
                               label:
                                   '${(_contextWindowSizes[_contextWindowSliderValue.round()] / 1024).round()}k',
@@ -1275,7 +1273,8 @@ class _AgentSettingsDrawerContentState
                             ),
                           ),
                           Text(
-                              '${(_contextWindowSizes[_contextWindowSliderValue.round()] / 1024).round()}k'),
+                            '${(_contextWindowSizes[_contextWindowSliderValue.round()] / 1024).round()}k',
+                          ),
                         ],
                       ),
                     ],
@@ -1286,16 +1285,19 @@ class _AgentSettingsDrawerContentState
           ),
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton(
-              onPressed: () {
-                widget.onApply(
-                  _selectedModelName,
-                  _creativityValue,
-                  _contextWindowSizes[_contextWindowSliderValue.round()],
-                );
-                Navigator.of(context).pop(); // Close the drawer
-              },
-              child: const Text('Apply'),
+            child: SizedBox(
+              width: double.infinity, // Make the button fill the width
+              child: ElevatedButton(
+                onPressed: () {
+                  widget.onApply(
+                    _selectedModelName,
+                    _creativityValue,
+                    _contextWindowSizes[_contextWindowSliderValue.round()],
+                  );
+                  Navigator.of(context).pop(); // Close the drawer
+                },
+                child: const Text('Apply'),
+              ),
             ),
           ),
         ],
