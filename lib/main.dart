@@ -944,7 +944,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                         ),
                         const SizedBox(width: 8),
                         _BottomBarButton(
-                          icon: Icons.send,
+                          icon: Icons.rocket_launch,
                           onPressed: _sendMessage,
                         ),
                       ],
@@ -1037,7 +1037,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                       Align(
                         alignment: Alignment.topLeft,
                         child: Wrap(
-                          alignment: WrapAlignment.start, // Align chips to the left
+                          alignment:
+                              WrapAlignment.start, // Align chips to the left
                           spacing: 8.0, // gap between adjacent chips
                           runSpacing: 4.0, // gap between lines
                           children: message.toolCalls!
