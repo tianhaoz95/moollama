@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'models.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -50,6 +51,20 @@ class DatabaseHelper {
         model_name TEXT
       )
     ''');
+    await db.execute('''
+      CREATE TABLE models(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        url TEXT
+      )
+    ''');
+    await _populateDefaultModels(db);
+  }
+
+  Future<void> _populateDefaultModels(Database db) async {
+    for (var entry in defaultModelUrls.entries) {
+      await db.insert('models', {'name': entry.key, 'url': entry.value});
+    }
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -84,6 +99,7 @@ class DatabaseHelper {
     final db = await database;
     await db.delete('messages');
     await db.delete('agents');
+    await db.delete('models');
   }
 
   // Agent related methods
@@ -121,13 +137,42 @@ class DatabaseHelper {
     await db.delete('agents');
   }
 
+  Future<List<Map<String, dynamic>>> getModels() async {
+    final db = await database;
+    return await db.query('models');
+  }
+
+  Future<int> insertModel(Map<String, dynamic> model) async {
+    final db = await database;
+    return await db.insert(
+      'models',
+      model,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<int> updateModel(Map<String, dynamic> model) async {
+    final db = await database;
+    return await db.update(
+      'models',
+      model,
+      where: 'id = ?',
+      whereArgs: [model['id']],
+    );
+  }
+
+  Future<int> deleteModel(int id) async {
+    final db = await database;
+    return await db.delete('models', where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<List<String>> getDistinctModelNames() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
-      'agents',
+      'models',
       distinct: true,
-      columns: ['model_name'],
+      columns: ['name'],
     );
-    return maps.map((map) => map['model_name'] as String).toList();
+    return maps.map((map) => map['name'] as String).toList();
   }
 }
