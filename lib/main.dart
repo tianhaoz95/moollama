@@ -1287,7 +1287,7 @@ class _AgentSettingsDrawerContentState
             padding: const EdgeInsets.all(16.0),
             child: SizedBox(
               width: double.infinity, // Make the button fill the width
-              child: ElevatedButton(
+              child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
@@ -1300,7 +1300,8 @@ class _AgentSettingsDrawerContentState
                   );
                   Navigator.of(context).pop(); // Close the drawer
                 },
-                child: const Text('Apply'),
+                icon: const Icon(Icons.check), // Add the icon here
+                label: const Text('Apply'),
               ),
             ),
           ),
