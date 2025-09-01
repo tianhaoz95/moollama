@@ -937,6 +937,16 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         _BottomBarButton(
+                          icon: Icons.camera_alt,
+                          onPressed: null, // Disabled
+                        ),
+                        const SizedBox(width: 8),
+                        _BottomBarButton(
+                          icon: Icons.attach_file,
+                          onPressed: null, // Disabled
+                        ),
+                        const SizedBox(width: 8),
+                        _BottomBarButton(
                           icon: Icons.refresh,
                           onPressed: _resetChat,
                         ),
