@@ -747,6 +747,18 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     onPressed: _debugAction,
                   ),
                   IconButton(
+                    icon: const Icon(Icons.flag), // New flag icon
+                    onPressed: () {
+                      DebugFeatures.show(
+                        context,
+                        availableFeatures: [
+                          Feature('DECREMENT', name: 'Decrement'),
+                          Feature('RESET', name: 'Reset'),
+                        ],
+                      );
+                    },
+                  ),
+                  IconButton(
                     icon: const Icon(Icons.settings),
                     onPressed: () {
                       Navigator.of(context).push(
