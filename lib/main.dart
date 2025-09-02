@@ -476,7 +476,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       // Dispose and re-initialize the agent
       _agent?.unload();
       if (_selectedAgent != null) {
-        _initializeCactusModel(_selectedAgent!.modelName);
+        _initializeCactusModel(
+          _selectedAgent!.modelName,
+        );
       }
     }
   }
@@ -734,7 +736,6 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                 ],
               ),
             ),
-<<<<<<< HEAD
             Padding(
               padding: const EdgeInsets.only(bottom: 32.0),
               child: Row(
@@ -760,9 +761,6 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                 ],
               ),
             ),
-=======
-            
->>>>>>> e71688b (feat: Move log and feature flag buttons to settings page)
           ],
         ),
       ),
@@ -1077,7 +1075,11 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                   ).copyWith(dividerColor: Colors.transparent),
                   child: ExpansionTile(
                     title: Text(
+<<<<<<< HEAD
                       '🤔 Thinking...', // Corrected: Removed extra backslash before 🤔
+=======
+                      '🤔 Thinking...', 
+>>>>>>> d72a77e (feat: Add 'Add New Agent' button to drawer and fix syntax errors)
                       style: TextStyle(color: textColor),
                     ),
                     initiallyExpanded: false,
@@ -1099,7 +1101,11 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                   ).copyWith(dividerColor: Colors.transparent),
                   child: ExpansionTile(
                     title: Text(
+<<<<<<< HEAD
                       '🛠️ Tool Calls', // Corrected: Removed extra backslash before 🛠️
+=======
+                      '🛠️ Tool Calls', 
+>>>>>>> d72a77e (feat: Add 'Add New Agent' button to drawer and fix syntax errors)
                       style: TextStyle(color: textColor),
                     ),
                     initiallyExpanded: false,
