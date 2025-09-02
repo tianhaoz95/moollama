@@ -3,10 +3,24 @@ import 'package:secret_agent/database_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:restart_app/restart_app.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   final int? agentId;
 
   const SettingsPage({super.key, this.agentId});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  double _contextWindowSize = 2048; // Default value
+  TextEditingController _systemPromptController = TextEditingController();
+
+  @override
+  void dispose() {
+    _systemPromptController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,6 +30,39 @@ class SettingsPage extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            // Context Window Size Slider
+            Row(
+              children: [
+                const Text('Context Window Size:'),
+                Expanded(
+                  child: Slider(
+                    value: _contextWindowSize,
+                    min: 512,
+                    max: 4096,
+                    divisions: 7, // (4096 - 512) / 512 = 7
+                    label: _contextWindowSize.round().toString(),
+                    onChanged: (double value) {
+                      setState(() {
+                        _contextWindowSize = value;
+                      });
+                    },
+                  ),
+                ),
+                Text(_contextWindowSize.round().toString()),
+              ],
+            ),
+            const SizedBox(height: 16),
+            // System Prompt Text Field
+            TextField(
+              controller: _systemPromptController,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'System Prompt',
+                hintText: 'Enter system prompt here',
+              ),
+              maxLines: 5,
+            ),
+            const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
