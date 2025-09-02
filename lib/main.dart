@@ -9,6 +9,7 @@ import 'package:siri_wave/siri_wave.dart'; // Ensure this package is added in pu
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:secret_agent/agent_helper.dart';
+import 'package:feature_flags/feature_flags.dart';
 
 final talker = TalkerFlutter.init();
 
@@ -17,6 +18,12 @@ final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await DatabaseHelper().init();
+
+  // Initialize feature flags
+  FeatureFlags.init(
+    features: {}, // Empty feature list as per the issue
+  );
+
   final prefs = await SharedPreferences.getInstance();
   final themeModeString = prefs.getString('themeMode');
   if (themeModeString == 'light') {
@@ -1179,6 +1186,7 @@ class _AgentSettingsDrawerContentState
   final List<int> _contextWindowSizes = [1024, 4096, 8192, 16384, 32768];
   List<String> _availableModels = [];
   final DatabaseHelper _dbHelper = DatabaseHelper();
+  late final TextEditingController _systemPromptController;
 
   @override
   void initState() {
@@ -1188,7 +1196,14 @@ class _AgentSettingsDrawerContentState
     _contextWindowSliderValue = _contextWindowSizes
         .indexOf(widget.initialContextWindowSize)
         .toDouble();
+    _systemPromptController = TextEditingController(); // Initialize the controller
     _loadAvailableModels();
+  }
+
+  @override
+  void dispose() {
+    _systemPromptController.dispose(); // Dispose the controller
+    super.dispose();
   }
 
   Future<void> _loadAvailableModels() async {
@@ -1310,6 +1325,21 @@ class _AgentSettingsDrawerContentState
                             '${(_contextWindowSizes[_contextWindowSliderValue.round()] / 1024).round()}k',
                           ),
                         ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24), // Add spacing
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('System Prompt'),
+                      TextField(
+                        controller: _systemPromptController,
+                        decoration: const InputDecoration(
+                          hintText: 'Enter system prompt',
+                          border: OutlineInputBorder(),
+                        ),
+                        maxLines: 3,
                       ),
                     ],
                   ),
