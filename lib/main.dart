@@ -9,6 +9,7 @@ import 'package:siri_wave/siri_wave.dart'; // Ensure this package is added in pu
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:secret_agent/agent_helper.dart';
+import 'package:feature_flags/feature_flags.dart';
 
 final talker = TalkerFlutter.init();
 
@@ -17,6 +18,7 @@ final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await DatabaseHelper().init();
+  FeatureFlags.initialize(features: {});
   final prefs = await SharedPreferences.getInstance();
   final themeModeString = prefs.getString('themeMode');
   if (themeModeString == 'light') {
