@@ -1185,6 +1185,12 @@ class _AgentSettingsDrawerContentState
   late double _contextWindowSliderValue;
   final List<int> _contextWindowSizes = [1024, 4096, 8192, 16384, 32768];
   List<String> _availableModels = [];
+  final List<String> _availableTools = [
+    'webpage-fetcher',
+    'alarm-setter',
+    'weather-fetcher',
+  ];
+  List<String> _selectedTools = [];
   final DatabaseHelper _dbHelper = DatabaseHelper();
   late final TextEditingController _systemPromptController;
 
@@ -1340,6 +1346,71 @@ class _AgentSettingsDrawerContentState
                           border: OutlineInputBorder(),
                         ),
                         maxLines: 3,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Tools'),
+                      ElevatedButton(
+                        onPressed: () async {
+                          final List<String>? selected = await showDialog<List<String>>(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text('Select Tools'),
+                                content: SingleChildScrollView(
+                                  child: ListBody(
+                                    children: _availableTools.map((tool) {
+                                      return CheckboxListTile(
+                                        value: _selectedTools.contains(tool),
+                                        title: Text(tool),
+                                        onChanged: (bool? isChecked) {
+                                          setState(() {
+                                            if (isChecked!) {
+                                              _selectedTools.add(tool);
+                                            } else {
+                                              _selectedTools.remove(tool);
+                                            }
+                                          });
+                                        },
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                                actions: <Widget>[
+                                  TextButton(
+                                    child: const Text('Done'),
+                                    onPressed: () {
+                                      Navigator.of(context).pop(_selectedTools);
+                                    },
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                          if (selected != null) {
+                            setState(() {
+                              _selectedTools = selected;
+                            });
+                          }
+                        },
+                        child: const Text('Select Tools'),
+                      ),
+                      Wrap(
+                        spacing: 8.0,
+                        children: _selectedTools.map((tool) {
+                          return Chip(
+                            label: Text(tool),
+                            onDeleted: () {
+                              setState(() {
+                                _selectedTools.remove(tool);
+                              });
+                            },
+                          );
+                        }).toList(),
                       ),
                     ],
                   ),
