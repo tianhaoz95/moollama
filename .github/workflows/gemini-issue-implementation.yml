@@ -75,7 +75,7 @@ jobs:
         id: "gemini_implementation"
         uses: "google-github-actions/run-gemini-cli@v0.1.12" # ratchet:exclude # ratchet:exclude
         env:
-          GITHUB_TOKEN: "" # Do not pass any auth token here since this runs on untrusted inputs
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN || github.token }}"
           ISSUE_NUMBER: "${{ matrix.issue.number }}"
           ISSUE_TITLE: "${{ matrix.issue.title }}"
           ISSUE_BODY: "${{ matrix.issue.body }}"
