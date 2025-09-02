@@ -9,6 +9,7 @@ import 'package:siri_wave/siri_wave.dart'; // Ensure this package is added in pu
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:secret_agent/agent_helper.dart';
+import 'package:feature_flags/feature_flags.dart';
 
 final talker = TalkerFlutter.init();
 
@@ -17,6 +18,7 @@ final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await DatabaseHelper().init();
+
   final prefs = await SharedPreferences.getInstance();
   final themeModeString = prefs.getString('themeMode');
   if (themeModeString == 'light') {
@@ -45,14 +47,17 @@ class MyApp extends StatelessWidget {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
       builder: (context, currentMode, child) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: ThemeData.light(),
-          darkTheme: ThemeData.dark().copyWith(
-            scaffoldBackgroundColor: const Color(0xFF232629),
+        return Features(
+          flags: const [], // No features enabled by default
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData.light(),
+            darkTheme: ThemeData.dark().copyWith(
+              scaffoldBackgroundColor: const Color(0xFF232629),
+            ),
+            themeMode: currentMode,
+            home: const SecretAgentHome(),
           ),
-          themeMode: currentMode,
-          home: const SecretAgentHome(),
         );
       },
     );
@@ -277,7 +282,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         contextSize: _contextWindowSize,
         onProgress: (progress, statusMessage, isError) {
           setState(() {
-            _initializationProgress = progress; // Update initialization progress
+            _initializationProgress =
+                progress; // Update initialization progress
             _downloadStatus = statusMessage;
             if (isError) {
               _downloadStatus = 'Error: $statusMessage';
@@ -314,7 +320,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       setState(() {
         _isLoading = false;
         _downloadProgress = null;
-        _initializationProgress = null; // Reset initialization progress on error
+        _initializationProgress =
+            null; // Reset initialization progress on error
         _downloadStatus = 'Initialization failed';
       });
     }
@@ -869,16 +876,19 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                           children: [
                             const CircularProgressIndicator(),
                             const SizedBox(height: 16),
-                            if (_initializationProgress != null) // Check for initialization progress
+                            if (_initializationProgress !=
+                                null) // Check for initialization progress
                               Padding(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 32.0,
                                 ),
                                 child: LinearProgressIndicator(
-                                  value: _initializationProgress, // Use initialization progress
+                                  value:
+                                      _initializationProgress, // Use initialization progress
                                 ),
                               )
-                            else if (_downloadProgress != null) // Fallback to download progress
+                            else if (_downloadProgress !=
+                                null) // Fallback to download progress
                               Padding(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 32.0,
@@ -1179,7 +1189,14 @@ class _AgentSettingsDrawerContentState
   late double _contextWindowSliderValue;
   final List<int> _contextWindowSizes = [1024, 4096, 8192, 16384, 32768];
   List<String> _availableModels = [];
+  final List<String> _availableTools = [
+    'webpage-fetcher',
+    'alarm-setter',
+    'weather-fetcher',
+  ];
+  List<String> _selectedTools = [];
   final DatabaseHelper _dbHelper = DatabaseHelper();
+  late final TextEditingController _systemPromptController;
 
   @override
   void initState() {
@@ -1189,7 +1206,15 @@ class _AgentSettingsDrawerContentState
     _contextWindowSliderValue = _contextWindowSizes
         .indexOf(widget.initialContextWindowSize)
         .toDouble();
+    _systemPromptController =
+        TextEditingController(); // Initialize the controller
     _loadAvailableModels();
+  }
+
+  @override
+  void dispose() {
+    _systemPromptController.dispose(); // Dispose the controller
+    super.dispose();
   }
 
   Future<void> _loadAvailableModels() async {
@@ -1311,6 +1336,87 @@ class _AgentSettingsDrawerContentState
                             '${(_contextWindowSizes[_contextWindowSliderValue.round()] / 1024).round()}k',
                           ),
                         ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24), // Add spacing
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('System Prompt'),
+                      TextField(
+                        controller: _systemPromptController,
+                        decoration: const InputDecoration(
+                          hintText: 'Enter system prompt',
+                          border: OutlineInputBorder(),
+                        ),
+                        maxLines: 3,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Tools'),
+                      ElevatedButton(
+                        onPressed: () async {
+                          final List<String>?
+                          selected = await showDialog<List<String>>(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text('Select Tools'),
+                                content: SingleChildScrollView(
+                                  child: ListBody(
+                                    children: _availableTools.map((tool) {
+                                      return CheckboxListTile(
+                                        value: _selectedTools.contains(tool),
+                                        title: Text(tool),
+                                        onChanged: (bool? isChecked) {
+                                          setState(() {
+                                            if (isChecked!) {
+                                              _selectedTools.add(tool);
+                                            } else {
+                                              _selectedTools.remove(tool);
+                                            }
+                                          });
+                                        },
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                                actions: <Widget>[
+                                  TextButton(
+                                    child: const Text('Done'),
+                                    onPressed: () {
+                                      Navigator.of(context).pop(_selectedTools);
+                                    },
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                          if (selected != null) {
+                            setState(() {
+                              _selectedTools = selected;
+                            });
+                          }
+                        },
+                        child: const Text('Select Tools'),
+                      ),
+                      Wrap(
+                        spacing: 8.0,
+                        children: _selectedTools.map((tool) {
+                          return Chip(
+                            label: Text(tool),
+                            onDeleted: () {
+                              setState(() {
+                                _selectedTools.remove(tool);
+                              });
+                            },
+                          );
+                        }).toList(),
                       ),
                     ],
                   ),
