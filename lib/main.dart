@@ -19,11 +19,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await DatabaseHelper().init();
 
-  // Initialize feature flags
-  FeatureFlags.init(
-    features: {}, // Empty feature list as per the issue
-  );
-
   final prefs = await SharedPreferences.getInstance();
   final themeModeString = prefs.getString('themeMode');
   if (themeModeString == 'light') {
@@ -52,14 +47,17 @@ class MyApp extends StatelessWidget {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
       builder: (context, currentMode, child) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: ThemeData.light(),
-          darkTheme: ThemeData.dark().copyWith(
-            scaffoldBackgroundColor: const Color(0xFF232629),
+        return Features(
+          flags: const [], // No features enabled by default
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData.light(),
+            darkTheme: ThemeData.dark().copyWith(
+              scaffoldBackgroundColor: const Color(0xFF232629),
+            ),
+            themeMode: currentMode,
+            home: const SecretAgentHome(),
           ),
-          themeMode: currentMode,
-          home: const SecretAgentHome(),
         );
       },
     );
@@ -284,7 +282,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         contextSize: _contextWindowSize,
         onProgress: (progress, statusMessage, isError) {
           setState(() {
-            _initializationProgress = progress; // Update initialization progress
+            _initializationProgress =
+                progress; // Update initialization progress
             _downloadStatus = statusMessage;
             if (isError) {
               _downloadStatus = 'Error: $statusMessage';
@@ -321,7 +320,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       setState(() {
         _isLoading = false;
         _downloadProgress = null;
-        _initializationProgress = null; // Reset initialization progress on error
+        _initializationProgress =
+            null; // Reset initialization progress on error
         _downloadStatus = 'Initialization failed';
       });
     }
@@ -876,16 +876,19 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                           children: [
                             const CircularProgressIndicator(),
                             const SizedBox(height: 16),
-                            if (_initializationProgress != null) // Check for initialization progress
+                            if (_initializationProgress !=
+                                null) // Check for initialization progress
                               Padding(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 32.0,
                                 ),
                                 child: LinearProgressIndicator(
-                                  value: _initializationProgress, // Use initialization progress
+                                  value:
+                                      _initializationProgress, // Use initialization progress
                                 ),
                               )
-                            else if (_downloadProgress != null) // Fallback to download progress
+                            else if (_downloadProgress !=
+                                null) // Fallback to download progress
                               Padding(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 32.0,
@@ -1202,7 +1205,8 @@ class _AgentSettingsDrawerContentState
     _contextWindowSliderValue = _contextWindowSizes
         .indexOf(widget.initialContextWindowSize)
         .toDouble();
-    _systemPromptController = TextEditingController(); // Initialize the controller
+    _systemPromptController =
+        TextEditingController(); // Initialize the controller
     _loadAvailableModels();
   }
 
@@ -1356,7 +1360,8 @@ class _AgentSettingsDrawerContentState
                       const Text('Tools'),
                       ElevatedButton(
                         onPressed: () async {
-                          final List<String>? selected = await showDialog<List<String>>(
+                          final List<String>?
+                          selected = await showDialog<List<String>>(
                             context: context,
                             builder: (BuildContext context) {
                               return AlertDialog(
