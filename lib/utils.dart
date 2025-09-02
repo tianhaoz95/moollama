@@ -21,23 +21,31 @@ ThinkingModelResponse splitContentByThinkTags(String? content) {
   final RegExp thinkRegex = RegExp(r'<think>(.*?)</think>', dotAll: true);
   final RegExp imEndRegex = RegExp(r'<\|im_end\|>');
 
-  int lastIndex = 0;
+  int lastMatchEnd = 0; // Keep track of the end of the last matched <think> tag
 
   for (final match in thinkRegex.allMatches(content)) {
+    // Add content between the previous match and the current <think> tag to finalOutput
+    if (match.start > lastMatchEnd) {
+      finalOutput += content.substring(lastMatchEnd, match.start);
+    }
+
     // Add content inside <think>...</think> as a thinking session
     thinkingSessions.add(match.group(1)!.trim());
-    lastIndex = match.end;
+    lastMatchEnd = match.end;
   }
 
-  // Get the remaining content after the last </think> tag
-  if (content.length > lastIndex) {
-    String remainingContent = content.substring(lastIndex).trim();
-    // Remove <|im_end|> if it exists at the end of the remaining content
-    if (imEndRegex.hasMatch(remainingContent)) {
-      remainingContent = remainingContent.replaceAll(imEndRegex, '').trim();
-    }
-    finalOutput = remainingContent;
+  // Add any remaining content after the last </think> tag to finalOutput
+  if (content.length > lastMatchEnd) {
+    finalOutput += content.substring(lastMatchEnd);
   }
+
+  // Remove <|im_end|> if it exists at the end of the finalOutput
+  if (imEndRegex.hasMatch(finalOutput)) {
+    finalOutput = finalOutput.replaceAll(imEndRegex, '').trim();
+  } else {
+    finalOutput = finalOutput.trim(); // Trim even if no im_end tag
+  }
+
 
   return ThinkingModelResponse(
     thinkingSessions: thinkingSessions,
@@ -87,11 +95,10 @@ String extractResponseFromJson(String text) {
         }
       }
     }
-  } catch (e) {
+  }
+  catch (e) {
     // Not a valid JSON or doesn't contain the expected structure
     // Do nothing, return original text
   }
   return text;
 }
-
-
