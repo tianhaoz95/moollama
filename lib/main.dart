@@ -734,6 +734,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                 ],
               ),
             ),
+<<<<<<< HEAD
             Padding(
               padding: const EdgeInsets.only(bottom: 32.0),
               child: Row(
@@ -759,6 +760,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                 ],
               ),
             ),
+=======
+            
+>>>>>>> e71688b (feat: Move log and feature flag buttons to settings page)
           ],
         ),
       ),
