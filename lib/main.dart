@@ -1117,7 +1117,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
 }
 
 class _BottomBarButton extends StatelessWidget {
-  const _BottomBarButton({required this.icon, this.onPressed});
+  const _BottomBarButton({super.key, required this.icon, this.onPressed});
 
   final IconData icon;
   final VoidCallback? onPressed;
@@ -1130,6 +1130,7 @@ class _BottomBarButton extends StatelessWidget {
 
 class _AgentItem extends StatelessWidget {
   const _AgentItem({
+    super.key,
     required this.agent,
     this.onRename,
     this.onTap,
