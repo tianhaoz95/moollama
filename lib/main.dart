@@ -881,75 +881,78 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     _sendMessage();
                   }
                 },
-                child: _isLoading
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const CircularProgressIndicator(),
-                            const SizedBox(height: 16),
-                            if (_initializationProgress !=
-                                null) // Check for initialization progress
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 32.0,
+                child: Container( // Wrap with Container to fill available space
+                  color: Colors.transparent, // Make it transparent so content below is visible
+                  child: _isLoading
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const CircularProgressIndicator(),
+                              const SizedBox(height: 16),
+                              if (_initializationProgress !=
+                                  null) // Check for initialization progress
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 32.0,
+                                  ),
+                                  child: LinearProgressIndicator(
+                                    value:
+                                        _initializationProgress, // Use initialization progress
+                                  ),
+                                )
+                              else if (_downloadProgress !=
+                                  null) // Fallback to download progress
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 32.0,
+                                  ),
+                                  child: LinearProgressIndicator(
+                                    value: _downloadProgress,
+                                  ),
                                 ),
-                                child: LinearProgressIndicator(
-                                  value:
-                                      _initializationProgress, // Use initialization progress
+                              const SizedBox(height: 8),
+                              Text(_downloadStatus),
+                            ],
+                          ),
+                        )
+                      : FutureBuilder<List<Message>>(
+                          future: _messagesFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            } else if (snapshot.hasError) {
+                              return Center(
+                                child: Text('Error: ${snapshot.error}'),
+                              );
+                            } else if (_messages.isEmpty) {
+                              return Center(
+                                child: Text(
+                                  'Hello!',
+                                  style: TextStyle(
+                                    color: Colors.blue[400],
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
-                              )
-                            else if (_downloadProgress !=
-                                null) // Fallback to download progress
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 32.0,
-                                ),
-                                child: LinearProgressIndicator(
-                                  value: _downloadProgress,
-                                ),
-                              ),
-                            const SizedBox(height: 8),
-                            Text(_downloadStatus),
-                          ],
+                              );
+                            } else {
+                              return ListView.builder(
+                                controller: _scrollController,
+                                padding: const EdgeInsets.all(8.0),
+                                itemCount: _messages.length,
+                                itemBuilder: (context, index) {
+                                  return _buildMessageBubble(_messages[index]);
+                                },
+                              );
+                            }
+                          },
                         ),
-                      )
-                    : FutureBuilder<List<Message>>(
-                        future: _messagesFuture,
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          } else if (snapshot.hasError) {
-                            return Center(
-                              child: Text('Error: ${snapshot.error}'),
-                            );
-                          } else if (_messages.isEmpty) {
-                            return Center(
-                              child: Text(
-                                'Hello!',
-                                style: TextStyle(
-                                  color: Colors.blue[400],
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            );
-                          } else {
-                            return ListView.builder(
-                              controller: _scrollController,
-                              padding: const EdgeInsets.all(8.0),
-                              itemCount: _messages.length,
-                              itemBuilder: (context, index) {
-                                return _buildMessageBubble(_messages[index]);
-                              },
-                            );
-                          }
-                        },
-                      ),
+                ),
               ),
             ),
             // Bottom bar
