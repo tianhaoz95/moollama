@@ -49,6 +49,7 @@ dependencies:
   talker_flutter: ^5.0.0
   flutter_email_sender: ^7.0.0
   feature_flags: ^0.1.4
+  multi_select_flutter: ^4.1.3 # Added this line
 
 dev_dependencies:
   flutter_test:
