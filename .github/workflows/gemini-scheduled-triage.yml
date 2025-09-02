@@ -85,7 +85,7 @@ jobs:
         id: "gemini_issue_analysis"
         if: |-
           ${{ steps.find_issues.outputs.issues_to_triage != '[]' }}
-        uses: "google-github-actions/run-gemini-cli@v0" # ratchet:exclude
+        uses: "google-github-actions/run-gemini-cli@v0.1.12" # ratchet:exclude
         env:
           GITHUB_TOKEN: "" # Do not pass any auth token here since this runs on untrusted inputs
           ISSUES_TO_TRIAGE: "${{ steps.find_issues.outputs.issues_to_triage }}"
@@ -100,6 +100,7 @@ jobs:
           gemini_api_key: "${{ secrets.GEMINI_API_KEY }}"
           use_vertex_ai: "${{ vars.GOOGLE_GENAI_USE_VERTEXAI }}"
           use_gemini_code_assist: "${{ vars.GOOGLE_GENAI_USE_GCA }}"
+          gemini_model: "gemini-2.5-flash"
           settings: |-
             {
               "maxSessionTurns": 25,

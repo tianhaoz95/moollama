@@ -39,7 +39,7 @@ jobs:
 
       - name: "Run Gemini CLI"
         id: "run_gemini"
-        uses: "google-github-actions/run-gemini-cli@v0" # ratchet:exclude
+        uses: "google-github-actions/run-gemini-cli@v0.1.12" # ratchet:exclude
         env:
           TITLE: "${{ github.event.pull_request.title || github.event.issue.title }}"
           DESCRIPTION: "${{ github.event.pull_request.body || github.event.issue.body }}"
@@ -57,6 +57,7 @@ jobs:
           gcp_service_account: "${{ vars.SERVICE_ACCOUNT_EMAIL }}"
           use_vertex_ai: "${{ vars.GOOGLE_GENAI_USE_VERTEXAI }}"
           use_gemini_code_assist: "${{ vars.GOOGLE_GENAI_USE_GCA }}"
+          gemini_model: "gemini-2.5-flash"
           settings: |-
             {
               "maxSessionTurns": 25,

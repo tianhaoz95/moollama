@@ -73,7 +73,7 @@ jobs:
 
       - name: "Run Gemini for implementation and PR creation"
         id: "gemini_implementation"
-        uses: "google-github-actions/run-gemini-cli@v0" # ratchet:exclude
+        uses: "google-github-actions/run-gemini-cli@v0.1.12" # ratchet:exclude # ratchet:exclude
         env:
           GITHUB_TOKEN: "" # Do not pass any auth token here since this runs on untrusted inputs
           ISSUE_NUMBER: "${{ matrix.issue.number }}"
@@ -89,6 +89,7 @@ jobs:
           gemini_api_key: "${{ secrets.GEMINI_API_KEY }}"
           use_vertex_ai: "${{ vars.GOOGLE_GENAI_USE_VERTEXAI }}"
           use_gemini_code_assist: "${{ vars.GOOGLE_GENAI_USE_GCA }}"
+          gemini_model: "gemini-2.5-flash"
           settings: |
             {
               "maxSessionTurns": 50,
@@ -174,9 +175,10 @@ jobs:
 
             ### Step 6: Output Result
 
-            Output a JSON object with the branch name and the PR URL.
+            Your final response should be a JSON object containing the branch name and the pull request URL.
             Example: `{"branch_name": "feature/issue-123", "pr_url": "https://github.com/owner/repo/pull/456"}`
-            You can use `echo "output_json_string" >> "${GITHUB_OUTPUT}"` to set an output.
+
+            You need to use `echo "output_json_string" >> "${GITHUB_OUTPUT}"` to set the output.
 
       - name: "Add label to issue"
         if: success() # Only add label if PR creation was successful
