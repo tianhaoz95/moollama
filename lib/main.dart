@@ -1343,12 +1343,13 @@ class _AgentSettingsDrawerContentState
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('System Prompt'),
                       TextField(
                         controller: _systemPromptController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           hintText: 'Enter system prompt',
-                          border: OutlineInputBorder(),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.0), // Increased radius
+                          ),
                         ),
                         maxLines: 3,
                       ),
