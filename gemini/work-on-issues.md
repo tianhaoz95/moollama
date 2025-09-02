@@ -6,7 +6,7 @@ For each open issue, do the following:
 1. Fetch the issue title and body.
 2. Create a branch with name that describes the solution to the issue.
 3. Publish the branch.
-4. Implement the requirements specified by the issue title and content on the branch created.
+4. Implement the requirements specified by the issue title and content on the branch created, add unit tests if applicable, and use `flutter test` and `flutter build apk` command to verify the correctness of the implementation, fix any issue if present.
 5. Commit the implementation with proper commit message on the branch created.
 6. Push the commit.
 7. Open a pull request to the main branch using `gh` command.
