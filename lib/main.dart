@@ -10,6 +10,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:secret_agent/agent_helper.dart';
 import 'package:feature_flags/feature_flags.dart';
+import 'package:multi_select_flutter/multi_select_flutter.dart';
 
 final talker = TalkerFlutter.init();
 
@@ -1359,64 +1360,43 @@ class _AgentSettingsDrawerContentState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text('Tools'),
-                      ElevatedButton(
-                        onPressed: () async {
-                          final List<String>?
-                          selected = await showDialog<List<String>>(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: const Text('Select Tools'),
-                                content: SingleChildScrollView(
-                                  child: ListBody(
-                                    children: _availableTools.map((tool) {
-                                      return CheckboxListTile(
-                                        value: _selectedTools.contains(tool),
-                                        title: Text(tool),
-                                        onChanged: (bool? isChecked) {
-                                          setState(() {
-                                            if (isChecked!) {
-                                              _selectedTools.add(tool);
-                                            } else {
-                                              _selectedTools.remove(tool);
-                                            }
-                                          });
-                                        },
-                                      );
-                                    }).toList(),
-                                  ),
-                                ),
-                                actions: <Widget>[
-                                  TextButton(
-                                    child: const Text('Done'),
-                                    onPressed: () {
-                                      Navigator.of(context).pop(_selectedTools);
-                                    },
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                          if (selected != null) {
-                            setState(() {
-                              _selectedTools = selected;
-                            });
-                          }
+                      MultiSelectDialogField(
+                        items: _availableTools
+                            .map((tool) => MultiSelectItem<String>(tool, tool))
+                            .toList(),
+                        title: const Text("Select Tools"),
+                        selectedColor: Colors.blue,
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.all(Radius.circular(8)),
+                          border: Border.all(
+                            color: Colors.blue,
+                            width: 1.8,
+                          ),
+                        ),
+                        buttonIcon: const Icon(
+                          Icons.build,
+                          color: Colors.blue,
+                        ),
+                        buttonText: const Text(
+                          "Select Tools",
+                          style: TextStyle(
+                            color: Colors.blue,
+                            fontSize: 16,
+                          ),
+                        ),
+                        onConfirm: (values) {
+                          setState(() {
+                            _selectedTools = values;
+                          });
                         },
-                        child: const Text('Select Tools'),
-                      ),
-                      Wrap(
-                        spacing: 8.0,
-                        children: _selectedTools.map((tool) {
-                          return Chip(
-                            label: Text(tool),
-                            onDeleted: () {
-                              setState(() {
-                                _selectedTools.remove(tool);
-                              });
-                            },
-                          );
-                        }).toList(),
+                        chipDisplay: MultiSelectChipDisplay(
+                          onTap: (item) {
+                            setState(() {
+                              _selectedTools.remove(item);
+                            });
+                          },
+                        ),
                       ),
                     ],
                   ),
