@@ -177,7 +177,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     _listeningPopupEntry = OverlayEntry(
       builder: (context) => Center(
         child: Card(
-          color: Color.fromRGBO(0, 0, 0, 0.7),
+          color: Theme.of(context).dialogBackgroundColor.withOpacity(0.7),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30.0),
           ),
@@ -190,7 +190,10 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                 const SizedBox(height: 10),
                 Text(
                   _lastWords.isEmpty ? 'Listening...' : _lastWords,
-                  style: TextStyle(color: Colors.white, fontSize: 24),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 24,
+                  ),
                 ),
               ],
             ),
