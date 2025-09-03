@@ -250,7 +250,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         // Show feedback UI
         BetterFeedback.of(context).show(
           (feedback) async {
-            // Save the screenshot to a temporary file
+            // Save the screenshot to the downloads directory
             final directory = await getDownloadsDirectory();
             final file = File('${directory!.path}/feedback_screenshot.png');
             await file.writeAsBytes(feedback.screenshot);
