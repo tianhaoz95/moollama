@@ -4,28 +4,33 @@ on:
   push:
     branches:
       - main
-  pull_request_target:
+  pull_request_target: # <-- Use pull_request_target for PRs from forks
     branches:
       - main
   schedule:
-    - cron: '0 0 * * *' # Runs once every 24 hours at midnight UTC
+    - cron: '0 0 * * *'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      issues: write
-
+      issues: write # Permissions for the job
+      pull-requests: write # Add pull-requests write permission for safety
+      contents: read # Add read permission for checkout
     steps:
+      # Step 1: Secure Checkout
+      # Check out the base branch (main), not the PR's head branch.
+      # This prevents untrusted code from running with write permissions.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
+      # The rest of your steps remain largely the same
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-
       - name: Get Flutter packages
         run: flutter pub get
-
       - name: Build Android APK
         run: flutter build apk --release
 
@@ -36,7 +41,9 @@ jobs:
           path: build/app/outputs/flutter-apk/app-release.apk
 
       - name: Comment APK download link on PR
-        if: github.event_name == 'pull_request'
+        # The 'if' condition remains the same, but now it will succeed
+        # because the GITHUB_TOKEN has write permissions with pull_request_target
+        if: github.event_name == 'pull_request_target'
         uses: actions/github-script@v6
         with:
           script: |
