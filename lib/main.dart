@@ -1446,6 +1446,7 @@ class _AgentSettingsDrawerContentState
                               setState(() {
                                 _selectedTools.remove(item);
                               });
+                              _saveSelectedTools(_selectedTools);
                             },
                           ),
                         ),
