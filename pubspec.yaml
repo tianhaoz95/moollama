@@ -50,6 +50,7 @@ dependencies:
   flutter_email_sender: ^7.0.0
   feature_flags: ^0.1.4
   multi_select_flutter: ^4.1.3 # Added this line
+  is_first_run: ^1.0.0
 
 dev_dependencies:
   flutter_test:
