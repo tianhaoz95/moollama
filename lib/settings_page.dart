@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:secret_agent/database_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:restart_app/restart_app.dart';
+import 'package:talker_flutter/talker_flutter.dart';
+import 'package:feature_flags/feature_flags.dart';
+import 'package:secret_agent/main.dart';
 
 class SettingsPage extends StatelessWidget {
   final int? agentId;
@@ -16,6 +19,46 @@ class SettingsPage extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.bug_report_outlined),
+                label: const Text('View Logs'),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => TalkerScreen(
+                        talker: talker,
+                        theme: TalkerScreenTheme(
+                          cardColor: Theme.of(context).cardColor,
+                          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                          textColor:
+                              Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.flag),
+                label: const Text('Manage Feature Flags'),
+                onPressed: () {
+                  DebugFeatures.show(
+                    context,
+                    availableFeatures: [
+                      Feature('DECREMENT', name: 'Decrement'),
+                      Feature('RESET', name: 'Reset'),
+                    ],
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
