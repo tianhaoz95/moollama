@@ -32,3 +32,23 @@ jobs:
         with:
           name: app-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Comment APK URL on PR
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get the artifact ID
+          ARTIFACT_ID=$(gh api \
+            -H "Accept: application/vnd.github.v3+json" \
+            /repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts \
+            | jq '.artifacts[] | select(.name == "app-release-apk") | .id')
+
+          # Construct the download URL
+          ARTIFACT_DOWNLOAD_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${ARTIFACT_ID}"
+
+          # Get the PR number
+          PR_NUMBER=${{ github.event.pull_request.number }}
+
+          # Comment on the PR
+          gh pr comment $PR_NUMBER --body "📦 **Android APK Artifact Available!**\n\nDownload the APK from the [workflow run artifacts]($ARTIFACT_DOWNLOAD_URL).\n\n_Note: You might need to be logged into GitHub to access the artifact directly._"
