@@ -226,9 +226,11 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
 
   void _checkFirstRun() async {
     bool firstRun = await IsFirstRun.isFirstRun();
+    if (!mounted) return;
     setState(() {
       _isFirstRun = firstRun;
     });
+    _loadAgents();
   }
 
   @override
