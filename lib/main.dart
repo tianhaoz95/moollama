@@ -182,9 +182,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                 Text(
                   _lastWords.isEmpty ? 'Listening...' : _lastWords,
                   style: TextStyle(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.white
-                        : Colors.black,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 24,
                   ),
                 ),
