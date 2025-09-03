@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  pull_request:
+  pull_request_target:
     branches:
       - main
   schedule:
@@ -13,6 +13,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
 
     steps:
       - uses: actions/checkout@v4
@@ -32,3 +34,25 @@ jobs:
         with:
           name: app-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Comment APK download link on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { repo, issue } = context;
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: repo.owner,
+              repo: repo.repo,
+              run_id: context.runId,
+            });
+            const apkArtifact = artifacts.data.artifacts.find(artifact => artifact.name === 'app-release-apk');
+            if (apkArtifact) {
+              const downloadUrl = apkArtifact.archive_download_url;
+              github.rest.issues.createComment({
+                owner: repo.owner,
+                repo: repo.repo,
+                issue_number: issue.number,
+                body: `📦 Android APK available for download: ${downloadUrl}`
+              });
+            }
