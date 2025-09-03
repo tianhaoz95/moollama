@@ -23,8 +23,7 @@ For each open issue, do the following:
 2. Create a branch with name that describes the solution to the issue.
 3. Publish the branch.
 4. Implement the requirements specified by the issue title and content on the branch created, add unit tests if applicable, and use `flutter test` and `flutter build apk` command to verify the correctness of the implementation, fix any issue if present.
-5. Modify the version in `pubspec.yaml` to be `version: 1.0.0+{issue_number}`. For example, if you are working on issue #34, the previous version number is `version: 1.0.0+32`, it should be modified to `version: 1.0.0+34`.
-6. Commit the implementation with proper commit message on the branch created.
-7. Push the commit.
-8. Open a pull request to the main branch using `gh` command.
-9. Go back to the main branch to make sure pull requests only depends on main branch.
+5. Commit the implementation with proper commit message on the branch created.
+6. Push the commit.
+7. Open a pull request to the main branch using `gh` command.
+8. Go back to the main branch to make sure pull requests only depends on main branch.
