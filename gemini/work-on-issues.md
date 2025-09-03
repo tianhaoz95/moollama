@@ -16,7 +16,7 @@ For each open pull request, do the following:
 
 ## Task 2: implement newly added issues
 
-First use `gh` command to find open issues related to the current repository.
+First use `gh` command to find open issues related to the current repository with label "gemini".
 
 For each open issue, do the following:
 1. Fetch the issue title and body.
