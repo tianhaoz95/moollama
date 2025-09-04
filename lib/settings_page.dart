@@ -59,6 +59,8 @@ class SettingsPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
+            _ShakeToFeedbackToggle(), // New toggle widget
+            const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -159,3 +161,46 @@ class SettingsPage extends StatelessWidget {
   }
 }
 
+class _ShakeToFeedbackToggle extends StatefulWidget {
+  const _ShakeToFeedbackToggle({super.key});
+
+  @override
+  State<_ShakeToFeedbackToggle> createState() => _ShakeToFeedbackToggleState();
+}
+
+class _ShakeToFeedbackToggleState extends State<_ShakeToFeedbackToggle> {
+  bool _isShakeToFeedbackEnabled = true; // Default to true
+
+  @override
+  void initState() {
+    super.initState();
+    _loadShakeToFeedbackPreference();
+  }
+
+  Future<void> _loadShakeToFeedbackPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isShakeToFeedbackEnabled =
+          prefs.getBool('isShakeToFeedbackEnabled') ?? true;
+    });
+  }
+
+  Future<void> _saveShakeToFeedbackPreference(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isShakeToFeedbackEnabled', value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SwitchListTile(
+      title: const Text('Enable Shake to Feedback'),
+      value: _isShakeToFeedbackEnabled,
+      onChanged: (bool value) {
+        setState(() {
+          _isShakeToFeedbackEnabled = value;
+        });
+        _saveShakeToFeedbackPreference(value);
+      },
+    );
+  }
+}
