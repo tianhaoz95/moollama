@@ -364,7 +364,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         _selectedAgent!.id!,
         userMessageText,
         true, // isUser: true
-      ); // isUser: true
+      ); 
       setState(() {
         _messages.add(Message(finalText: userMessageText, isUser: true));
         _messages.add(Message(finalText: '', isUser: false, isLoading: true));
