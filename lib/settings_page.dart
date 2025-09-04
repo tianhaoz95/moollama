@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:secret_agent/database_helper.dart';
+import 'package:moollama/database_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:restart_app/restart_app.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:feature_flags/feature_flags.dart';
-import 'package:secret_agent/main.dart';
+import 'package:moollama/main.dart';
 
 class SettingsPage extends StatelessWidget {
   final int? agentId;
