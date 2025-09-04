@@ -16,6 +16,8 @@ void main() async {
 
   final prefs = await SharedPreferences.getInstance();
   final themeModeString = prefs.getString('themeMode');
+  final shakeToFeedbackEnabled = prefs.getBool('shakeToFeedbackEnabled') ?? false;
+
   if (themeModeString == 'light') {
     themeNotifier.value = ThemeMode.light;
   } else if (themeModeString == 'dark') {
@@ -23,11 +25,16 @@ void main() async {
   } else {
     themeNotifier.value = ThemeMode.system;
   }
-  runApp(
-    BetterFeedback(
-      child: const MyApp(),
-    ),
-  );
+
+  Widget app = const MyApp();
+
+  if (shakeToFeedbackEnabled) {
+    app = BetterFeedback(
+      child: app,
+    );
+  }
+
+  runApp(app);
 
   themeNotifier.addListener(() async {
     final prefs = await SharedPreferences.getInstance();

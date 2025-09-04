@@ -5,11 +5,39 @@ import 'package:restart_app/restart_app.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:feature_flags/feature_flags.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   final int? agentId;
-  final Talker talker; // Add talker to constructor
+  final Talker talker;
 
-  const SettingsPage({super.key, this.agentId, required this.talker}); // Update constructor
+  const SettingsPage({super.key, this.agentId, required this.talker});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  bool _shakeToFeedbackEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadShakeToFeedbackSetting();
+  }
+
+  Future<void> _loadShakeToFeedbackSetting() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _shakeToFeedbackEnabled = prefs.getBool('shakeToFeedbackEnabled') ?? false;
+    });
+  }
+
+  Future<void> _setShakeToFeedbackSetting(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('shakeToFeedbackEnabled', value);
+    setState(() {
+      _shakeToFeedbackEnabled = value;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +56,7 @@ class SettingsPage extends StatelessWidget {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => TalkerScreen(
-                        talker: talker, // Use talker from constructor
+                        talker: widget.talker, // Use talker from constructor
                         theme: TalkerScreenTheme(
                           cardColor: Theme.of(context).cardColor,
                           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -57,6 +85,12 @@ class SettingsPage extends StatelessWidget {
                   );
                 },
               ), // Corrected: Removed extra '\n' here
+            ),
+            const SizedBox(height: 16),
+            SwitchListTile(
+              title: const Text('Shake to Feedback'),
+              value: _shakeToFeedbackEnabled,
+              onChanged: _setShakeToFeedbackSetting,
             ),
             const SizedBox(height: 16),
             SizedBox(
