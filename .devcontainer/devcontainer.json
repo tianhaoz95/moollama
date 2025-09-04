@@ -1,9 +1,9 @@
 {
   "name": "Flutter",
-"image": "ghcr.io/thephaseless/devcontainers/flutter:latest",
-"features": {
-	"ghcr.io/devcontainers/features/github-cli:1": {},
-	"ghcr.io/devcontainers-extra/features/ffmpeg-apt-get:1": {},
-	"ghcr.io/devcontainers-extra/features/npm-package:1": {}
-}
+  "image": "ghcr.io/thephaseless/devcontainers/flutter:latest",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers-extra/features/ffmpeg-apt-get:1": {},
+    "ghcr.io/devcontainers-extra/features/npm-package:1": {}
+  }
 }
