@@ -1006,8 +1006,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                   children: [
                     TextField(
                       controller: _textController,
-                      minLines: 2,
-                      maxLines: 2,
+                      minLines: 1,
+                      maxLines: 1,
                       textInputAction: TextInputAction.send, // Add this line
                       decoration: InputDecoration(
                         hintText: 'Ask Secret Agent',
