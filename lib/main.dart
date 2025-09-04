@@ -312,6 +312,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       });
       await _agent!.init(
         contextSize: _contextWindowSize,
+        gpuLayers: 99, // Add this line for GPU offload
         onProgress: (progress, statusMessage, isError) {
           setState(() {
             _initializationProgress =
