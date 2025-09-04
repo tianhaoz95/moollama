@@ -28,4 +28,5 @@ For each open issue, do the following:
 5. Commit the implementation with proper commit message on the branch created.
 6. Push the commit.
 7. Open a pull request to the main branch using `gh` command. Do not use command substitution $(), <(), or >() when you open the pull request with `gh` command, use a more verbose and descriptive title or body for the pull request instead.
-8. Go back to the main branch to make sure pull requests only depends on main branch.
+8. Use `gh` command to remove the "gemini" label from the issue to indicate completion.
+9. Go back to the main branch to make sure pull requests only depends on main branch.
