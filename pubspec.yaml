@@ -51,7 +51,8 @@ dependencies:
   feature_flags: ^0.1.4
   multi_select_flutter: ^4.1.3 # Added this line
   shake: ^2.2.0 # Add shake package
-  feedback: ^3.0.0 # Add feedback package
+  http: ^1.2.1
+  url_launcher: ^6.2.5
 
 dev_dependencies:
   flutter_test:

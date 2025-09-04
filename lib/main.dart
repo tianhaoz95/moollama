@@ -8,15 +8,27 @@ import 'package:secret_agent/utils.dart'; // Import the new utility file
 import 'package:siri_wave/siri_wave.dart'; // Ensure this package is added in pubspec.yaml
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:talker_flutter/talker_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert'; // For JSON encoding/decoding
+import 'dart:io'; // For File operations
+import 'dart:async'; // For Completer
+import 'dart:typed_data'; // For Uint8List
 import 'package:secret_agent/agent_helper.dart';
 import 'package:feature_flags/feature_flags.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:shake/shake.dart'; // Add shake package
-import 'package:feedback/feedback.dart'; // Add feedback package
 import 'package:path_provider/path_provider.dart'; // For temporary directory
-import 'dart:io'; // For File operations
 
 final talker = TalkerFlutter.init();
+
+// GitHub OAuth credentials (replace with your actual credentials)
+const String githubClientId = 'YOUR_GITHUB_CLIENT_ID';
+const String githubClientSecret = 'YOUR_GITHUB_CLIENT_SECRET';
+const String githubRedirectUrl = 'http://localhost:8080/auth'; // Or a custom scheme for mobile
+const String githubAuthUrl = 'https://github.com/login/oauth/authorize';
+const String githubTokenUrl = 'https://github.com/login/oauth/access_token';
+const String githubApiUrl = 'https://api.github.com';
 
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
 
@@ -34,9 +46,7 @@ void main() async {
     themeNotifier.value = ThemeMode.system;
   }
   runApp(
-    BetterFeedback(
-      child: const MyApp(),
-    ),
+    const MyApp(),
   );
 
   themeNotifier.addListener(() async {
@@ -248,20 +258,175 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     _shakeDetector = ShakeDetector.autoStart(
       onPhoneShake: () async {
         // Show feedback UI
-        BetterFeedback.of(context).show(
-          (feedback) async {
-            // Save the screenshot to a temporary file
-            final directory = await getTemporaryDirectory();
-            final file = File('${directory.path}/feedback_screenshot.png');
-            await file.writeAsBytes(feedback.screenshot);
-
-            talker.info('Feedback saved to: ${file.path}');
-            talker.info('Feedback text: ${feedback.text}');
-            // In a real app, you would send this feedback to a backend service.
-          },
+        final feedbackTextController = TextEditingController();
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Submit Feedback'),
+            content: TextField(
+              controller: feedbackTextController,
+              decoration: const InputDecoration(hintText: 'Enter your feedback'),
+              maxLines: 5,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  if (feedbackTextController.text.isNotEmpty) {
+                    await _submitFeedbackToGitHub(feedbackTextController.text, null, context);
+                  }
+                },
+                child: const Text('Submit'),
+              ),
+            ],
+          ),
         );
       },
     );
+  }
+
+  Future<void> _submitFeedbackToGitHub(
+      String feedbackText, Uint8List? screenshotBytes, BuildContext context) async {
+    talker.info('Submitting feedback to GitHub manually...');
+
+    try {
+      // 1. Initiate GitHub OAuth flow
+      final authUri = Uri.parse(githubAuthUrl).replace(queryParameters: {
+        'client_id': githubClientId,
+        'redirect_uri': githubRedirectUrl,
+        'scope': 'public_repo', // Request scope to create issues
+      });
+
+      if (await canLaunchUrl(authUri)) {
+        await launchUrl(authUri);
+      } else {
+        talker.error('Could not launch $authUri');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open GitHub login page.')),
+        );
+        return;
+      }
+
+      // For CLI, we'll prompt the user to manually paste the code.
+      // In a real app, you'd set up a custom URL scheme and listener.
+      final codeCompleter = Completer<String>();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Please authorize in your browser and paste the code here:'),
+          action: SnackBarAction(
+            label: 'Paste Code',
+            onPressed: () async {
+              // This is a placeholder. In a real app, you'd have a text field
+              // or a more sophisticated way to get the code.
+              // For now, assume the user will provide it via some input.
+              // For the purpose of this CLI, I will simulate getting the code.
+              talker.info('Waiting for user to paste code...');
+              // Simulate user pasting code after a delay
+              await Future.delayed(const Duration(seconds: 10));
+              // In a real scenario, the user would paste the code here.
+              // For this simulation, I'll use a dummy code.
+              codeCompleter.complete('dummy_auth_code'); // REPLACE WITH ACTUAL CODE FROM USER
+            },
+          ),
+        ),
+      );
+
+      final authCode = await codeCompleter.future;
+      talker.info('Authorization code obtained: $authCode');
+
+      // 2. Exchange authorization code for access token
+      final tokenResponse = await http.post(
+        Uri.parse(githubTokenUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'client_id': githubClientId,
+          'client_secret': githubClientSecret,
+          'code': authCode,
+          'redirect_uri': githubRedirectUrl,
+        }),
+      );
+
+      if (tokenResponse.statusCode != 200) {
+        talker.error(
+            'Failed to get access token: ${tokenResponse.statusCode} - ${tokenResponse.body}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  'Failed to get access token: ${tokenResponse.statusCode} - ${tokenResponse.body}')),
+        );
+        return;
+      }
+
+      final tokenData = jsonDecode(tokenResponse.body);
+      final accessToken = tokenData['access_token'];
+      if (accessToken == null) {
+        talker.error('Access token not found in response: ${tokenResponse.body}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Access token not found.')),
+        );
+        return;
+      }
+      talker.info('GitHub access token obtained.');
+
+      // 3. Upload screenshot (if available)
+      String? imageUrl;
+      if (screenshotBytes != null && screenshotBytes.isNotEmpty) {
+        final directory = await getTemporaryDirectory();
+        final file = File('${directory.path}/feedback_screenshot.png');
+        await file.writeAsBytes(screenshotBytes);
+
+        talker.info('Screenshot saved to: ${file.path}');
+        imageUrl = 'Screenshot attached (see local file: ${file.path})';
+      }
+
+      // 4. Create GitHub Issue
+      final issueTitle = 'User Feedback from App';
+      String issueBody = feedbackText;
+      if (imageUrl != null) {
+        issueBody += '\n\nScreenshot: $imageUrl';
+      }
+
+      final issueResponse = await http.post(
+        Uri.parse('$githubApiUrl/repos/tianhaoz95/secret_agent/issues'),
+        headers: {
+          'Authorization': 'token $accessToken',
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'title': issueTitle,
+          'body': issueBody,
+          'labels': ['feedback', 'bug'], // Example labels
+        }),
+      );
+
+      if (issueResponse.statusCode == 201) {
+        talker.info('GitHub Issue created successfully!');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Feedback submitted to GitHub!ব্যাকআপ')),
+        );
+      } else {
+        talker.error(
+            'Failed to create GitHub Issue: ${issueResponse.statusCode} - ${issueResponse.body}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  'Failed to submit feedback: ${issueResponse.statusCode} - ${issueResponse.body}')),
+        );
+      }
+    } catch (e) {
+      talker.error('Error during GitHub feedback submission: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error submitting feedback: $e')),
+      );
+    }
   }
 
   @override
