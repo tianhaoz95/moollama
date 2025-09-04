@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+30
+version: 1.0.0+38
 
 environment:
   sdk: ^3.9.0
@@ -51,6 +51,8 @@ dependencies:
   feature_flags: ^0.1.4
   multi_select_flutter: ^4.1.3 # Added this line
   is_first_run: ^1.0.0
+  shake: ^2.2.0 # Add shake package
+  feedback: ^3.0.0 # Add feedback package
 
 dev_dependencies:
   flutter_test:
@@ -62,6 +64,10 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+
+dependency_overrides:
+  intl: 0.20.2 # Override intl package version
+  sensors_plus: ^6.1.2 # Override sensors_plus package version
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

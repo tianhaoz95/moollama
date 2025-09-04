@@ -12,6 +12,10 @@ import 'package:secret_agent/agent_helper.dart';
 import 'package:feature_flags/feature_flags.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:is_first_run/is_first_run.dart';
+import 'package:shake/shake.dart'; // Add shake package
+import 'package:feedback/feedback.dart'; // Add feedback package
+import 'package:path_provider/path_provider.dart'; // For temporary directory
+import 'dart:io'; // For File operations
 
 final talker = TalkerFlutter.init();
 
@@ -30,7 +34,11 @@ void main() async {
   } else {
     themeNotifier.value = ThemeMode.system;
   }
-  runApp(const MyApp());
+  runApp(
+    BetterFeedback(
+      child: const MyApp(),
+    ),
+  );
 
   themeNotifier.addListener(() async {
     final prefs = await SharedPreferences.getInstance();
@@ -141,6 +149,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   final stt.SpeechToText _speechToText = stt.SpeechToText();
   String _lastWords = '';
   bool _isFirstRun = false;
+  late ShakeDetector _shakeDetector;
 
   void _handleAgentLongPress(Agent agent) async {
     if (_agents.length == 1) {
@@ -170,7 +179,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     _listeningPopupEntry = OverlayEntry(
       builder: (context) => Center(
         child: Card(
-          color: Color.fromRGBO(0, 0, 0, 0.7),
+          color: Theme.of(context).dialogBackgroundColor.withOpacity(0.7),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30.0),
           ),
@@ -183,7 +192,10 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                 const SizedBox(height: 10),
                 Text(
                   _lastWords.isEmpty ? 'Listening...' : _lastWords,
-                  style: TextStyle(color: Colors.white, fontSize: 24),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 24,
+                  ),
                 ),
               ],
             ),
@@ -244,11 +256,30 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       onError: (errorNotification) =>
           talker.info('Speech recognition error: $errorNotification'),
     );
+
+    _shakeDetector = ShakeDetector.autoStart(
+      onPhoneShake: () async {
+        // Show feedback UI
+        BetterFeedback.of(context).show(
+          (feedback) async {
+            // Save the screenshot to a temporary file
+            final directory = await getTemporaryDirectory();
+            final file = File('${directory.path}/feedback_screenshot.png');
+            await file.writeAsBytes(feedback.screenshot);
+
+            talker.info('Feedback saved to: ${file.path}');
+            talker.info('Feedback text: ${feedback.text}');
+            // In a real app, you would send this feedback to a backend service.
+          },
+        );
+      },
+    );
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _shakeDetector.stopListening(); // Changed from stop() to stopListening()
     super.dispose();
   }
 
@@ -1442,6 +1473,7 @@ class _AgentSettingsDrawerContentState
                               setState(() {
                                 _selectedTools.remove(item);
                               });
+                              _saveSelectedTools(_selectedTools);
                             },
                           ),
                         ),
