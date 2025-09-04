@@ -8,6 +8,7 @@ import 'package:moollama/utils.dart'; // Import the new utility file
 import 'package:siri_wave/siri_wave.dart'; // Ensure this package is added in pubspec.yaml
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:talker_flutter/talker_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:moollama/agent_helper.dart';
 import 'package:feature_flags/feature_flags.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
@@ -259,6 +260,26 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             talker.info('Feedback saved to: ${file.path}');
             talker.info('Feedback text: ${feedback.text}');
             // In a real app, you would send this feedback to a backend service.
+            try {
+              final result = await Share.shareXFiles([XFile(file.path)], text: feedback.text);
+              if (result.status == ShareResultStatus.unavailable) {
+                talker.warning('Sharing is unavailable on this device.');
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Sharing is not available on this device.'),
+                  ),
+                );
+              }
+            } catch (e, s) {
+              talker.error('Error sharing feedback', e, s);
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Could not share feedback.'),
+                ),
+              );
+            }
           },
         );
       },
