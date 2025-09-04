@@ -1,14 +1,14 @@
 import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
-import 'package:secret_agent/database_helper.dart';
+import 'package:moollama/database_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:secret_agent/settings_page.dart';
+import 'package:moollama/settings_page.dart';
 import 'package:cactus/cactus.dart';
-import 'package:secret_agent/utils.dart'; // Import the new utility file
+import 'package:moollama/utils.dart'; // Import the new utility file
 import 'package:siri_wave/siri_wave.dart'; // Ensure this package is added in pubspec.yaml
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:talker_flutter/talker_flutter.dart';
-import 'package:secret_agent/agent_helper.dart';
+import 'package:moollama/agent_helper.dart';
 import 'package:feature_flags/feature_flags.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:shake/shake.dart'; // Add shake package

@@ -1,5 +1,5 @@
 import 'package:cactus/cactus.dart';
-import 'package:secret_agent/tools.dart';
+import 'package:moollama/tools.dart';
 
 void addAgentTools(CactusAgent agent, List<String> selectedTools) {
   if (selectedTools.contains('fetch_webpage')) {
