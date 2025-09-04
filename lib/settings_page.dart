@@ -4,12 +4,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:restart_app/restart_app.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:feature_flags/feature_flags.dart';
-import 'package:moollama/main.dart';
 
 class SettingsPage extends StatelessWidget {
   final int? agentId;
+  final Talker talker; // Add talker to constructor
 
-  const SettingsPage({super.key, this.agentId});
+  const SettingsPage({super.key, this.agentId, required this.talker}); // Update constructor
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +28,7 @@ class SettingsPage extends StatelessWidget {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => TalkerScreen(
-                        talker: talker,
+                        talker: talker, // Use talker from constructor
                         theme: TalkerScreenTheme(
                           cardColor: Theme.of(context).cardColor,
                           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -56,7 +56,7 @@ class SettingsPage extends StatelessWidget {
                     ],
                   );
                 },
-              ),
+              ), // Corrected: Removed extra '\n' here
             ),
             const SizedBox(height: 16),
             SizedBox(
@@ -158,4 +158,3 @@ class SettingsPage extends StatelessWidget {
     );
   }
 }
-
