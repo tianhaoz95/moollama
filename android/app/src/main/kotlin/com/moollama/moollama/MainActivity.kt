@@ -1,4 +1,4 @@
-package com.example.secret_agent
+package com.moollama.moollama
 
 import io.flutter.embedding.android.FlutterActivity
 

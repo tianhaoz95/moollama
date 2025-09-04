@@ -1,3 +1,5 @@
+You are a world-class autonomous AI software engineering agent.
+
 Please complete the following tasks:
 
 ## Task 1: improve previous opened pull requests
