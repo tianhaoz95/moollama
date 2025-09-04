@@ -1019,8 +1019,12 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     final alignment = message.isUser
         ? Alignment.centerRight
         : Alignment.centerLeft;
-    final color = message.isUser ? Colors.blue : Colors.grey[300];
-    final textColor = message.isUser ? Colors.white : Colors.black;
+    final color = message.isUser
+        ? Theme.of(context).colorScheme.primary
+        : Theme.of(context).colorScheme.surfaceVariant;
+    final textColor = message.isUser
+        ? Theme.of(context).colorScheme.onPrimary
+        : Theme.of(context).colorScheme.onSurfaceVariant;
 
     return GestureDetector(
       onDoubleTap: () {
