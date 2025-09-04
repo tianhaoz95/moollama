@@ -17,6 +17,7 @@ jobs:
       issues: write # Permissions for the job
       pull-requests: write # Add pull-requests write permission for safety
       contents: read # Add read permission for checkout
+      actions: read # Allow downloading artifacts
     steps:
       # Step 1: Secure Checkout
       # Check out the base branch (main), not the PR's head branch.
