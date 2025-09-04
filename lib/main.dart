@@ -149,6 +149,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   final stt.SpeechToText _speechToText = stt.SpeechToText();
   String _lastWords = '';
   late ShakeDetector _shakeDetector;
+  bool _isExpanded = false;
 
   void _handleAgentLongPress(Agent agent) async {
     if (_agents.length == 1) {
@@ -1025,28 +1026,46 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextField(
-                      controller: _textController,
-                      minLines: 2,
-                      maxLines: 2,
-                      textInputAction: TextInputAction.send, // Add this line
-                      decoration: InputDecoration(
-                        hintText: 'Ask Secret Agent',
-                        hintStyle: TextStyle(
-                          color: Theme.of(context).hintColor,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _textController,
+                            minLines: _isExpanded ? null : 1,
+                            maxLines: _isExpanded ? null : 1,
+                            textInputAction: TextInputAction.send,
+                            decoration: InputDecoration(
+                              hintText: 'Ask Secret Agent',
+                              hintStyle: TextStyle(
+                                color: Theme.of(context).hintColor,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 8,
+                                horizontal: 0,
+                              ),
+                            ),
+                            style: TextStyle(
+                              color: Theme.of(context).textTheme.bodyLarge?.color,
+                            ),
+                            onSubmitted: (_) => _sendMessage(),
+                          ),
                         ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 8,
-                          horizontal: 0,
+                        IconButton(
+                          icon: Icon(
+                            _isExpanded ? Icons.fullscreen_exit : Icons.fullscreen,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _isExpanded = !_isExpanded;
+                            });
+                          },
                         ),
-                      ),
-                      style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                      ),
-                      onSubmitted: (_) => _sendMessage(),
+                      ],
                     ),
-                    const SizedBox(height: 10),
+                    if (!_isExpanded) const SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
