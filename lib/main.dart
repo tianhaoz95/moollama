@@ -1313,159 +1313,162 @@ class _AgentSettingsDrawerContentState
           ),
           const Divider(height: 1, thickness: 1, indent: 0, endIndent: 0),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: <Widget>[
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: <Widget>[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey),
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                            child: DropdownButton<String>(
+                              value: _selectedModelName,
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  _selectedModelName = newValue!;
+                                });
+                              },
+                              items: _availableModels
+                                  .map<DropdownMenuItem<String>>((String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    );
+                                  })
+                                  .toList(),
+                              underline: const SizedBox(),
+                              isExpanded: true,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Creativity'),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Slider(
+                                value: _creativityValue,
+                                min: 0,
+                                max: 100,
+                                divisions: 100,
+                                label: _creativityValue.round().toString(),
+                                onChanged: (double value) {
+                                  setState(() {
+                                    _creativityValue = value;
+                                  });
+                                },
+                              ),
+                            ),
+                            Text(_creativityValue.round().toString()),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Context Window'),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Slider(
+                                value: _contextWindowSliderValue,
+                                min: 0,
+                                max: (_contextWindowSizes.length - 1).toDouble(),
+                                divisions: _contextWindowSizes.length - 1,
+                                label:
+                                    '${(_contextWindowSizes[_contextWindowSliderValue.round()] / 1024).round()}k',
+                                onChanged: (double value) {
+                                  setState(() {
+                                    _contextWindowSliderValue = value;
+                                  });
+                                },
+                              ),
+                            ),
+                            Text(
+                              '${(_contextWindowSizes[_contextWindowSliderValue.round()] / 1024).round()}k',
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24), // Add spacing
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextField(
+                          controller: _systemPromptController,
+                          decoration: InputDecoration(
+                            hintText: 'Enter system prompt',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12.0), // Increased radius
+                            ),
+                          ),
+                          maxLines: 3,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Tools'),
+                        MultiSelectDialogField(
+                          items: _availableTools
+                              .map((tool) => MultiSelectItem<String>(tool, tool))
+                              .toList(),
+                          title: const Text("Select Tools"),
+                          selectedColor: Colors.blue,
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
-                          child: DropdownButton<String>(
-                            value: _selectedModelName,
-                            onChanged: (String? newValue) {
-                              setState(() {
-                                _selectedModelName = newValue!;
-                              });
-                            },
-                            items: _availableModels
-                                .map<DropdownMenuItem<String>>((String value) {
-                                  return DropdownMenuItem<String>(
-                                    value: value,
-                                    child: Text(value),
-                                  );
-                                })
-                                .toList(),
-                            underline: const SizedBox(),
-                            isExpanded: true,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Creativity'),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Slider(
-                              value: _creativityValue,
-                              min: 0,
-                              max: 100,
-                              divisions: 100,
-                              label: _creativityValue.round().toString(),
-                              onChanged: (double value) {
-                                setState(() {
-                                  _creativityValue = value;
-                                });
-                              },
+                            color: Colors.blue.withOpacity(0.1),
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
+                            border: Border.all(
+                              color: Colors.blue,
+                              width: 1.8,
                             ),
                           ),
-                          Text(_creativityValue.round().toString()),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Context Window'),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Slider(
-                              value: _contextWindowSliderValue,
-                              min: 0,
-                              max: (_contextWindowSizes.length - 1).toDouble(),
-                              divisions: _contextWindowSizes.length - 1,
-                              label:
-                                  '${(_contextWindowSizes[_contextWindowSliderValue.round()] / 1024).round()}k',
-                              onChanged: (double value) {
-                                setState(() {
-                                  _contextWindowSliderValue = value;
-                                });
-                              },
+                          buttonIcon: const Icon(
+                            Icons.build,
+                            color: Colors.blue,
+                          ),
+                          buttonText: const Text(
+                            "Select Tools",
+                            style: TextStyle(
+                              color: Colors.blue,
+                              fontSize: 16,
                             ),
                           ),
-                          Text(
-                            '${(_contextWindowSizes[_contextWindowSliderValue.round()] / 1024).round()}k',
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24), // Add spacing
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TextField(
-                        controller: _systemPromptController,
-                        decoration: InputDecoration(
-                          hintText: 'Enter system prompt',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12.0), // Increased radius
-                          ),
-                        ),
-                        maxLines: 3,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Tools'),
-                      MultiSelectDialogField(
-                        items: _availableTools
-                            .map((tool) => MultiSelectItem<String>(tool, tool))
-                            .toList(),
-                        title: const Text("Select Tools"),
-                        selectedColor: Colors.blue,
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
-                          borderRadius: BorderRadius.all(Radius.circular(8)),
-                          border: Border.all(
-                            color: Colors.blue,
-                            width: 1.8,
-                          ),
-                        ),
-                        buttonIcon: const Icon(
-                          Icons.build,
-                          color: Colors.blue,
-                        ),
-                        buttonText: const Text(
-                          "Select Tools",
-                          style: TextStyle(
-                            color: Colors.blue,
-                            fontSize: 16,
-                          ),
-                        ),
-                        onConfirm: (values) {
-                          setState(() {
-                            _selectedTools = values.cast<String>();
-                          });
-                          _saveSelectedTools(values.cast<String>()); // Save selected tools
-                        },
-                        chipDisplay: MultiSelectChipDisplay(
-                          onTap: (item) {
+                          onConfirm: (values) {
                             setState(() {
-                              _selectedTools.remove(item);
+                              _selectedTools = values.cast<String>();
                             });
+                            _saveSelectedTools(values.cast<String>()); // Save selected tools
                           },
+                          chipDisplay: MultiSelectChipDisplay(
+                            onTap: (item) {
+                              setState(() {
+                                _selectedTools.remove(item);
+                              });
+                              _saveSelectedTools(_selectedTools);
+                            },
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
