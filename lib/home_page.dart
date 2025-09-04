@@ -54,7 +54,6 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   final stt.SpeechToText _speechToText = stt.SpeechToText();
   String _lastWords = '';
   late ShakeDetector _shakeDetector;
-  bool _isExpanded = false;
 
   void _handleAgentLongPress(Agent agent) async {
     if (_agents.length == 1) {
@@ -935,8 +934,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                         Expanded(
                           child: TextField(
                             controller: _textController,
-                            minLines: _isExpanded ? null : 1,
-                            maxLines: _isExpanded ? null : 1,
+                            minLines: 1,
+                            maxLines: 1,
                             textInputAction: TextInputAction.send,
                             decoration: InputDecoration(
                               hintText: 'Ask Secret Agent',
@@ -955,20 +954,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                             onSubmitted: (_) => _sendMessage(),
                           ),
                         ),
-                        IconButton(
-                          icon: Icon(
-                            _isExpanded ? Icons.fullscreen_exit : Icons.fullscreen,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _isExpanded = !_isExpanded;
-                            });
-                          },
-                        ),
                       ],
                     ),
-                    if (!_isExpanded) const SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
