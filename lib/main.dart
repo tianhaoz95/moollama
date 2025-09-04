@@ -259,7 +259,26 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             talker.info('Feedback saved to: ${file.path}');
             talker.info('Feedback text: ${feedback.text}');
             // In a real app, you would send this feedback to a backend service.
-            await Share.shareXFiles([XFile(file.path)], text: feedback.text);
+            try {
+              final result = await Share.shareXFiles([XFile(file.path)], text: feedback.text);
+              if (result.status == ShareResultStatus.unavailable) {
+                talker.warning('Sharing is unavailable on this device.');
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Sharing is not available on this device.'),
+                  ),
+                );
+              }
+            } catch (e, s) {
+              talker.error('Error sharing feedback', e, s);
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Could not share feedback.'),
+                ),
+              );
+            }
           },
         );
       },
