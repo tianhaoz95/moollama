@@ -56,7 +56,7 @@ jobs:
             });
             const apkArtifact = artifacts.data.artifacts.find(artifact => artifact.name === 'app-release-apk');
             if (apkArtifact) {
-              const downloadUrl = apkArtifact.archive_download_url;
+              const downloadUrl = `https://github.com/${repo.owner}/${repo.repo}/actions/runs/${context.runId}/artifacts/${apkArtifact.id}`;
               github.rest.issues.createComment({
                 owner: repo.owner,
                 repo: repo.repo,
