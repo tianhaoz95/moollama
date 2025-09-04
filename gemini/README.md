@@ -4,6 +4,14 @@ cat gemini/work-on-issues.md | gemini --yolo
 
 ```json
 {
-  "model": "gemini-2.5-flash"
+  "model": "gemini-2.5-flash",
+  "mcpServers": {
+    "dart": {
+      "command": "dart",
+      "args": [
+        "mcp-server"
+      ]
+    }
+  }
 }
 ```
