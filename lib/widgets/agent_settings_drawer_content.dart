@@ -10,12 +10,14 @@ class AgentSettingsDrawerContent extends StatefulWidget {
     required this.initialCreativity,
     required this.initialContextWindowSize,
     required this.onApply,
+    this.initialSystemPrompt,
   });
 
   final String initialModelName;
   final double initialCreativity;
   final int initialContextWindowSize;
-  final Function(String, double, int, List<String>) onApply;
+  final Function(String, double, int, List<String>, String) onApply;
+  final String? initialSystemPrompt;
 
   @override
   State<AgentSettingsDrawerContent> createState() =>
@@ -42,8 +44,7 @@ class _AgentSettingsDrawerContentState
     _contextWindowSliderValue = _contextWindowSizes
         .indexOf(widget.initialContextWindowSize)
         .toDouble();
-    _systemPromptController =
-        TextEditingController(); // Initialize the controller
+    _systemPromptController = TextEditingController(text: widget.initialSystemPrompt); // Initialize the controller
     _loadAvailableModels();
     _loadAvailableTools(); // Load available tools dynamically
     _loadSelectedTools(); // Load selected tools
@@ -288,7 +289,8 @@ class _AgentSettingsDrawerContentState
                     _selectedModelName,
                     _creativityValue,
                     _contextWindowSizes[_contextWindowSliderValue.round()],
-                    _selectedTools, // Pass selected tools
+                    _selectedTools,
+                    _systemPromptController.text, // Pass system prompt
                   );
                   Navigator.of(context).pop(); // Close the drawer
                 },
