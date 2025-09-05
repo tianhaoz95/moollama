@@ -41,7 +41,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   late Future<List<Message>> _messagesFuture;
   List<Agent> _agents = [];
   Agent? _selectedAgent;
-  String _selectedModelName = 'Qwen3 0.6B'; // New field for selected model name
+  String _selectedModelName = 'SmolVLM2 256M (mmproj)'; // New field for selected model name
   double _creativity = 70.0;
   int _contextWindowSize = 8192;
   bool _isLoading = true;

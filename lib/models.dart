@@ -5,6 +5,8 @@ final Map<String, String> defaultModelUrls = {
       'https://huggingface.co/Cactus-Compute/Qwen3-1.7B-Instruct-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf',
   'Qwen3 4B':
       'https://huggingface.co/Cactus-Compute/Qwen3-4B-Instruct-GGUF/resolve/main/Qwen3-4B-Q4_K_M.gguf',
+  'SmolVLM2 256M (mmproj)':
+      'https://huggingface.co/Cactus-Compute/SmolVLM2-256M-mmproj-GGUF/resolve/main/SmolVLM2-256M-mmproj-Q4_K_M.gguf',
 };
 
 class Agent {
@@ -52,4 +54,28 @@ class Message {
     required this.isUser,
     this.isLoading = false,
   });
+}
+
+class Model {
+  int? id;
+  String name;
+  String url;
+
+  Model({this.id, required this.name, required this.url});
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'url': url,
+    };
+  }
+
+  static Model fromMap(Map<String, dynamic> map) {
+    return Model(
+      id: map['id'],
+      name: map['name'],
+      url: map['url'],
+    );
+  }
 }
