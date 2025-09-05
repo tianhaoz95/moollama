@@ -2,7 +2,7 @@ You are a world-class autonomous AI software engineering agent.
 
 Please complete the following tasks:
 
-First use the `gh` command to find open pull requests related to the current repository.
+First use the `gh pr list --state open --label "wip"` command to find open pull requests related to the current repository with label "wip".
 
 For each open pull request, following the steps:
 1. Fetch the comments start with "[need fix]" and without thumb up reaction.
@@ -13,4 +13,5 @@ For each open pull request, following the steps:
 6. Push the commit.
 7. Use `gh` command to add a thumb up reaction to all addressed comments.
 8. Use `gh` command to add a comment summarizing the changes made.
-9. Go back to the main branch to start clear for the next pull request.
+9. Use 'gh' command to remove the "wip" label from the pull request.
+10. Go back to the main branch to start clear for the next pull request.
