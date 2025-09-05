@@ -936,24 +936,41 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                                 children: [
                                   const CircularProgressIndicator(),
                                   const SizedBox(height: 16),
-                                  if (_initializationProgress != null) // Check for initialization progress
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 32.0,
-                                      ),
-                                      child: LinearProgressIndicator(
-                                        value:
-                                            _initializationProgress, // Use initialization progress
-                                      ),
+                                  if (_initializationProgress != null)
+                                    Column(
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 32.0,
+                                          ),
+                                          child: LinearProgressIndicator(
+                                            value: _initializationProgress,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          '${(_initializationProgress! * 100).toInt()}% Initializing...',
+                                          style: Theme.of(context).textTheme.bodyMedium,
+                                        ),
+                                      ],
                                     )
-                                  else if (_downloadProgress != null) // Fallback to download progress
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 32.0,
-                                      ),
-                                      child: LinearProgressIndicator(
-                                        value: _downloadProgress,
-                                      ),
+                                  else if (_downloadProgress != null)
+                                    Column(
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 32.0,
+                                          ),
+                                          child: LinearProgressIndicator(
+                                            value: _downloadProgress,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          '${(_downloadProgress! * 100).toInt()}% Downloading...',
+                                          style: Theme.of(context).textTheme.bodyMedium,
+                                        ),
+                                      ],
                                     ),
                                   const SizedBox(height: 8),
                                   Text(_downloadStatus),
