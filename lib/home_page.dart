@@ -423,12 +423,16 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
 
       // Generate response using CactusLM
       if (_agent != null) {
-        final messages = _messages.where((msg) => !msg.isLoading).map((msg) {
+        final List<ChatMessage> messages = [];
+        if (_systemPrompt.isNotEmpty) {
+          messages.add(ChatMessage(role: 'system', content: _systemPrompt));
+        }
+        messages.addAll(_messages.where((msg) => !msg.isLoading).map((msg) {
           return ChatMessage(
             role: msg.isUser ? 'user' : 'assistant',
             content: msg.finalText,
           );
-        }).toList();
+        }).toList());
         final response = await _agent!.completionWithTools(
           messages,
           maxTokens: 2048,
