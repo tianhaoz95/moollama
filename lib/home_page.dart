@@ -935,8 +935,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                           child: TextField(
                             controller: _textController,
                             minLines: 1,
-                            maxLines: 1,
+                            maxLines: 6, // Allow up to 6 lines before scrolling
                             textInputAction: TextInputAction.send,
+                            keyboardType: TextInputType.multiline, // Enable multiline keyboard
                             decoration: InputDecoration(
                               hintText: 'Ask Secret Agent',
                               hintStyle: TextStyle(
