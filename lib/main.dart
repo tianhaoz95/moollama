@@ -918,40 +918,63 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                 },
                 child: Container( // Wrap with Container to fill available space
                   color: Colors.transparent, // Make it transparent so content below is visible
-                  child: _isLoading
+                  child: _isFirstRun
                       ? Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const CircularProgressIndicator(),
-                              const SizedBox(height: 16),
-                              if (_initializationProgress !=
-                                  null) // Check for initialization progress
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 32.0,
-                                  ),
-                                  child: LinearProgressIndicator(
-                                    value:
-                                        _initializationProgress, // Use initialization progress
-                                  ),
-                                )
-                              else if (_downloadProgress !=
-                                  null) // Fallback to download progress
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 32.0,
-                                  ),
-                                  child: LinearProgressIndicator(
-                                    value: _downloadProgress,
-                                  ),
-                                ),
-                              const SizedBox(height: 8),
-                              Text(_downloadStatus),
+                              const Text(
+                                'Welcome! To get started, please download the model.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 18),
+                              ),
+                              const SizedBox(height: 20),
+                              ElevatedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _isFirstRun = false; // Mark first run as complete
+                                  });
+                                  if (_selectedAgent != null) {
+                                    _initializeCactusModel(_selectedAgent!.modelName);
+                                  }
+                                },
+                                child: const Text('Download Model'),
+                              ),
                             ],
                           ),
                         )
-                      : FutureBuilder<List<Message>>(
+                      : _isLoading
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const CircularProgressIndicator(),
+                                  const SizedBox(height: 16),
+                                  if (_initializationProgress != null) // Check for initialization progress
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 32.0,
+                                      ),
+                                      child: LinearProgressIndicator(
+                                        value:
+                                            _initializationProgress, // Use initialization progress
+                                      ),
+                                    )
+                                  else if (_downloadProgress != null) // Fallback to download progress
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 32.0,
+                                      ),
+                                      child: LinearProgressIndicator(
+                                        value: _downloadProgress,
+                                      ),
+                                    ),
+                                  const SizedBox(height: 8),
+                                  Text(_downloadStatus),
+                                ],
+                              ),
+                            )
+                          : FutureBuilder<List<Message>>(
                           future: _messagesFuture,
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
