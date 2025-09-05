@@ -665,6 +665,38 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     );
   }
 
+  void _showAttachmentOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext bc) {
+        return SafeArea(
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take Photo'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  // Implement take photo functionality
+                  widget.talker.info('Take Photo selected');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose from Gallery'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  // Implement choose from gallery functionality
+                  widget.talker.info('Choose from Gallery selected');
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -967,7 +999,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                         const SizedBox(width: 8),
                         BottomBarButton(
                           icon: Icons.attach_file,
-                          onPressed: null, // Disabled
+                          onPressed: () {
+                            _showAttachmentOptions(context);
+                          },
                         ),
                         const SizedBox(width: 8),
                         BottomBarButton(
