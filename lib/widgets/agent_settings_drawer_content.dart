@@ -269,26 +269,6 @@ class _AgentSettingsDrawerContentState
                         ),
                       ],
                     ),
-                    const SizedBox(height: 24),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Available Models'),
-                        Wrap(
-                          spacing: 8.0,
-                          runSpacing: 4.0,
-                          children: _availableModels
-                              .map(
-                                (model) => Chip(
-                                  label: Text(model),
-                                  backgroundColor: Colors.grey[200],
-                                  labelStyle: TextStyle(color: Colors.black),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      ],
-                    ),
                   ],
                 ),
               ),

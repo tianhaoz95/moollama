@@ -4,12 +4,32 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:restart_app/restart_app.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
-
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   final int? agentId;
-  final Talker talker; // Add talker to constructor
+  final Talker talker;
 
-  const SettingsPage({super.key, this.agentId, required this.talker}); // Update constructor
+  const SettingsPage({super.key, this.agentId, required this.talker});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  List<String> _availableModels = [];
+  final DatabaseHelper _dbHelper = DatabaseHelper();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAvailableModels();
+  }
+
+  Future<void> _loadAvailableModels() async {
+    final models = await _dbHelper.getDistinctModelNames();
+    setState(() {
+      _availableModels = models;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +48,7 @@ class SettingsPage extends StatelessWidget {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => TalkerScreen(
-                        talker: talker, // Use talker from constructor
+                        talker: widget.talker, // Use widget.talker
                         theme: TalkerScreenTheme(
                           cardColor: Theme.of(context).cardColor,
                           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -41,7 +61,6 @@ class SettingsPage extends StatelessWidget {
                 },
               ),
             ),
-            
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
@@ -69,6 +88,26 @@ class SettingsPage extends StatelessWidget {
                 },
                 child: const Text('Delete All Data'),
               ),
+            ),
+            const SizedBox(height: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Available Models'),
+                Wrap(
+                  spacing: 8.0,
+                  runSpacing: 4.0,
+                  children: _availableModels
+                      .map(
+                        (model) => Chip(
+                          label: Text(model),
+                          backgroundColor: Colors.grey[200],
+                          labelStyle: TextStyle(color: Colors.black),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ],
             ),
           ],
         ),
