@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:moollama/database_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:moollama/models.dart';
 import 'package:restart_app/restart_app.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
@@ -15,7 +16,7 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  List<String> _availableModels = [];
+  List<Model> _availableModels = [];
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
   @override
@@ -25,9 +26,9 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _loadAvailableModels() async {
-    final models = await _dbHelper.getDistinctModelNames();
+    final models = await _dbHelper.getModels();
     setState(() {
-      _availableModels = models;
+      _availableModels = models.map((map) => Model.fromMap(map)).toList();
     });
   }
 
@@ -104,25 +105,127 @@ class _SettingsPageState extends State<SettingsPage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Available Models'),
-                Wrap(
-                  spacing: 8.0,
-                  runSpacing: 4.0,
-                  children: _availableModels
-                      .map(
-                        (model) => Chip(
-                          label: Text(model),
-                          backgroundColor: Colors.grey[200],
-                          labelStyle: TextStyle(color: Colors.black),
+                const Text('Available Models', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: _availableModels.length,
+                    itemBuilder: (context, index) {
+                      final model = _availableModels[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: ListTile(
+                          title: Text(model.name),
+                          subtitle: Text(model.url),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit),
+                                onPressed: () => _editModelDialog(context, model),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete),
+                                onPressed: () => _deleteModel(model),
+                              ),
+                            ],
+                          ),
                         ),
-                      )
-                      .toList(),
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
           ],
         ),
       ),
+    );
+  }
+
+  void _editModelDialog(BuildContext context, Model model) {
+    final TextEditingController nameController = TextEditingController(text: model.name);
+    final TextEditingController urlController = TextEditingController(text: model.url);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Edit Model'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Model Name'),
+              ),
+              TextField(
+                controller: urlController,
+                decoration: const InputDecoration(labelText: 'Model URL'),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Save'),
+              onPressed: () async {
+                if (nameController.text.isNotEmpty && urlController.text.isNotEmpty) {
+                  final updatedModel = Model(
+                    id: model.id,
+                    name: nameController.text,
+                    url: urlController.text,
+                  );
+                  await _dbHelper.updateModel(updatedModel.toMap());
+                  _loadAvailableModels(); // Refresh the list
+                  if (!context.mounted) return;
+                  Navigator.of(context).pop();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Name and URL cannot be empty.')),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _deleteModel(Model model) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Deletion'),
+          content: Text('Are you sure you want to delete ${model.name}?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Delete'),
+              onPressed: () async {
+                if (model.id != null) {
+                  await _dbHelper.deleteModel(model.id!);
+                  _loadAvailableModels(); // Refresh the list
+                  if (!context.mounted) return;
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -240,15 +343,20 @@ class _SettingsPageState extends State<SettingsPage> {
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () {
-                // TODO: Implement logic to add the model
+              onPressed: () async {
                 final String nickname = nicknameController.text;
                 final String url = urlController.text;
-                print('Nickname: $nickname, URL: $url'); // For debugging
-                Navigator.of(context).pop(); // Dismiss the dialog
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Model add logic not yet implemented.')),
-                );
+                if (nickname.isNotEmpty && url.isNotEmpty) {
+                  final newModel = Model(name: nickname, url: url);
+                  await _dbHelper.insertModel(newModel.toMap());
+                  _loadAvailableModels(); // Refresh the list
+                  if (!context.mounted) return;
+                  Navigator.of(context).pop();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Nickname and URL cannot be empty.')),
+                  );
+                }
               },
               child: const Text('Add'),
             ),

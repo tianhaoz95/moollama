@@ -53,3 +53,27 @@ class Message {
     this.isLoading = false,
   });
 }
+
+class Model {
+  int? id;
+  String name;
+  String url;
+
+  Model({this.id, required this.name, required this.url});
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'url': url,
+    };
+  }
+
+  static Model fromMap(Map<String, dynamic> map) {
+    return Model(
+      id: map['id'],
+      name: map['name'],
+      url: map['url'],
+    );
+  }
+}
