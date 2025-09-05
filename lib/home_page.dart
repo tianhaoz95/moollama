@@ -20,6 +20,7 @@ import 'package:moollama/models.dart';
 import 'package:moollama/widgets/bottom_bar_button.dart';
 import 'package:moollama/widgets/agent_item.dart';
 import 'package:moollama/widgets/agent_settings_drawer_content.dart';
+import 'package:blur/blur.dart';
 
 final talker = TalkerFlutter.init();
 
@@ -82,26 +83,31 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   void _showListeningPopup(BuildContext context) async {
     _listeningPopupEntry = OverlayEntry(
       builder: (context) => Center(
-        child: Card(
-          color: Theme.of(context).dialogBackgroundColor.withOpacity(0.7),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30.0),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SiriWaveform.ios9(),
-                const SizedBox(height: 10),
-                Text(
-                  _lastWords.isEmpty ? 'Listening...' : _lastWords,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontSize: 24,
+        child: Blur(
+          blur: 10.0,
+          blurColor: Theme.of(context).dialogBackgroundColor.withOpacity(0.7),
+          borderRadius: BorderRadius.circular(30.0),
+          child: Card(
+            color: Colors.transparent, // Make card transparent as blur handles color
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30.0),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SiriWaveform.ios9(),
+                  const SizedBox(height: 10),
+                  Text(
+                    _lastWords.isEmpty ? 'Listening...' : _lastWords,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontSize: 24,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
