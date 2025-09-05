@@ -290,6 +290,52 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   }
 
   Future<void> _loadAgents() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasLaunchedBefore = prefs.getBool('has_launched_before') ?? false;
+
+    if (!hasLaunchedBefore) {
+      // First time launch
+      await prefs.setBool('has_launched_before', true);
+      final bool? downloadConfirmed = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Download Model'),
+            content: const Text(
+                'This is the first time you are opening the app. Do you want to download the AI model now? This may take some time and data.'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('No'),
+                onPressed: () {
+                  Navigator.of(context).pop(false);
+                },
+              ),
+              TextButton(
+                child: const Text('Yes'),
+                onPressed: () {
+                  Navigator.of(context).pop(true);
+                },
+              ),
+            ],
+          );
+        },
+      );
+
+      if (downloadConfirmed == true) {
+        await _performAgentLoadingAndInitialization();
+      } else {
+        setState(() {
+          _isLoading = false;
+          _downloadStatus = 'Model not downloaded.';
+        });
+      }
+    } else {
+      // Not first time launch, proceed as usual
+      await _performAgentLoadingAndInitialization();
+    }
+  }
+
+  Future<void> _performAgentLoadingAndInitialization() async {
     final agentsFromDb = await _dbHelper.getAgents();
     if (agentsFromDb.isEmpty) {
       final defaultAgent = Agent(
