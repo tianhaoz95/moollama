@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:moollama/database_helper.dart';
 import 'package:moollama/home_page.dart'; // Import the new home page
 import 'package:feedback/feedback.dart';
-import 'package:feature_flags/feature_flags.dart';
+
 import 'package:talker_flutter/talker_flutter.dart'; // Import talker
 
 final talker = TalkerFlutter.init(); // Global talker instance
@@ -46,9 +46,7 @@ class MyApp extends StatelessWidget {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
       builder: (context, currentMode, child) {
-        return Features(
-          flags: const [], // No features enabled by default
-          child: MaterialApp(
+        return MaterialApp(
             debugShowCheckedModeBanner: false,
             theme: ThemeData.light(),
             darkTheme: ThemeData.dark().copyWith(
@@ -56,8 +54,7 @@ class MyApp extends StatelessWidget {
             ),
             themeMode: currentMode,
             home: SecretAgentHome(themeNotifier: themeNotifier, talker: talker), // Pass themeNotifier and talker
-          ),
-        );
+          );
       },
     );
   }

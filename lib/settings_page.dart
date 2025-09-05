@@ -3,7 +3,7 @@ import 'package:moollama/database_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:restart_app/restart_app.dart';
 import 'package:talker_flutter/talker_flutter.dart';
-import 'package:feature_flags/feature_flags.dart';
+
 
 class SettingsPage extends StatelessWidget {
   final int? agentId;
@@ -41,23 +41,7 @@ class SettingsPage extends StatelessWidget {
                 },
               ),
             ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.flag),
-                label: const Text('Manage Feature Flags'),
-                onPressed: () {
-                  DebugFeatures.show(
-                    context,
-                    availableFeatures: [
-                      Feature('DECREMENT', name: 'Decrement'),
-                      Feature('RESET', name: 'Reset'),
-                    ],
-                  );
-                },
-              ), // Corrected: Removed extra '\n' here
-            ),
+            
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
