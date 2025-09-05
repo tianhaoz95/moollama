@@ -1044,11 +1044,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            BottomBarButton(
-                              icon: Icons.camera_alt,
-                              onPressed: null, // Disabled
-                            ),
-                            const SizedBox(width: 8),
+                            
                             BottomBarButton(
                               icon: Icons.attach_file,
                               onPressed: () {
