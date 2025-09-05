@@ -17,6 +17,43 @@ Moollama is a Flutter-based personal AI agent application that allows you to int
 
 This project is a starting point for a Flutter application.
 
+### Running the Application
+
+To get the Moollama application up and running on your device or emulator, follow these steps:
+
+1.  **Ensure Flutter is installed:** If you haven't already, install Flutter by following the official guide: [Flutter Installation Guide](https://flutter.dev/docs/get-started/install)
+2.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/tianhaoz95/moollama.git
+    cd moollama
+    ```
+3.  **Get dependencies:**
+    ```bash
+    flutter pub get
+    ```
+4.  **Run the application:**
+    ```bash
+    flutter run
+    ```
+    This command will launch the app on your connected device or emulator.
+
+### Building the APK
+
+To build a release APK for Android:
+
+```bash
+flutter build apk --release
+```
+The generated APK will be located in `build/app/outputs/flutter-apk/app-release.apk`.
+
+### Running Unit Tests
+
+To execute the unit tests for the project:
+
+```bash
+flutter test
+```
+
 A few resources to get you started if this is your first Flutter project:
 
 - [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
