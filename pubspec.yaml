@@ -53,6 +53,7 @@ dependencies:
   shake: ^2.2.0 # Add shake package
   feedback: ^3.0.0 # Add feedback package
   share_plus: ^11.1.0
+  blur: ^3.1.0 # Added for Issue #67
 
 dev_dependencies:
   flutter_test:
