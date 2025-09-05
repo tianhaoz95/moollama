@@ -13,4 +13,5 @@ For each open pull request, following the steps:
 6. Push the commit.
 7. Use `gh` command to add a thumb up reaction to all addressed comments.
 8. Use `gh` command to add a comment summarizing the changes made.
-9. Go back to the main branch to start clear for the next pull request.
+9. Use 'gh' command to remove the "wip" label from the pull request.
+10. Go back to the main branch to start clear for the next pull request.
