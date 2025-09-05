@@ -11,13 +11,15 @@ class AgentSettingsDrawerContent extends StatefulWidget {
     required this.initialContextWindowSize,
     required this.onApply,
     this.initialSystemPrompt,
+    required this.initialIsTtsEnabled, // New parameter
   });
 
   final String initialModelName;
   final double initialCreativity;
   final int initialContextWindowSize;
-  final Function(String, double, int, List<String>, String) onApply;
+  final Function(String, double, int, List<String>, String, bool) onApply; // Updated signature
   final String? initialSystemPrompt;
+  final bool initialIsTtsEnabled; // New field
 
   @override
   State<AgentSettingsDrawerContent> createState() =>
@@ -35,6 +37,7 @@ class _AgentSettingsDrawerContentState
   List<String> _selectedTools = [];
   final DatabaseHelper _dbHelper = DatabaseHelper();
   late final TextEditingController _systemPromptController;
+  late bool _isTtsEnabled; // New class member
 
   @override
   void initState() {
@@ -45,6 +48,7 @@ class _AgentSettingsDrawerContentState
         .indexOf(widget.initialContextWindowSize)
         .toDouble();
     _systemPromptController = TextEditingController(text: widget.initialSystemPrompt); // Initialize the controller
+    _isTtsEnabled = widget.initialIsTtsEnabled; // Initialize _isTtsEnabled
     _loadAvailableModels();
     _loadAvailableTools(); // Load available tools dynamically
     _loadSelectedTools(); // Load selected tools
@@ -270,6 +274,16 @@ class _AgentSettingsDrawerContentState
                         ),
                       ],
                     ),
+                    const SizedBox(height: 24), // Add spacing
+                    SwitchListTile(
+                      title: const Text('Enable Text-to-Speech'),
+                      value: _isTtsEnabled,
+                      onChanged: (bool value) {
+                        setState(() {
+                          _isTtsEnabled = value;
+                        });
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -291,6 +305,7 @@ class _AgentSettingsDrawerContentState
                     _contextWindowSizes[_contextWindowSliderValue.round()],
                     _selectedTools,
                     _systemPromptController.text, // Pass system prompt
+                    _isTtsEnabled, // Pass TTS setting
                   );
                   Navigator.of(context).pop(); // Close the drawer
                 },

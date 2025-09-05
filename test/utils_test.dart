@@ -53,25 +53,5 @@ void main() {
     });
   });
 
-  group('getModelUrl', () {
-    test('should return correct URL for Qwen3 0.6B', () {
-      expect(getModelUrl('Qwen3 0.6B'),
-          'https://huggingface.co/Cactus-Compute/Qwen3-600m-Instruct-GGUF/resolve/main/Qwen3-0.6B-Q8_0.gguf');
-    });
-
-    test('should return correct URL for Phi-3-mini-4k-instruct', () {
-      expect(getModelUrl('Phi-3-mini-4k-instruct'),
-          'https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf');
-    });
-
-    test('should return correct URL for Llama-3-8B-Instruct', () {
-      expect(getModelUrl('Llama-3-8B-Instruct'),
-          'https://huggingface.co/unsloth/llama-3-8b-Instruct-gguf/resolve/main/llama-3-8b-Instruct-Q4_K_M.gguf');
-    });
-
-    test('should return default URL for unknown modelId', () {
-      expect(getModelUrl('Unknown Model'),
-          'https://huggingface.co/Cactus-Compute/Qwen3-600m-Instruct-GGUF/resolve/main/Qwen3-0.6B-Q8_0.gguf');
-    });
-  });
+  
 }

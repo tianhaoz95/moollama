@@ -21,6 +21,7 @@ import 'package:moollama/widgets/bottom_bar_button.dart';
 import 'package:moollama/widgets/agent_item.dart';
 import 'package:moollama/widgets/agent_settings_drawer_content.dart';
 import 'package:blur/blur.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 final talker = TalkerFlutter.init();
 
@@ -56,6 +57,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   String _lastWords = '';
   String _systemPrompt = ''; // New field for system prompt
   late ShakeDetector _shakeDetector;
+  late FlutterTts _flutterTts;
+  bool _isTtsEnabled = false;
 
   void _handleAgentLongPress(Agent agent) async {
     if (_agents.length == 1) {
@@ -142,6 +145,21 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     });
   }
 
+  Future<void> _loadTtsSetting() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isTtsEnabled = prefs.getBool('isTtsEnabled') ?? false;
+    });
+  }
+
+  Future<void> _setTtsEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isTtsEnabled', enabled);
+    setState(() {
+      _isTtsEnabled = enabled;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -152,6 +170,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       onError: (errorNotification) =>
           widget.talker.info('Speech recognition error: $errorNotification'),
     );
+
+    _flutterTts = FlutterTts();
+    _loadTtsSetting(); // Load TTS setting from SharedPreferences
 
     _shakeDetector = ShakeDetector.autoStart(
       onPhoneShake: () async {
@@ -337,6 +358,23 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   }
 
   Future<void> _performAgentLoadingAndInitialization() async {
+    final modelsInDb = await _dbHelper.getModels();
+    if (modelsInDb.isEmpty) {
+      // Insert default models if none exist
+      await _dbHelper.insertModel({
+        'name': 'Qwen3 0.6B',
+        'url': 'https://huggingface.co/Cactus-Compute/Qwen3-600m-Instruct-GGUF/resolve/main/Qwen3-0.6B-Q8_0.gguf'
+      });
+      await _dbHelper.insertModel({
+        'name': 'Qwen3 1.7B',
+        'url': 'https://huggingface.co/Cactus-Compute/Qwen3-1.7B-Instruct-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf'
+      });
+      await _dbHelper.insertModel({
+        'name': 'Qwen3 4B',
+        'url': 'https://huggingface.co/Cactus-Compute/Qwen3-4B-Instruct-GGUF/resolve/main/Qwen3-4B-Q4_K_M.gguf'
+      });
+    }
+
     final agentsFromDb = await _dbHelper.getAgents();
     if (agentsFromDb.isEmpty) {
       final defaultAgent = Agent(
@@ -475,6 +513,10 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           );
         });
         _scrollToBottom();
+
+        if (_isTtsEnabled && finalText.isNotEmpty) {
+          _flutterTts.speak(finalText);
+        }
       }
     }
   }
@@ -811,7 +853,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         initialCreativity: _creativity,
         initialContextWindowSize: _contextWindowSize,
         initialSystemPrompt: _systemPrompt, // Pass system prompt
-        onApply: (modelName, creativity, contextWindowSize, selectedTools, systemPrompt) async {
+        initialIsTtsEnabled: _isTtsEnabled, // Pass TTS setting
+        onApply: (modelName, creativity, contextWindowSize, selectedTools, systemPrompt, isTtsEnabled) async {
           bool needsReinitialization =
               _selectedModelName != modelName ||
               _contextWindowSize != contextWindowSize;
@@ -821,6 +864,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             _creativity = creativity;
             _contextWindowSize = contextWindowSize;
             _systemPrompt = systemPrompt; // Update _systemPrompt
+            _isTtsEnabled = isTtsEnabled; // Update _isTtsEnabled
             if (_selectedAgent != null) {
               _selectedAgent!.modelName = modelName;
               _dbHelper.updateAgent(_selectedAgent!.toMap());
@@ -832,6 +876,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             final prefs = await SharedPreferences.getInstance();
             await prefs.setString('systemPrompt_${_selectedAgent!.id}', systemPrompt);
           }
+          // Save TTS setting to SharedPreferences
+          await _setTtsEnabled(isTtsEnabled);
 
           if (needsReinitialization) {
             _initializeCactusModel(modelName, systemPrompt: systemPrompt);
