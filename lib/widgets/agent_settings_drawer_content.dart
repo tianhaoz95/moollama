@@ -297,6 +297,19 @@ class _AgentSettingsDrawerContentState
               ),
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  // Implement "Bring My Own" functionality
+                  print('Bring My Own button pressed');
+                },
+                child: const Text('Bring My Own'),
+              ),
+            ),
+          ),
         ],
       ),
     );
