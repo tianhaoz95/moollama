@@ -1,6 +1,17 @@
-# secret_agent
+# Moollama - Your Personal AI Agent
 
-A new Flutter project.
+Moollama is a Flutter-based personal AI agent application that allows you to interact with various AI models and tools.
+
+## Features
+
+*   **AI Chat:** Engage in conversations with different AI models.
+*   **Customizable Agents:** Create and manage multiple AI agents with distinct personalities and model configurations.
+*   **Model Management:** Select from available AI models and configure their creativity and context window size.
+*   **Tool Integration:** Utilize various tools (e.g., web fetching, email sending, current time) to enhance AI capabilities.
+*   **Attachment Support:** Attach files (e.g., photos from camera or gallery) to your conversations.
+*   **Feedback Mechanism:** Provide feedback easily (debug mode only).
+*   **First-time User Experience:** Prompts user to download AI model on first launch.
+*   **Bring Your Own Model:** Option to integrate custom AI models.
 
 ## Getting Started
 
