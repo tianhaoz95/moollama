@@ -20,6 +20,7 @@ import 'package:moollama/models.dart';
 import 'package:moollama/widgets/bottom_bar_button.dart';
 import 'package:moollama/widgets/agent_item.dart';
 import 'package:moollama/widgets/agent_settings_drawer_content.dart';
+import 'package:flutter/foundation.dart';
 
 final talker = TalkerFlutter.init();
 
@@ -153,39 +154,41 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
 
     _shakeDetector = ShakeDetector.autoStart(
       onPhoneShake: () async {
-        // Show feedback UI
-        BetterFeedback.of(context).show(
-          (feedback) async {
-            // Save the screenshot to a temporary file
-            final directory = await getTemporaryDirectory();
-            final file = File('${directory.path}/feedback_screenshot.png');
-            await file.writeAsBytes(feedback.screenshot);
+        // Show feedback UI only in debug mode
+        if (kDebugMode) {
+          BetterFeedback.of(context).show(
+            (feedback) async {
+              // Save the screenshot to a temporary file
+              final directory = await getTemporaryDirectory();
+              final file = File('${directory.path}/feedback_screenshot.png');
+              await file.writeAsBytes(feedback.screenshot);
 
-            widget.talker.info('Feedback saved to: ${file.path}');
-            widget.talker.info('Feedback text: ${feedback.text}');
-            // In a real app, you would send this feedback to a backend service.
-            try {
-              final result = await Share.shareXFiles([XFile(file.path)], text: feedback.text);
-              if (result.status == ShareResultStatus.unavailable) {
-                widget.talker.warning('Sharing is unavailable on this device.');
+              widget.talker.info('Feedback saved to: ${file.path}');
+              widget.talker.info('Feedback text: ${feedback.text}');
+              // In a real app, you would send this feedback to a backend service.
+              try {
+                final result = await Share.shareXFiles([XFile(file.path)], text: feedback.text);
+                if (result.status == ShareResultStatus.unavailable) {
+                  widget.talker.warning('Sharing is unavailable on this device.');
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Sharing is not available on this device.'),
+                    ),
+                  );
+                }
+              } catch (e, s) {
+                widget.talker.error('Error sharing feedback', e, s);
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Sharing is not available on this device.'),
+                    content: Text('Could not share feedback.'),
                   ),
                 );
               }
-            } catch (e, s) {
-              widget.talker.error('Error sharing feedback', e, s);
-              if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Could not share feedback.'),
-                ),
-              );
-            }
-          },
-        );
+            },
+          );
+        }
       },
     );
   }
