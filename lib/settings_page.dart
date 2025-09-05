@@ -36,108 +36,110 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.bug_report_outlined),
-                label: const Text('View Logs'),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => TalkerScreen(
-                        talker: widget.talker, // Use widget.talker
-                        theme: TalkerScreenTheme(
-                          cardColor: Theme.of(context).cardColor,
-                          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                          textColor:
-                              Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: () {
-                  _confirmAndDeletePreferences(context);
-                },
-                child: const Text('Delete All Preferences'),
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: () {
-                  _confirmAndDeleteData(context);
-                },
-                child: const Text('Delete All Data'),
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.add),
-                label: const Text('Add Model'),
-                onPressed: () {
-                  _showAddModelDialog(context);
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Available Models', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: _availableModels.length,
-                    itemBuilder: (context, index) {
-                      final model = _availableModels[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: ListTile(
-                          title: Text(model.name),
-                          subtitle: Text(model.url),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit),
-                                onPressed: () => _editModelDialog(context, model),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete),
-                                onPressed: () => _deleteModel(model),
-                              ),
-                            ],
+      body: Expanded(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.bug_report_outlined),
+                  label: const Text('View Logs'),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => TalkerScreen(
+                          talker: widget.talker, // Use widget.talker
+                          theme: TalkerScreenTheme(
+                            cardColor: Theme.of(context).cardColor,
+                            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                            textColor:
+                                Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white,
                           ),
                         ),
-                      );
-                    },
-                  ),
+                      ),
+                    );
+                  },
                 ),
-              ],
-            ),
-          ],
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () {
+                    _confirmAndDeletePreferences(context);
+                  },
+                  child: const Text('Delete All Preferences'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () {
+                    _confirmAndDeleteData(context);
+                  },
+                  child: const Text('Delete All Data'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Model'),
+                  onPressed: () {
+                    _showAddModelDialog(context);
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Available Models', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: _availableModels.length,
+                      itemBuilder: (context, index) {
+                        final model = _availableModels[index];
+                        return Card(
+                          margin: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: ListTile(
+                            title: Text(model.name),
+                            subtitle: Text(model.url),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit),
+                                  onPressed: () => _editModelDialog(context, model),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete),
+                                  onPressed: () => _deleteModel(model),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

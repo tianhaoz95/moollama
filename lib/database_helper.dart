@@ -17,6 +17,18 @@ class DatabaseHelper {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
     }
+    // Ensure default models are present
+    final db = await database;
+    for (var entry in defaultModelUrls.entries) {
+      final existingModels = await db.query(
+        'models',
+        where: 'name = ?',
+        whereArgs: [entry.key],
+      );
+      if (existingModels.isEmpty) {
+        await db.insert('models', {'name': entry.key, 'url': entry.value});
+      }
+    }
   }
 
   Future<Database> get database async {
