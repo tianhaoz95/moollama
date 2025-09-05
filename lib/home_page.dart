@@ -20,6 +20,7 @@ import 'package:moollama/models.dart';
 import 'package:moollama/widgets/bottom_bar_button.dart';
 import 'package:moollama/widgets/agent_item.dart';
 import 'package:moollama/widgets/agent_settings_drawer_content.dart';
+import 'package:blur/blur.dart';
 
 final talker = TalkerFlutter.init();
 
@@ -83,7 +84,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     _listeningPopupEntry = OverlayEntry(
       builder: (context) => Center(
         child: Card(
-          color: Theme.of(context).dialogBackgroundColor.withOpacity(0.7),
+          color: Theme.of(context).dialogBackgroundColor, // Use dialog background color
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30.0),
           ),
@@ -795,244 +796,256 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           }
         },
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Top bar
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              child: Row(
-                children: [
-                  // Hamburger menu
-                  Builder(
-                    builder: (context) {
-                      return IconButton(
-                        icon: const Icon(Icons.menu),
-                        onPressed: () {
-                          Scaffold.of(context).openDrawer();
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              children: [
+                // Top bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 8.0,
+                  ),
+                  child: Row(
+                    children: [
+                      // Hamburger menu
+                      Builder(
+                        builder: (context) {
+                          return IconButton(
+                            icon: const Icon(Icons.menu),
+                            onPressed: () {
+                              Scaffold.of(context).openDrawer();
+                            },
+                          );
                         },
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 16),
-                  // App name
-                  Text(
-                    _selectedAgent?.name ?? 'Secret Agent',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const Spacer(),
-                  Builder(
-                    builder: (BuildContext innerContext) {
-                      return IconButton(
-                        icon: const Icon(Icons.smart_toy_outlined),
-                        onPressed: () {
-                          _showCactusModelInfo(innerContext);
+                      ),
+                      const SizedBox(width: 16),
+                      // App name
+                      Text(
+                        _selectedAgent?.name ?? 'Secret Agent',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const Spacer(),
+                      Builder(
+                        builder: (BuildContext innerContext) {
+                          return IconButton(
+                            icon: const Icon(Icons.smart_toy_outlined),
+                            onPressed: () {
+                              _showCactusModelInfo(innerContext);
+                            },
+                          );
                         },
-                      );
-                    },
-                  ),
-                  ValueListenableBuilder<ThemeMode>(
-                    valueListenable: widget.themeNotifier,
-                    builder: (context, currentMode, child) {
-                      return DropdownButton<ThemeMode>(
-                        underline: const SizedBox(),
-                        icon: const SizedBox.shrink(),
-                        value: currentMode,
-                        onChanged: (ThemeMode? newValue) {
-                          if (newValue != null) {
-                            widget.themeNotifier.value = newValue;
-                          }
-                        },
-                        items: const [
-                          DropdownMenuItem(
-                            value: ThemeMode.light,
-                            child: Icon(Icons.light_mode),
-                          ),
-                          DropdownMenuItem(
-                            value: ThemeMode.dark,
-                            child: Icon(Icons.dark_mode),
-                          ),
-                          DropdownMenuItem(
-                            value: ThemeMode.system,
-                            child: Icon(Icons.brightness_auto),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: GestureDetector(
-                onLongPressStart: (_) => _showListeningPopup(context),
-                onLongPressEnd: (_) {
-                  final transcript = _lastWords;
-                  _hideListeningPopup();
-                  if (transcript.isNotEmpty) {
-                    _textController.text = transcript;
-                    _sendMessage();
-                  }
-                },
-                child: Container( // Wrap with Container to fill available space
-                  color: Colors.transparent, // Make it transparent so content below is visible
-                  child: _isLoading
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const CircularProgressIndicator(),
-                              const SizedBox(height: 16),
-                              if (_initializationProgress != null) // Check for initialization progress
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 32.0,
-                                  ),
-                                  child: LinearProgressIndicator(
-                                    value:
-                                        _initializationProgress, // Use initialization progress
-                                  ),
-                                )
-                              else if (_downloadProgress != null) // Fallback to download progress
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 32.0,
-                                  ),
-                                  child: LinearProgressIndicator(
-                                    value: _downloadProgress,
-                                  ),
-                                ),
-                              const SizedBox(height: 8),
-                              Text(_downloadStatus),
+                      ),
+                      ValueListenableBuilder<ThemeMode>(
+                        valueListenable: widget.themeNotifier,
+                        builder: (context, currentMode, child) {
+                          return DropdownButton<ThemeMode>(
+                            underline: const SizedBox(),
+                            icon: const SizedBox.shrink(),
+                            value: currentMode,
+                            onChanged: (ThemeMode? newValue) {
+                              if (newValue != null) {
+                                widget.themeNotifier.value = newValue;
+                              }
+                            },
+                            items: const [
+                              DropdownMenuItem(
+                                value: ThemeMode.light,
+                                child: Icon(Icons.light_mode),
+                              ),
+                              DropdownMenuItem(
+                                value: ThemeMode.dark,
+                                child: Icon(Icons.dark_mode),
+                              ),
+                              DropdownMenuItem(
+                                value: ThemeMode.system,
+                                child: Icon(Icons.brightness_auto),
+                              ),
                             ],
-                          ),
-                        )
-                      : FutureBuilder<List<Message>>(
-                          future: _messagesFuture,
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const Center(
-                                child: CircularProgressIndicator(),
-                              );
-                            } else if (snapshot.hasError) {
-                              return Center(
-                                child: Text('Error: ${snapshot.error}'),
-                              );
-                            } else if (_messages.isEmpty) {
-                              return Center(
-                                child: Text(
-                                  'Hello!',
-                                  style: TextStyle(
-                                    color: Colors.blue[400],
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              );
-                            } else {
-                              return ListView.builder(
-                                controller: _scrollController,
-                                padding: const EdgeInsets.all(8.0),
-                                itemCount: _messages.length,
-                                itemBuilder: (context, index) {
-                                  return _buildMessageBubble(_messages[index]);
-                                },
-                              );
-                            }
-                          },
-                        ),
-                ),
-              ),
-            ),
-            // Bottom bar
-            Padding(
-              padding: const EdgeInsets.only(
-                bottom: 16.0,
-                left: 12.0,
-                right: 12.0,
-                top: 8.0,
-              ),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey[800]!
-                        : Colors.grey[300]!,
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
+                Expanded(
+                  child: GestureDetector(
+                    onLongPressStart: (_) => _showListeningPopup(context),
+                    onLongPressEnd: (_) {
+                      final transcript = _lastWords;
+                      _hideListeningPopup();
+                      if (transcript.isNotEmpty) {
+                        _textController.text = transcript;
+                        _sendMessage();
+                      }
+                    },
+                    child: Container( // Wrap with Container to fill available space
+                      color: Colors.transparent, // Make it transparent so content below is visible
+                      child: _isLoading
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const CircularProgressIndicator(),
+                                  const SizedBox(height: 16),
+                                  if (_initializationProgress != null) // Check for initialization progress
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 32.0,
+                                      ),
+                                      child: LinearProgressIndicator(
+                                        value:
+                                            _initializationProgress, // Use initialization progress
+                                      ),
+                                    )
+                                  else if (_downloadProgress != null) // Fallback to download progress
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 32.0,
+                                      ),
+                                      child: LinearProgressIndicator(
+                                        value: _downloadProgress,
+                                      ),
+                                    ),
+                                  const SizedBox(height: 8),
+                                  Text(_downloadStatus),
+                                ],
+                              ),
+                            )
+                          : FutureBuilder<List<Message>>(
+                              future: _messagesFuture,
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return const Center(
+                                    child: CircularProgressIndicator(),
+                                  );
+                                } else if (snapshot.hasError) {
+                                  return Center(
+                                    child: Text('Error: ${snapshot.error}'),
+                                  );
+                                } else if (_messages.isEmpty) {
+                                  return Center(
+                                    child: Text(
+                                      'Hello!',
+                                      style: TextStyle(
+                                        color: Colors.blue[400],
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  );
+                                } else {
+                                  return ListView.builder(
+                                    controller: _scrollController,
+                                    padding: const EdgeInsets.all(8.0),
+                                    itemCount: _messages.length,
+                                    itemBuilder: (context, index) {
+                                      return _buildMessageBubble(_messages[index]);
+                                    },
+                                  );
+                                }
+                              },
+                            ),
+                    ),
+                  ),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                // Bottom bar
+                Padding(
+                  padding: const EdgeInsets.only(
+                    bottom: 16.0,
+                    left: 12.0,
+                    right: 12.0,
+                    top: 8.0,
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.grey[800]!
+                            : Colors.grey[300]!,
+                      ),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _textController,
-                            minLines: 1,
-                            maxLines: 6, // Allow up to 6 lines before scrolling
-                            textInputAction: TextInputAction.send,
-                            keyboardType: TextInputType.multiline, // Enable multiline keyboard
-                            decoration: InputDecoration(
-                              hintText: 'Ask Secret Agent',
-                              hintStyle: TextStyle(
-                                color: Theme.of(context).hintColor,
-                              ),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 8,
-                                horizontal: 0,
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _textController,
+                                minLines: 1,
+                                maxLines: 6, // Allow up to 6 lines before scrolling
+                                textInputAction: TextInputAction.send,
+                                keyboardType: TextInputType.multiline, // Enable multiline keyboard
+                                decoration: InputDecoration(
+                                  hintText: 'Ask Secret Agent',
+                                  hintStyle: TextStyle(
+                                    color: Theme.of(context).hintColor,
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 8,
+                                    horizontal: 0,
+                                  ),
+                                ),
+                                style: TextStyle(
+                                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                                ),
+                                onSubmitted: (_) => _sendMessage(),
                               ),
                             ),
-                            style: TextStyle(
-                              color: Theme.of(context).textTheme.bodyLarge?.color,
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            BottomBarButton(
+                              icon: Icons.camera_alt,
+                              onPressed: null, // Disabled
                             ),
-                            onSubmitted: (_) => _sendMessage(),
-                          ),
+                            const SizedBox(width: 8),
+                            BottomBarButton(
+                              icon: Icons.attach_file,
+                              onPressed: null, // Disabled
+                            ),
+                            const SizedBox(width: 8),
+                            BottomBarButton(
+                              icon: Icons.refresh,
+                              onPressed: _resetChat,
+                            ),
+                            const SizedBox(width: 8),
+                            BottomBarButton(
+                              icon: Icons.rocket_launch,
+                              onPressed: _sendMessage,
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        BottomBarButton(
-                          icon: Icons.camera_alt,
-                          onPressed: null, // Disabled
-                        ),
-                        const SizedBox(width: 8),
-                        BottomBarButton(
-                          icon: Icons.attach_file,
-                          onPressed: null, // Disabled
-                        ),
-                        const SizedBox(width: 8),
-                        BottomBarButton(
-                          icon: Icons.refresh,
-                          onPressed: _resetChat,
-                        ),
-                        const SizedBox(width: 8),
-                        BottomBarButton(
-                          icon: Icons.rocket_launch,
-                          onPressed: _sendMessage,
-                        ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
+              ],
+            ),
+          ),
+          if (_isListening)
+            Positioned.fill(
+              child: Blur(
+                blur: 10.0,
+                blurColor: Theme.of(context).dialogBackgroundColor.withOpacity(0.7),
+                child: Container(), // Add an empty Container as a child
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
