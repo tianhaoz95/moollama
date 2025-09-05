@@ -6,4 +6,4 @@ Please identify the top 3 potential improvements to the project codebase by foll
 1. Read through the files in `/lib`
 2. Identify potential imporvements to UI, robustness or even new features. Do not limit to these categories, be creative.
 3. Rank the potential imporvements from step 2 to get the top 3 most important improvement.
-4. Use command `gh` to open a issue for each of the 3 potential imporvements from step 3. The issue should have concise title, detailed and descriptive body to specify what is the potential improvement and a plan on how to implement it.
+4. Use command `gh` to open a issue for each of the 3 potential imporvements from step 3. The issue should have concise title, detailed and descriptive body to specify what is the potential improvement and a plan on how to implement it, and be labeled with "generated".
