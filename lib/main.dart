@@ -24,9 +24,7 @@ void main() async {
     themeNotifier.value = ThemeMode.system;
   }
   runApp(
-    BetterFeedback(
-      child: const MyApp(),
-    ),
+    const MyApp(),
   );
 
   themeNotifier.addListener(() async {
@@ -55,7 +53,21 @@ class MyApp extends StatelessWidget {
               scaffoldBackgroundColor: const Color(0xFF232629),
             ),
             themeMode: currentMode,
-            home: SecretAgentHome(themeNotifier: themeNotifier, talker: talker), // Pass themeNotifier and talker
+            home: BetterFeedback( // Move BetterFeedback here
+              theme: FeedbackThemeData( // Pass theme data
+                background: Theme.of(context).scaffoldBackgroundColor,
+                drawColors: [
+                  Colors.red,
+                  Colors.green,
+                  Colors.blue,
+                  Colors.yellow,
+                  Theme.of(context).colorScheme.primary, // Use primary color from theme
+                ],
+                feedbackSheetColor: Theme.of(context).cardColor,
+                // Add other theme properties as needed for consistency
+              ),
+              child: SecretAgentHome(themeNotifier: themeNotifier, talker: talker), // Pass themeNotifier and talker
+            ),
           ),
         );
       },
