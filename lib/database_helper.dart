@@ -58,14 +58,9 @@ class DatabaseHelper {
         url TEXT
       )
     ''');
-    await _populateDefaultModels(db);
   }
 
-  Future<void> _populateDefaultModels(Database db) async {
-    for (var entry in defaultModelUrls.entries) {
-      await db.insert('models', {'name': entry.key, 'url': entry.value});
-    }
-  }
+  
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     // No migrations yet.

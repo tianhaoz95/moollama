@@ -3,6 +3,7 @@ import 'package:moollama/database_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:restart_app/restart_app.dart';
 import 'package:talker_flutter/talker_flutter.dart';
+import 'package:file_picker/file_picker.dart';
 
 class SettingsPage extends StatefulWidget {
   final int? agentId;
@@ -110,10 +111,12 @@ class _SettingsPageState extends State<SettingsPage> {
                   runSpacing: 4.0,
                   children: _availableModels
                       .map(
-                        (model) => Chip(
-                          label: Text(model),
+                        (modelName) => Chip(
+                          label: Text(modelName),
                           backgroundColor: Colors.grey[200],
-                          labelStyle: TextStyle(color: Colors.black),
+                          labelStyle: const TextStyle(color: Colors.black),
+                          deleteIcon: const Icon(Icons.cancel),
+                          onDeleted: () => _deleteModel(modelName),
                         ),
                       )
                       .toList(),
@@ -192,6 +195,63 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  Future<void> _deleteModel(String modelName) async {
+    final bool confirmDelete = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Deletion'),
+          content: Text('Are you sure you want to delete the model "$modelName"?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    ) ?? false;
+
+    if (confirmDelete) {
+      // Get the model ID from the database using its name
+      final models = await _dbHelper.getModels();
+      final modelToDelete = models.firstWhere((m) => m['name'] == modelName);
+      if (modelToDelete['id'] != null) {
+        await _dbHelper.deleteModel(modelToDelete['id']);
+        _loadAvailableModels(); // Refresh the list
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Model "$modelName" deleted.')),
+        );
+      }
+    }
+  }
+
+  void _pickModelFile(TextEditingController urlController) async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['gguf'],
+    );
+
+    if (result != null && result.files.single.path != null) {
+      urlController.text = result.files.single.path!;
+    } else {
+      // User canceled the picker or no file selected
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No file selected.')),
+      );
+    }
+  }
+
   void _showAddModelDialog(BuildContext context) {
     final TextEditingController nicknameController = TextEditingController();
     final TextEditingController urlController = TextEditingController();
@@ -214,19 +274,14 @@ class _SettingsPageState extends State<SettingsPage> {
               TextField(
                 controller: urlController,
                 decoration: const InputDecoration(
-                  labelText: 'Model URL',
+                  labelText: 'Model URL or File Path',
                 ),
               ),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // TODO: Implement file selection
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('File selection not yet implemented.')),
-                    );
-                  },
+                  onPressed: () => _pickModelFile(urlController),
                   child: const Text('Select from Files'),
                 ),
               ),
@@ -240,14 +295,23 @@ class _SettingsPageState extends State<SettingsPage> {
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () {
-                // TODO: Implement logic to add the model
-                final String nickname = nicknameController.text;
-                final String url = urlController.text;
-                print('Nickname: $nickname, URL: $url'); // For debugging
+              onPressed: () async {
+                final String nickname = nicknameController.text.trim();
+                final String url = urlController.text.trim();
+
+                if (nickname.isEmpty || url.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Nickname and URL/File Path cannot be empty.')),
+                  );
+                  return;
+                }
+
+                await _dbHelper.insertModel({'name': nickname, 'url': url});
+                _loadAvailableModels(); // Refresh the list of available models
+                if (!mounted) return;
                 Navigator.of(context).pop(); // Dismiss the dialog
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Model add logic not yet implemented.')),
+                  SnackBar(content: Text('Model "$nickname" added successfully.')),
                 );
               },
               child: const Text('Add'),
