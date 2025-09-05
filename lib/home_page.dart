@@ -10,7 +10,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:moollama/agent_helper.dart';
-import 'package:feature_flags/feature_flags.dart';
+
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:shake/shake.dart';
 import 'package:feedback/feedback.dart';
