@@ -54,6 +54,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   OverlayEntry? _listeningPopupEntry;
   final stt.SpeechToText _speechToText = stt.SpeechToText();
   String _lastWords = '';
+  String _systemPrompt = ''; // New field for system prompt
   late ShakeDetector _shakeDetector;
 
   void _handleAgentLongPress(Agent agent) async {
@@ -200,7 +201,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
 
   // Removed duplicate and unreferenced _initializeCactusModel method
 
-  Future<void> _initializeCactusModel(String modelName) async {
+  Future<void> _initializeCactusModel(String modelName, {String? systemPrompt}) async {
     try {
       setState(() {
         _isLoading = true;
@@ -358,7 +359,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     // After agents are loaded and a default/selected agent is set, load messages
     _messagesFuture = _loadMessages();
     if (_selectedAgent != null) {
-      _initializeCactusModel(_selectedAgent!.modelName);
+      final prefs = await SharedPreferences.getInstance();
+      _systemPrompt = prefs.getString('systemPrompt_${_selectedAgent!.id}') ?? '';
+      _initializeCactusModel(_selectedAgent!.modelName, systemPrompt: _systemPrompt);
     }
   }
 
@@ -420,12 +423,16 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
 
       // Generate response using CactusLM
       if (_agent != null) {
-        final messages = _messages.where((msg) => !msg.isLoading).map((msg) {
+        final List<ChatMessage> messages = [];
+        if (_systemPrompt.isNotEmpty) {
+          messages.add(ChatMessage(role: 'system', content: _systemPrompt));
+        }
+        messages.addAll(_messages.where((msg) => !msg.isLoading).map((msg) {
           return ChatMessage(
             role: msg.isUser ? 'user' : 'assistant',
             content: msg.finalText,
           );
-        }).toList();
+        }).toList());
         final response = await _agent!.completionWithTools(
           messages,
           maxTokens: 2048,
@@ -481,7 +488,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       // Dispose and re-initialize the agent
       _agent?.unload();
       if (_selectedAgent != null) {
-        _initializeCactusModel(_selectedAgent!.modelName);
+        _initializeCactusModel(_selectedAgent!.modelName, systemPrompt: _systemPrompt);
       }
     }
   }
@@ -673,7 +680,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       _messagesFuture = _loadMessages(); // Reload messages for the new agent
     });
     _initializeCactusModel(
-      _selectedAgent!.modelName,
+      _selectedAgent!.modelName, systemPrompt: _systemPrompt,
     ); // Initialize model for the new agent
   }
 
@@ -803,7 +810,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         initialModelName: _selectedModelName,
         initialCreativity: _creativity,
         initialContextWindowSize: _contextWindowSize,
-        onApply: (modelName, creativity, contextWindowSize, selectedTools) {
+        initialSystemPrompt: _systemPrompt, // Pass system prompt
+        onApply: (modelName, creativity, contextWindowSize, selectedTools, systemPrompt) async {
           bool needsReinitialization =
               _selectedModelName != modelName ||
               _contextWindowSize != contextWindowSize;
@@ -812,19 +820,26 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             _selectedModelName = modelName;
             _creativity = creativity;
             _contextWindowSize = contextWindowSize;
+            _systemPrompt = systemPrompt; // Update _systemPrompt
             if (_selectedAgent != null) {
               _selectedAgent!.modelName = modelName;
               _dbHelper.updateAgent(_selectedAgent!.toMap());
             }
           });
 
-          if (needsReinitialization) {
-            _initializeCactusModel(modelName);
+          // Save system prompt to SharedPreferences
+          if (_selectedAgent != null) {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('systemPrompt_${_selectedAgent!.id}', systemPrompt);
           }
-          // Re-initialize agent with selected tools
+
+          if (needsReinitialization) {
+            _initializeCactusModel(modelName, systemPrompt: systemPrompt);
+          }
+          // Re-initialize agent with new settings
           if (_agent != null) {
             _agent!.unload(); // Unload current agent
-            _initializeCactusModel(modelName); // Re-initialize with new settings
+            _initializeCactusModel(modelName, systemPrompt: systemPrompt); // Re-initialize with new settings
           }
         },
       ),
