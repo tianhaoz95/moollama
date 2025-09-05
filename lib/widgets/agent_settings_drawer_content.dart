@@ -269,6 +269,26 @@ class _AgentSettingsDrawerContentState
                         ),
                       ],
                     ),
+                    const SizedBox(height: 24),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Available Models'),
+                        Wrap(
+                          spacing: 8.0,
+                          runSpacing: 4.0,
+                          children: _availableModels
+                              .map(
+                                (model) => Chip(
+                                  label: Text(model),
+                                  backgroundColor: Colors.grey[200],
+                                  labelStyle: TextStyle(color: Colors.black),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -294,6 +314,19 @@ class _AgentSettingsDrawerContentState
                 },
                 icon: const Icon(Icons.check), // Add the icon here
                 label: const Text('Apply'),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  // Implement "Bring My Own" functionality
+                  print('Bring My Own button pressed');
+                },
+                child: const Text('Bring My Own'),
               ),
             ),
           ),
