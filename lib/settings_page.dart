@@ -90,6 +90,17 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
             const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.add),
+                label: const Text('Add Model'),
+                onPressed: () {
+                  _showAddModelDialog(context);
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -174,6 +185,72 @@ class _SettingsPageState extends State<SettingsPage> {
                 );
               },
               child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showAddModelDialog(BuildContext context) {
+    final TextEditingController nicknameController = TextEditingController();
+    final TextEditingController urlController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Add New Model'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nicknameController,
+                decoration: const InputDecoration(
+                  labelText: 'Model Nickname',
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: urlController,
+                decoration: const InputDecoration(
+                  labelText: 'Model URL',
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    // TODO: Implement file selection
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('File selection not yet implemented.')),
+                    );
+                  },
+                  child: const Text('Select from Files'),
+                ),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Dismiss the dialog
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                // TODO: Implement logic to add the model
+                final String nickname = nicknameController.text;
+                final String url = urlController.text;
+                print('Nickname: $nickname, URL: $url'); // For debugging
+                Navigator.of(context).pop(); // Dismiss the dialog
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Model add logic not yet implemented.')),
+                );
+              },
+              child: const Text('Add'),
             ),
           ],
         );
