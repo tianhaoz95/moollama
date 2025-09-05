@@ -55,6 +55,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   String _lastWords = '';
   late ShakeDetector _shakeDetector;
   bool _isExpanded = false;
+  bool _shakeToFeedbackEnabled = false; // Add this line
 
   void _handleAgentLongPress(Agent agent) async {
     if (_agents.length == 1) {
@@ -152,43 +153,58 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           widget.talker.info('Speech recognition error: $errorNotification'),
     );
 
-    _shakeDetector = ShakeDetector.autoStart(
-      onPhoneShake: () async {
-        // Show feedback UI
-        BetterFeedback.of(context).show(
-          (feedback) async {
-            // Save the screenshot to a temporary file
-            final directory = await getTemporaryDirectory();
-            final file = File('${directory.path}/feedback_screenshot.png');
-            await file.writeAsBytes(feedback.screenshot);
+    _loadShakeToFeedbackSetting().then((_) { // Load setting first
+      if (_shakeToFeedbackEnabled) { // Conditionally initialize
+        _shakeDetector = ShakeDetector.autoStart(
+          onPhoneShake: () async {
+            // Show feedback UI
+            BetterFeedback.of(context).show(
+              (feedback) async {
+                // Save the screenshot to a temporary file
+                final directory = await getTemporaryDirectory();
+                final file = File('${directory.path}/feedback_screenshot.png');
+                await file.writeAsBytes(feedback.screenshot);
 
-            widget.talker.info('Feedback saved to: ${file.path}');
-            widget.talker.info('Feedback text: ${feedback.text}');
-            // In a real app, you would send this feedback to a backend service.
-            try {
-              final result = await Share.shareXFiles([XFile(file.path)], text: feedback.text);
-              if (result.status == ShareResultStatus.unavailable) {
-                widget.talker.warning('Sharing is unavailable on this device.');
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Sharing is not available on this device.'),
-                  ),
-                );
-              }
-            } catch (e, s) {
-              widget.talker.error('Error sharing feedback', e, s);
-              if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Could not share feedback.'),
-                ),
-              );
-            }
+                widget.talker.info('Feedback saved to: ${file.path}');
+                widget.talker.info('Feedback text: ${feedback.text}');
+                // In a real app, you would send this feedback to a backend service.
+                try {
+                  final result = await Share.shareXFiles([XFile(file.path)], text: feedback.text);
+                  if (result.status == ShareResultStatus.unavailable) {
+                    widget.talker.warning('Sharing is unavailable on this device.');
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Sharing is not available on this device.'),
+                      ),
+                    );
+                  }
+                } catch (e, s) {
+                  widget.talker.error('Error sharing feedback', e, s);
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Could not share feedback.'),
+                    ),
+                  );
+                }
+              },
+            );
           },
         );
-      },
-    );
+      } else {
+        // Initialize with waitForStart if not enabled, so dispose() doesn't fail
+        _shakeDetector = ShakeDetector.waitForStart(onPhoneShake: () {});
+      }
+    });
+  }
+
+  // Add this method to load the setting
+  Future<void> _loadShakeToFeedbackSetting() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _shakeToFeedbackEnabled = prefs.getBool('shakeToFeedbackEnabled') ?? false;
+    });
   }
 
   @override
