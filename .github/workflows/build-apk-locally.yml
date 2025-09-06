@@ -1,0 +1,40 @@
+name: Android APK Build (Local)
+
+on:
+  push:
+    branches:
+      - main
+  pull_request_target:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: self-hosted
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          
+      - name: Get Flutter packages
+        run: flutter pub get
+        
+      - name: Build Android APK
+        run: flutter build apk --release
+
+      - name: Get PR number
+        id: pr_number
+        if: github.event_name == 'pull_request_target'
+        run: echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+        
+      - name: Copy APK to local Download folder
+        run: mv -f build/app/outputs/flutter-apk/app-release.apk ~/Downloads/app-release-${{ env.PR_NUMBER }}.apk
