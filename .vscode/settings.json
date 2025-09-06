@@ -1,0 +1,15 @@
+{
+    "ego.power-tools": {
+        "jobs": [
+            {
+                "name": "Gemini CLI autonomous improvement flow",
+                "description": "Run Gemini CLI autonomous improvement flow every 30 mintues.",
+                "time": "* */30 * * * *",
+                "action": {
+                    "type": "shell",
+                    "command": "cat ./gemini/cron-improvement.md | gemini --yolo"
+                }
+            }
+        ]
+    }
+}
