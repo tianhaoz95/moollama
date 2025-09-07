@@ -1,18 +1,22 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:moollama/main.dart';
 import 'package:patrol/patrol.dart';
 
 void main() {
-  patrolTest(
-    'counter is incremented',
-    ($) async {
-      await $.pumpWidget(MaterialApp(
-        home: Scaffold(
-          appBar: AppBar(title: const Text('app')),
-        ),
-      ));
+  patrolTest('Happy path', ($) async {
+    await $.pumpWidget(const MyApp());
 
-      await $.pumpAndSettle();
-    },
-  );
+    const int platformPermissionCount = 3;
+
+    for (var i = 0; i < platformPermissionCount; i++) {
+      if (await $.native.isPermissionDialogVisible(
+        timeout: Duration(seconds: 20),
+      )) {
+        await $.native.grantPermissionWhenInUse();
+      }
+    }
+
+    await $('Yes').tap();
+
+    await $.pumpAndSettle(timeout: Duration(minutes: 15));
+  });
 }
