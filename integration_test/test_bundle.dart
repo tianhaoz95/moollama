@@ -10,6 +10,8 @@ import 'package:test_api/src/backend/invoker.dart';
 
 // START: GENERATED TEST IMPORTS
 import 'app_test.dart' as app_test;
+import 'simple_flutter_test.dart' as simple_flutter_test;
+import 'simple_test.dart' as simple_test;
 // END: GENERATED TEST IMPORTS
 
 Future<void> main() async {
@@ -70,6 +72,8 @@ Future<void> main() async {
 
   // START: GENERATED TEST GROUPS
   group('app_test', app_test.main);
+  group('simple_flutter_test', simple_flutter_test.main);
+  group('simple_test', simple_test.main);
   // END: GENERATED TEST GROUPS
 
   final dartTestGroup = await testExplorationCompleter.future;
