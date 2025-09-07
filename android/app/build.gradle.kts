@@ -28,8 +28,8 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        testInstrumentationRunner = "com.leancode.patrol.PatrolTestRunner"
-        testInstrumentationRunnerArguments = mapOf("runnerBuilder" to "de.mannodermaus.junit5.AndroidJUnit5Builder")
+        testInstrumentationRunner = "pl.leancode.patrol.PatrolJUnitRunner"
+        testInstrumentationRunnerArguments["clearPackageData"] = "true"
     }
 
     buildTypes {
@@ -47,6 +47,8 @@ android {
 
 dependencies {
     androidTestUtil("androidx.test:orchestrator:1.5.1")
+    androidTestImplementation("androidx.test:runner:1.5.1")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
 }
 
 flutter {

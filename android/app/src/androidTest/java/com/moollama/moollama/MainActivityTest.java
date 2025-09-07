@@ -1,18 +1,34 @@
-package com.moollama.moollama;
+package com.moollama.moollama; // replace "com.example.myapp" with your app's package
 
-import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+import pl.leancode.patrol.PatrolJUnitRunner;
 
-import io.flutter.embedding.android.FlutterActivity;
-import io.flutter.embedding.engine.FlutterEngine;
-import io.flutter.plugins.GeneratedPluginRegistrant;
+@RunWith(Parameterized.class)
+public class MainActivityTest {
+    @Parameters(name = "{0}")
+    public static Object[] testCases() {
+        PatrolJUnitRunner instrumentation = (PatrolJUnitRunner) InstrumentationRegistry.getInstrumentation();
+        // replace "MainActivity.class" with "io.flutter.embedding.android.FlutterActivity.class"
+        // if in AndroidManifest.xml in manifest/application/activity you have
+        // android:name="io.flutter.embedding.android.FlutterActivity"
+        instrumentation.setUp(MainActivity.class);
+        instrumentation.waitForPatrolAppService();
+        return instrumentation.listDartTests();
+    }
 
-import com.leancode.patrol.PatrolTestRunner;
+    public MainActivityTest(String dartTestName) {
+        this.dartTestName = dartTestName;
+    }
 
-@RunWith(PatrolTestRunner.class)
-public class MainActivityTest extends FlutterActivity {
-  @Override
-  public void configureFlutterEngine(FlutterEngine flutterEngine) {
-    GeneratedPluginRegistrant.registerWith(flutterEngine);
-  }
+    private final String dartTestName;
+
+    @Test
+    public void runDartTest() {
+        PatrolJUnitRunner instrumentation = (PatrolJUnitRunner) InstrumentationRegistry.getInstrumentation();
+        instrumentation.runDartTest(dartTestName);
+    }
 }
