@@ -114,3 +114,9 @@ final fetchCurrentTimeTool = AgentTool(
   parameters: {},
 );
 
+final List<AgentTool> allAgentTools = [
+  fetchWebpageTool,
+  sendEmailAgentTool,
+  fetchCurrentTimeTool,
+];
+
