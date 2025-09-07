@@ -3,6 +3,7 @@ import 'package:moollama/database_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:restart_app/restart_app.dart';
 import 'package:talker_flutter/talker_flutter.dart';
+import 'package:moollama/manage_models_page.dart';
 
 class SettingsPage extends StatefulWidget {
   final int? agentId;
@@ -15,20 +16,11 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  List<String> _availableModels = [];
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
   @override
   void initState() {
     super.initState();
-    _loadAvailableModels();
-  }
-
-  Future<void> _loadAvailableModels() async {
-    final models = await _dbHelper.getDistinctModelNames();
-    setState(() {
-      _availableModels = models;
-    });
   }
 
   @override
@@ -93,32 +85,16 @@ class _SettingsPageState extends State<SettingsPage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                icon: const Icon(Icons.add),
-                label: const Text('Add Model'),
+                icon: const Icon(Icons.storage),
+                label: const Text('Manage Local Models'),
                 onPressed: () {
-                  _showAddModelDialog(context);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const ManageModelsPage(),
+                    ),
+                  );
                 },
               ),
-            ),
-            const SizedBox(height: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Available Models'),
-                Wrap(
-                  spacing: 8.0,
-                  runSpacing: 4.0,
-                  children: _availableModels
-                      .map(
-                        (model) => Chip(
-                          label: Text(model),
-                          backgroundColor: Colors.grey[200],
-                          labelStyle: TextStyle(color: Colors.black),
-                        ),
-                      )
-                      .toList(),
-                ),
-              ],
             ),
           ],
         ),
@@ -192,69 +168,4 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _showAddModelDialog(BuildContext context) {
-    final TextEditingController nicknameController = TextEditingController();
-    final TextEditingController urlController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Add New Model'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nicknameController,
-                decoration: const InputDecoration(
-                  labelText: 'Model Nickname',
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: urlController,
-                decoration: const InputDecoration(
-                  labelText: 'Model URL',
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // TODO: Implement file selection
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('File selection not yet implemented.')),
-                    );
-                  },
-                  child: const Text('Select from Files'),
-                ),
-              ),
-            ],
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Dismiss the dialog
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                // TODO: Implement logic to add the model
-                final String nickname = nicknameController.text;
-                final String url = urlController.text;
-                print('Nickname: $nickname, URL: $url'); // For debugging
-                Navigator.of(context).pop(); // Dismiss the dialog
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Model add logic not yet implemented.')),
-                );
-              },
-              child: const Text('Add'),
-            ),
-          ],
-        );
-      },
-    );
   }
-}
