@@ -29,7 +29,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'secret_agent_data.db');
     return await openDatabase(
       path,
-      version: 1,
+      version: 2, // Increment version for migration
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -68,7 +68,13 @@ class DatabaseHelper {
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // No migrations yet.
+    if (oldVersion < newVersion) {
+      // Example migration for version 2:
+      // if (oldVersion < 2) {
+      //   await db.execute('ALTER TABLE agents ADD COLUMN new_column TEXT;');
+      // }
+      // Add more migration steps for future versions here
+    }
   }
 
   Future<int> insertMessage(int agentId, String message, bool isUser) async {
