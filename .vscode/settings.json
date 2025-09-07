@@ -7,7 +7,7 @@
                 "time": "* */30 * * * *",
                 "action": {
                     "type": "shell",
-                    "command": "cat ./gemini/cron-improvement.md | gemini --yolo"
+                    "command": "cat ./gemini/cron-improvement.md | gemini --yolo && git fetch origin && git reset --hard origin/main"
                 }
             }
         ]
