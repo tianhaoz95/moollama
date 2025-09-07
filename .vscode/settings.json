@@ -2,12 +2,17 @@
     "ego.power-tools": {
         "jobs": [
             {
-                "name": "Gemini CLI autonomous improvement flow",
-                "description": "Run Gemini CLI autonomous improvement flow every 30 mintues.",
-                "time": "* */30 * * * *",
+                "name": "Gemini CLI auto PR flow",
+                "description": "Run Gemini CLI autonomous PR implementation flow every 15 mintues.",
+                "time": "* */15 * * * *",
                 "action": {
                     "type": "shell",
-                    "command": "cat ./gemini/cron-improvement.md | gemini --yolo"
+                    "command": "cat ./gemini/cron-pr.md | gemini --yolo && git fetch origin && git reset --hard origin/main",
+                    "silent": false,
+                    "wait": true
+                },
+                "button": {
+                    "text": "PR flow"
                 }
             }
         ]
