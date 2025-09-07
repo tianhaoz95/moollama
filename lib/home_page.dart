@@ -7,6 +7,7 @@ import 'package:cactus/cactus.dart';
 import 'package:moollama/utils.dart';
 import 'package:siri_wave/siri_wave.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:moollama/agent_helper.dart';
@@ -1258,9 +1259,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     childrenPadding: EdgeInsets.zero,
                     expandedCrossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text(
-                        message.thinkingText!,
-                        style: TextStyle(color: textColor),
+                      MarkdownBody(
+                        data: message.thinkingText!,
+                        styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(p: TextStyle(color: textColor)),
                       ),
                     ],
                   ),
@@ -1301,7 +1302,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     ],
                   ),
                 ),
-              Text(message.finalText, style: TextStyle(color: textColor)),
+              MarkdownBody(data: message.finalText, styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(p: TextStyle(color: textColor))),
             ],
           ),
         ),
