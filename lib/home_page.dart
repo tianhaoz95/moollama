@@ -17,6 +17,7 @@ import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:shake/shake.dart';
 import 'package:feedback/feedback.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 import 'dart:io';
 import 'package:moollama/models.dart';
 import 'package:moollama/widgets/bottom_bar_button.dart';
@@ -32,7 +33,11 @@ class SecretAgentHome extends StatefulWidget {
   final ValueNotifier<ThemeMode> themeNotifier;
   final Talker talker;
 
-  const SecretAgentHome({super.key, required this.themeNotifier, required this.talker});
+  const SecretAgentHome({
+    super.key,
+    required this.themeNotifier,
+    required this.talker,
+  });
 
   @override
   State<SecretAgentHome> createState() => _SecretAgentHomeState();
@@ -93,7 +98,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     _listeningPopupEntry = OverlayEntry(
       builder: (context) => Center(
         child: Card(
-          color: Theme.of(context).dialogBackgroundColor, // Use dialog background color
+          color: Theme.of(
+            context,
+          ).dialogBackgroundColor, // Use dialog background color
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30.0),
           ),
@@ -171,7 +178,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     _messagesFuture = Future.value([]); // Initialize with an empty future
     _loadAgents(); // Load agents, which will then load messages
     _speechToText.initialize(
-      onStatus: (status) => widget.talker.info('Speech recognition status: $status'),
+      onStatus: (status) =>
+          widget.talker.info('Speech recognition status: $status'),
       onError: (errorNotification) =>
           widget.talker.info('Speech recognition error: $errorNotification'),
     );
@@ -182,38 +190,36 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     _shakeDetector = ShakeDetector.autoStart(
       onPhoneShake: () async {
         // Show feedback UI
-        BetterFeedback.of(context).show(
-          (feedback) async {
-            // Save the screenshot to a temporary file
-            final directory = await getTemporaryDirectory();
-            final file = File('${directory.path}/feedback_screenshot.png');
-            await file.writeAsBytes(feedback.screenshot);
+        BetterFeedback.of(context).show((feedback) async {
+          // Save the screenshot to a temporary file
+          final directory = await getTemporaryDirectory();
+          final file = File('${directory.path}/feedback_screenshot.png');
+          await file.writeAsBytes(feedback.screenshot);
 
-            widget.talker.info('Feedback saved to: ${file.path}');
-            widget.talker.info('Feedback text: ${feedback.text}');
-            // In a real app, you would send this feedback to a backend service.
-            try {
-              final result = await Share.shareXFiles([XFile(file.path)], text: feedback.text);
-              if (result.status == ShareResultStatus.unavailable) {
-                widget.talker.warning('Sharing is unavailable on this device.');
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Sharing is not available on this device.'),
-                  ),
-                );
-              }
-            } catch (e, s) {
-              widget.talker.error('Error sharing feedback', e, s);
+          widget.talker.info('Feedback saved to: ${file.path}');
+          widget.talker.info('Feedback text: ${feedback.text}');
+          // In a real app, you would send this feedback to a backend service.
+          try {
+            final result = await Share.shareXFiles([
+              XFile(file.path),
+            ], text: feedback.text);
+            if (result.status == ShareResultStatus.unavailable) {
+              widget.talker.warning('Sharing is unavailable on this device.');
               if (!mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Could not share feedback.'),
+                  content: Text('Sharing is not available on this device.'),
                 ),
               );
             }
-          },
-        );
+          } catch (e, s) {
+            widget.talker.error('Error sharing feedback', e, s);
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Could not share feedback.')),
+            );
+          }
+        });
       },
     );
   }
@@ -225,46 +231,100 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     super.dispose();
   }
 
-  // Removed duplicate and unreferenced _initializeCactusModel method
+  Future<String> _getModelFilePath(String modelName) async {
+    final models = await _dbHelper.getModels();
+    final model = models.firstWhere(
+      (m) => m['name'] == modelName,
+      orElse: () => <String, dynamic>{},
+    );
+    final filename = model['filename']; // Assuming 'filename' is stored in DB
+    if (filename == null) {
+      // Fallback or error handling if filename is not in DB
+      // For now, let's assume a default filename based on modelName if not found
+      return p.join(
+        (await getApplicationDocumentsDirectory()).path,
+        '$modelName.gguf',
+      );
+    }
+    return p.join((await getApplicationDocumentsDirectory()).path, filename);
+  }
 
-  Future<void> _initializeCactusModel(String modelName, {String? systemPrompt}) async {
+  Future<void> _initializeCactusModel(
+    String modelName, {
+    String? systemPrompt,
+  }) async {
     try {
       setState(() {
         _isLoading = true;
         _downloadProgress = null;
         _initializationProgress = null; // Reset initialization progress
-        _downloadStatus = 'Downloading model...';
+        _downloadStatus = 'Checking model availability...'; // Updated status
       });
       _agent = CactusAgent();
+
       final models = await _dbHelper.getModels();
       final model = models.firstWhere(
         (m) => m['name'] == modelName,
         orElse: () => <String, dynamic>{},
       );
-      final modelUrl = model['url'];
-      if (modelUrl == null) {
-        widget.talker.error('Model URL not found for $modelName');
-        throw Exception('Model URL not found for $modelName');
+      String? filename = model['filename'];
+      if (filename == null && model['url'] != null) {
+        // Parse filename from URL if not present in DB
+        final url = model['url'] as String;
+        filename = url.split('/').last;
       }
-      await _agent!.download(
-        modelUrl: modelUrl,
-        onProgress: (progress, statusMessage, isError) {
-          setState(() {
-            _downloadProgress = progress;
-            _downloadStatus = statusMessage;
-            if (isError) {
-              _downloadStatus = 'Error: $statusMessage';
-            }
-          });
-        },
+      final modelFilePath = p.join(
+        (await getApplicationDocumentsDirectory()).path,
+        filename ?? '$modelName.gguf',
       );
-      // After download, start initialization
+      final modelFile = File(modelFilePath);
+
+      bool modelExistsLocally = await modelFile.exists();
+
+      if (!modelExistsLocally) {
+        setState(() {
+          _downloadStatus = 'Downloading model...';
+        });
+        final models = await _dbHelper.getModels();
+        final model = models.firstWhere(
+          (m) => m['name'] == modelName,
+          orElse: () => <String, dynamic>{},
+        );
+        final modelUrl = model['url'];
+        if (modelUrl == null) {
+          widget.talker.error('Model URL not found for $modelName');
+          throw Exception('Model URL not found for $modelName');
+        }
+        await _agent!.download(
+          modelUrl: modelUrl,
+          onProgress: (progress, statusMessage, isError) {
+            setState(() {
+              _downloadProgress = progress;
+              _downloadStatus = statusMessage;
+              if (isError) {
+                _downloadStatus = 'Error: $statusMessage';
+              }
+            });
+          },
+        );
+      } else {
+        widget.talker.info(
+          'Model $modelName already exists locally at $modelFilePath. Skipping download.',
+        );
+        setState(() {
+          _downloadProgress = 1.0; // Indicate 100% downloaded
+          _downloadStatus = 'Model found locally.';
+        });
+      }
+
+      // After download (or if already exists), start initialization
       setState(() {
         _downloadProgress = null; // Clear download progress
         _initializationProgress = 0.0; // Start initialization progress
         _downloadStatus = 'Initializing model...';
       });
       await _agent!.init(
+        modelFilename: filename,
         contextSize: _contextWindowSize,
         gpuLayers: 99, // Offload all possible layers to GPU
         onProgress: (progress, statusMessage, isError) {
@@ -320,8 +380,21 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     final prefs = await SharedPreferences.getInstance();
     final hasLaunchedBefore = prefs.getBool('has_launched_before') ?? false;
 
-    if (!hasLaunchedBefore) {
-      // First time launch
+    final modelsInDb = await _dbHelper.getModels();
+    bool anyDefaultModelFileExists = false;
+    final defaultModelNames = ['Qwen3 0.6B', 'Qwen3 1.7B', 'Qwen3 4B'];
+
+    for (String modelName in defaultModelNames) {
+      final modelFilePath = await _getModelFilePath(modelName);
+      if (await File(modelFilePath).exists()) {
+        anyDefaultModelFileExists = true;
+        break;
+      }
+    }
+
+    if (!hasLaunchedBefore ||
+        (modelsInDb.isEmpty && !anyDefaultModelFileExists)) {
+      // First time launch OR no models in DB and no default model files on disk
       await prefs.setBool('has_launched_before', true);
       final bool? downloadConfirmed = await showDialog<bool>(
         context: context,
@@ -329,7 +402,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           return AlertDialog(
             title: const Text('Download Model'),
             content: const Text(
-                'This is the first time you are opening the app. Do you want to download the AI model now? This may take some time and data.'),
+              'This is the first time you are opening the app or no models are found. Do you want to download the AI model now? This may take some time and data.',
+            ),
             actions: <Widget>[
               TextButton(
                 child: const Text('No'),
@@ -357,7 +431,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         });
       }
     } else {
-      // Not first time launch, proceed as usual
+      // Not first time launch and models are either in DB or files exist
       await _performAgentLoadingAndInitialization();
     }
   }
@@ -368,15 +442,18 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       // Insert default models if none exist
       await _dbHelper.insertModel({
         'name': 'Qwen3 0.6B',
-        'url': 'https://huggingface.co/Cactus-Compute/Qwen3-600m-Instruct-GGUF/resolve/main/Qwen3-0.6B-Q8_0.gguf'
+        'url':
+            'https://huggingface.co/Cactus-Compute/Qwen3-600m-Instruct-GGUF/resolve/main/Qwen3-0.6B-Q8_0.gguf',
       });
       await _dbHelper.insertModel({
         'name': 'Qwen3 1.7B',
-        'url': 'https://huggingface.co/Cactus-Compute/Qwen3-1.7B-Instruct-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf'
+        'url':
+            'https://huggingface.co/Cactus-Compute/Qwen3-1.7B-Instruct-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf',
       });
       await _dbHelper.insertModel({
         'name': 'Qwen3 4B',
-        'url': 'https://huggingface.co/Cactus-Compute/Qwen3-4B-Instruct-GGUF/resolve/main/Qwen3-4B-Q4_K_M.gguf'
+        'url':
+            'https://huggingface.co/Cactus-Compute/Qwen3-4B-Instruct-GGUF/resolve/main/Qwen3-4B-Q4_K_M.gguf',
       });
     }
 
@@ -403,8 +480,12 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     _messagesFuture = _loadMessages();
     if (_selectedAgent != null) {
       final prefs = await SharedPreferences.getInstance();
-      _systemPrompt = prefs.getString('systemPrompt_${_selectedAgent!.id}') ?? '';
-      _initializeCactusModel(_selectedAgent!.modelName, systemPrompt: _systemPrompt);
+      _systemPrompt =
+          prefs.getString('systemPrompt_${_selectedAgent!.id}') ?? '';
+      _initializeCactusModel(
+        _selectedAgent!.modelName,
+        systemPrompt: _systemPrompt,
+      );
     }
   }
 
@@ -427,8 +508,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                 splitContentByThinkTags(map['text']);
             final String? thinkingText =
                 parsedResponse.thinkingSessions.isNotEmpty
-                    ? parsedResponse.thinkingSessions.join('\n')
-                    : null;
+                ? parsedResponse.thinkingSessions.join('\n')
+                : null;
             final List<String> toolCalls = [];
             final String finalText = extractResponseFromJson(
               parsedResponse.finalOutput,
@@ -473,12 +554,14 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           if (_systemPrompt.isNotEmpty) {
             messages.add(ChatMessage(role: 'system', content: _systemPrompt));
           }
-          messages.addAll(_messages.where((msg) => !msg.isLoading).map((msg) {
-            return ChatMessage(
-              role: msg.isUser ? 'user' : 'assistant',
-              content: msg.finalText,
-            );
-          }).toList());
+          messages.addAll(
+            _messages.where((msg) => !msg.isLoading).map((msg) {
+              return ChatMessage(
+                role: msg.isUser ? 'user' : 'assistant',
+                content: msg.finalText,
+              );
+            }).toList(),
+          );
           final response = await _agent!.completionWithTools(
             messages,
             maxTokens: 2048,
@@ -508,7 +591,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             response.result ?? '',
           );
 
-          final String? thinkingText = parsedResponse.thinkingSessions.isNotEmpty
+          final String? thinkingText =
+              parsedResponse.thinkingSessions.isNotEmpty
               ? parsedResponse.thinkingSessions.join('\n')
               : null;
 
@@ -560,7 +644,10 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       // Dispose and re-initialize the agent
       _agent?.unload();
       if (_selectedAgent != null) {
-        _initializeCactusModel(_selectedAgent!.modelName, systemPrompt: _systemPrompt);
+        _initializeCactusModel(
+          _selectedAgent!.modelName,
+          systemPrompt: _systemPrompt,
+        );
       }
     }
   }
@@ -752,7 +839,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       _messagesFuture = _loadMessages(); // Reload messages for the new agent
     });
     _initializeCactusModel(
-      _selectedAgent!.modelName, systemPrompt: _systemPrompt,
+      _selectedAgent!.modelName,
+      systemPrompt: _systemPrompt,
     ); // Initialize model for the new agent
   }
 
@@ -832,7 +920,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       // You might want to add a new Message type for images.
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Image selected: ${image.path.split('/').last}')),
+        SnackBar(
+          content: Text('Image selected: ${image.path.split('/').last}'),
+        ),
       );
     } else {
       widget.talker.info('No image selected.');
@@ -882,8 +972,10 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) =>
-                              SettingsPage(agentId: _selectedAgent?.id, talker: widget.talker), // Pass talker
+                          builder: (context) => SettingsPage(
+                            agentId: _selectedAgent?.id,
+                            talker: widget.talker,
+                          ), // Pass talker
                         ),
                       );
                     },
@@ -900,40 +992,54 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         initialContextWindowSize: _contextWindowSize,
         initialSystemPrompt: _systemPrompt, // Pass system prompt
         initialIsTtsEnabled: _isTtsEnabled, // Pass TTS setting
-        onApply: (modelName, creativity, contextWindowSize, selectedTools, systemPrompt, isTtsEnabled) async {
-          bool needsReinitialization =
-              _selectedModelName != modelName ||
-              _contextWindowSize != contextWindowSize;
+        onApply:
+            (
+              modelName,
+              creativity,
+              contextWindowSize,
+              selectedTools,
+              systemPrompt,
+              isTtsEnabled,
+            ) async {
+              bool needsReinitialization =
+                  _selectedModelName != modelName ||
+                  _contextWindowSize != contextWindowSize;
 
-          setState(() {
-            _selectedModelName = modelName;
-            _creativity = creativity;
-            _contextWindowSize = contextWindowSize;
-            _systemPrompt = systemPrompt; // Update _systemPrompt
-            _isTtsEnabled = isTtsEnabled; // Update _isTtsEnabled
-            if (_selectedAgent != null) {
-              _selectedAgent!.modelName = modelName;
-              _dbHelper.updateAgent(_selectedAgent!.toMap());
-            }
-          });
+              setState(() {
+                _selectedModelName = modelName;
+                _creativity = creativity;
+                _contextWindowSize = contextWindowSize;
+                _systemPrompt = systemPrompt; // Update _systemPrompt
+                _isTtsEnabled = isTtsEnabled; // Update _isTtsEnabled
+                if (_selectedAgent != null) {
+                  _selectedAgent!.modelName = modelName;
+                  _dbHelper.updateAgent(_selectedAgent!.toMap());
+                }
+              });
 
-          // Save system prompt to SharedPreferences
-          if (_selectedAgent != null) {
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('systemPrompt_${_selectedAgent!.id}', systemPrompt);
-          }
-          // Save TTS setting to SharedPreferences
-          await _setTtsEnabled(isTtsEnabled);
+              // Save system prompt to SharedPreferences
+              if (_selectedAgent != null) {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setString(
+                  'systemPrompt_${_selectedAgent!.id}',
+                  systemPrompt,
+                );
+              }
+              // Save TTS setting to SharedPreferences
+              await _setTtsEnabled(isTtsEnabled);
 
-          if (needsReinitialization) {
-            _initializeCactusModel(modelName, systemPrompt: systemPrompt);
-          }
-          // Re-initialize agent with new settings
-          if (_agent != null) {
-            _agent!.unload(); // Unload current agent
-            _initializeCactusModel(modelName, systemPrompt: systemPrompt); // Re-initialize with new settings
-          }
-        },
+              if (needsReinitialization) {
+                _initializeCactusModel(modelName, systemPrompt: systemPrompt);
+              }
+              // Re-initialize agent with new settings
+              if (_agent != null) {
+                _agent!.unload(); // Unload current agent
+                _initializeCactusModel(
+                  modelName,
+                  systemPrompt: systemPrompt,
+                ); // Re-initialize with new settings
+              }
+            },
       ),
       body: Stack(
         children: [
@@ -1019,8 +1125,10 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                         _sendMessage();
                       }
                     },
-                    child: Container( // Wrap with Container to fill available space
-                      color: Colors.transparent, // Make it transparent so content below is visible
+                    child: Container(
+                      // Wrap with Container to fill available space
+                      color: Colors
+                          .transparent, // Make it transparent so content below is visible
                       child: _isLoading
                           ? Center(
                               child: Column(
@@ -1042,7 +1150,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                                         const SizedBox(height: 8),
                                         Text(
                                           '${(_initializationProgress! * 100).toInt()}% Initializing...',
-                                          style: Theme.of(context).textTheme.bodyMedium,
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.bodyMedium,
                                         ),
                                       ],
                                     )
@@ -1060,11 +1170,12 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                                         const SizedBox(height: 8),
                                         Text(
                                           '${(_downloadProgress! * 100).toInt()}% Downloading...',
-                                          style: Theme.of(context).textTheme.bodyMedium,
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.bodyMedium,
                                         ),
                                       ],
                                     ),
-                                  
                                 ],
                               ),
                             )
@@ -1098,7 +1209,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                                     padding: const EdgeInsets.all(8.0),
                                     itemCount: _messages.length,
                                     itemBuilder: (context, index) {
-                                      return _buildMessageBubble(_messages[index]);
+                                      return _buildMessageBubble(
+                                        _messages[index],
+                                      );
                                     },
                                   );
                                 }
@@ -1139,9 +1252,11 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                               child: TextField(
                                 controller: _textController,
                                 minLines: 1,
-                                maxLines: 6, // Allow up to 6 lines before scrolling
+                                maxLines:
+                                    6, // Allow up to 6 lines before scrolling
                                 textInputAction: TextInputAction.send,
-                                keyboardType: TextInputType.multiline, // Enable multiline keyboard
+                                keyboardType: TextInputType
+                                    .multiline, // Enable multiline keyboard
                                 decoration: InputDecoration(
                                   hintText: 'Ask Secret Agent',
                                   hintStyle: TextStyle(
@@ -1154,7 +1269,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                                   ),
                                 ),
                                 style: TextStyle(
-                                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                                  color: Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.color,
                                 ),
                                 onSubmitted: (_) => _sendMessage(),
                               ),
@@ -1164,7 +1281,6 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            
                             BottomBarButton(
                               icon: Icons.attach_file,
                               onPressed: () {
@@ -1205,7 +1321,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             Positioned.fill(
               child: Blur(
                 blur: 10.0,
-                blurColor: Theme.of(context).dialogBackgroundColor.withOpacity(0.7),
+                blurColor: Theme.of(
+                  context,
+                ).dialogBackgroundColor.withOpacity(0.7),
                 child: Container(), // Add an empty Container as a child
               ),
             ),
@@ -1273,7 +1391,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     children: <Widget>[
                       MarkdownBody(
                         data: message.thinkingText!,
-                        styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(p: TextStyle(color: textColor)),
+                        styleSheet: MarkdownStyleSheet.fromTheme(
+                          Theme.of(context),
+                        ).copyWith(p: TextStyle(color: textColor)),
                       ),
                     ],
                   ),
@@ -1296,8 +1416,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                       Align(
                         alignment: Alignment.topLeft,
                         child: Wrap(
-                          alignment:
-                              WrapAlignment.start,
+                          alignment: WrapAlignment.start,
                           spacing: 8.0,
                           runSpacing: 4.0,
                           children: message.toolCalls!
@@ -1314,7 +1433,12 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     ],
                   ),
                 ),
-              MarkdownBody(data: message.finalText, styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(p: TextStyle(color: textColor))),
+              MarkdownBody(
+                data: message.finalText,
+                styleSheet: MarkdownStyleSheet.fromTheme(
+                  Theme.of(context),
+                ).copyWith(p: TextStyle(color: textColor)),
+              ),
             ],
           ),
         ),
