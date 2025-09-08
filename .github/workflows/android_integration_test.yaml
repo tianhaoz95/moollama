@@ -29,10 +29,10 @@ jobs:
         run: dart pub global activate patrol_cli
 
       - name: Run Android Emulator
-        uses: reactivecircus/android-emulator-runner@v2
+        uses: reactivecircus/android-emulator-runner@v3
         with:
-          api-level: 30
-          target: default
+          api-level: 33
+          target: google_apis
           arch: x86_64
           profile: Nexus 5
           disk-size: 2000M
