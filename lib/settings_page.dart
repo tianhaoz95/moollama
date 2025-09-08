@@ -90,7 +90,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => const ManageModelsPage(),
+                      builder: (context) => ManageModelsPage(talker: widget.talker),
                     ),
                   );
                 },

@@ -1048,6 +1048,10 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.refresh),
+                        onPressed: _resetChat,
+                      ),
                       Builder(
                         builder: (BuildContext innerContext) {
                           return IconButton(
@@ -1263,10 +1267,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                             },
                           ),
                           const SizedBox(width: 8),
-                          IconButton(
-                            icon: const Icon(Icons.refresh),
-                            onPressed: _resetChat,
-                          ),
+                          
                         ],
                       ),
                       suffixIcon: _isGenerating
