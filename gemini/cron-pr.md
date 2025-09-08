@@ -10,6 +10,8 @@ Here are the high level requirements of the app:
 
 While working on tasks, follow the following rules:
 * Avoid using command substitution using $(), <(), or >() while running shell commands, use verbose or descriptive content instead.
+* Before starting any work, the `main` branch should be up to date.
+* After the work is finished, the local repository should be cleaned up which means temporary files should be deleted, branch should be switched back to `main` and other local branches should be deleted.
 
 Please create pull request addressing 1 open issue by following the steps:
 
