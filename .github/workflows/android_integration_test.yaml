@@ -38,6 +38,9 @@ jobs:
           profile: pixel_7
           arch: x86_64
           script: |
+            touch $HOME/.android/advancedFeatures.ini
+            echo "Vulkan = off" >> $HOME/.android/advancedFeatures.ini
+            echo "GLDirectMem = on" >> $HOME/.android/advancedFeatures.ini
             export ANDROID_HOME=$HOME/.android
             dart pub global activate patrol_cli
             patrol doctor
