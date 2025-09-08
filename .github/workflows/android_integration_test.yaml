@@ -37,5 +37,8 @@ jobs:
           profile: Nexus 5
           disk-size: 4000M
 
+      - name: Set ANDROID_HOME
+        run: echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> $GITHUB_ENV
+
       - name: Run integration tests
         run: patrol test --target integration_test/example_test.dart
