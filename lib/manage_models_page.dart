@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:moollama/database_helper.dart';
 import 'package:moollama/models.dart'; // Import models.dart to use the Model class if needed
+import 'package:url_launcher/url_launcher.dart';
 
 class ManageModelsPage extends StatefulWidget {
   const ManageModelsPage({super.key});
@@ -180,6 +181,16 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
     );
   }
 
+  Future<void> _launchUrl(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (!await launchUrl(url)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not launch $urlString')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -210,7 +221,17 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
                     margin: const EdgeInsets.symmetric(vertical: 8.0),
                     child: ListTile(
                       title: Text(model['name']),
-                      subtitle: Text(model['url']),
+                      subtitle: Row(
+                        children: [
+                          Expanded(child: Text(model['url'])),
+                          IconButton(
+                            icon: const Icon(Icons.link),
+                            onPressed: () {
+                              _launchUrl(model['url']);
+                            },
+                          ),
+                        ],
+                      ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
