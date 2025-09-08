@@ -2,7 +2,7 @@ name: moollama
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -48,7 +48,7 @@ dependencies:
   html2md: ^1.3.2
   talker_flutter: ^5.0.0
   flutter_email_sender: ^7.0.0
-  
+
   multi_select_flutter: ^4.1.3 # Added this line
   shake: ^2.2.0 # Add shake package
   feedback: ^3.0.0 # Add feedback package
@@ -68,6 +68,12 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  patrol: ^3.19.0
+
+patrol:
+  app_name: Moollama
+  android:
+    package_name: com.moollama.moollama
 
 dependency_overrides:
   intl: 0.20.2 # Override intl package version
@@ -78,7 +84,6 @@ dependency_overrides:
 
 # The following section is specific to Flutter packages.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
