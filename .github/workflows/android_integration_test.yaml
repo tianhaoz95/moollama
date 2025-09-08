@@ -28,17 +28,17 @@ jobs:
       - name: Install patrol_cli
         run: dart pub global activate patrol_cli
 
-      - name: Run Android Emulator
-        uses: reactivecircus/android-emulator-runner@v3
-        with:
-          api-level: 30
-          target: google_apis
-          arch: x86_64
-          profile: Nexus 5
-          disk-size: 4000M
-
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          
       - name: Set ANDROID_HOME
         run: echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> $GITHUB_ENV
 
-      - name: Run integration tests
-        run: patrol test --target integration_test/example_test.dart
+      - name: run tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          script: patrol test
