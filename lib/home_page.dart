@@ -452,14 +452,16 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       });
 
       if (!modelExistsLocally) {
-        // Only initialize if model is not downloaded
-        _initializeCactusModel(
-          _selectedAgent!.modelName,
-        );
-      } else {
-        // If model exists, set loading to false immediately
+        // If model does not exist, set _isLoading to false and let the UI display the download button.
         setState(() {
           _isLoading = false;
+          _modelDownloaded = false; // Ensure this is false so the button shows
+        });
+      } else {
+        // If model exists, set loading to false immediately and _modelDownloaded to true
+        setState(() {
+          _isLoading = false;
+          _modelDownloaded = true;
         });
       }
     }
