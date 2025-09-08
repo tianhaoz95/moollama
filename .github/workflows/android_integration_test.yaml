@@ -35,7 +35,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 29
-          profile: Pixel 7 Pro
+          profile: pixel_7
           script: |
             export ANDROID_HOME=$HOME/.android
             avdmanager list device
