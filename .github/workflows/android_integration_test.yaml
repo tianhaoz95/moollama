@@ -31,11 +31,13 @@ jobs:
       - name: Run Android Emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 30
+          api-level: 33
           target: default
           arch: x86_64
           profile: Nexus 5
           disk-size: 2000M
+          force-adb-connect: true
+          timeout-minutes: 5
 
       - name: Run integration tests
         run: patrol test --target integration_test/example_test.dart
