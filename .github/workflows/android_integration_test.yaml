@@ -37,6 +37,7 @@ jobs:
           api-level: 29
           script: |
             export ANDROID_HOME=$HOME/.android
+            avdmanager list device
             dart pub global activate patrol_cli
             patrol doctor
             patrol test
