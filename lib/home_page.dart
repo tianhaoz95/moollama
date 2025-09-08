@@ -20,7 +20,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'dart:io';
 import 'package:moollama/models.dart';
-import 'package:moollama/widgets/bottom_bar_button.dart';
+
 import 'package:moollama/widgets/agent_item.dart';
 import 'package:moollama/widgets/agent_settings_drawer_content.dart';
 import 'package:blur/blur.dart';
@@ -57,6 +57,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   CactusAgent? _agent;
   double? _downloadProgress;
   bool _isGenerating = false; // New: To track if AI is generating
+  bool _modelDownloaded = false;
   bool _cancellationToken = false; // New: To signal cancellation
   double? _initializationProgress;
   String _downloadStatus = 'Initializing...';
@@ -250,9 +251,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   }
 
   Future<void> _initializeCactusModel(
-    String modelName, {
-    String? systemPrompt,
-  }) async {
+    String modelName,
+  ) async {
     try {
       setState(() {
         _isLoading = true;
@@ -314,6 +314,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         setState(() {
           _downloadProgress = 1.0; // Indicate 100% downloaded
           _downloadStatus = 'Model found locally.';
+          _modelDownloaded = true;
         });
       }
 
@@ -346,6 +347,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         _downloadProgress = null; // Ensure download progress is null
         _initializationProgress = 1.0; // Set to 1.0 after successful init
         _downloadStatus = 'Model initialized';
+        _modelDownloaded = true;
       });
     } catch (e) {
       if (!mounted) return;
@@ -392,48 +394,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       }
     }
 
-    if (!hasLaunchedBefore ||
-        (modelsInDb.isEmpty && !anyDefaultModelFileExists)) {
-      // First time launch OR no models in DB and no default model files on disk
-      await prefs.setBool('has_launched_before', true);
-      final bool? downloadConfirmed = await showDialog<bool>(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Download Model'),
-            content: const Text(
-              'This is the first time you are opening the app or no models are found. Do you want to download the AI model now? This may take some time and data.',
-            ),
-            actions: <Widget>[
-              TextButton(
-                child: const Text('No'),
-                onPressed: () {
-                  Navigator.of(context).pop(false);
-                },
-              ),
-              TextButton(
-                child: const Text('Yes'),
-                onPressed: () {
-                  Navigator.of(context).pop(true);
-                },
-              ),
-            ],
-          );
-        },
-      );
-
-      if (downloadConfirmed == true) {
-        await _performAgentLoadingAndInitialization();
-      } else {
-        setState(() {
-          _isLoading = false;
-          _downloadStatus = 'Model not downloaded.';
-        });
-      }
-    } else {
-      // Not first time launch and models are either in DB or files exist
-      await _performAgentLoadingAndInitialization();
-    }
+    await _performAgentLoadingAndInitialization();
   }
 
   Future<void> _performAgentLoadingAndInitialization() async {
@@ -482,10 +443,28 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       final prefs = await SharedPreferences.getInstance();
       _systemPrompt =
           prefs.getString('systemPrompt_${_selectedAgent!.id}') ?? '';
-      _initializeCactusModel(
-        _selectedAgent!.modelName,
-        systemPrompt: _systemPrompt,
-      );
+
+      final modelFilePath = await _getModelFilePath(_selectedAgent!.modelName);
+      final modelFile = File(modelFilePath);
+      bool modelExistsLocally = await modelFile.exists();
+
+      setState(() {
+        _modelDownloaded = modelExistsLocally;
+      });
+
+      if (!modelExistsLocally) {
+        // If model does not exist, set _isLoading to false and let the UI display the download button.
+        setState(() {
+          _isLoading = false;
+          _modelDownloaded = false; // Ensure this is false so the button shows
+        });
+      } else {
+        // If model exists, set loading to false immediately and _modelDownloaded to true
+        setState(() {
+          _isLoading = false;
+          _modelDownloaded = true;
+        });
+      }
     }
   }
 
@@ -646,7 +625,6 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       if (_selectedAgent != null) {
         _initializeCactusModel(
           _selectedAgent!.modelName,
-          systemPrompt: _systemPrompt,
         );
       }
     }
@@ -840,7 +818,6 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     });
     _initializeCactusModel(
       _selectedAgent!.modelName,
-      systemPrompt: _systemPrompt,
     ); // Initialize model for the new agent
   }
 
@@ -1029,14 +1006,13 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
               await _setTtsEnabled(isTtsEnabled);
 
               if (needsReinitialization) {
-                _initializeCactusModel(modelName, systemPrompt: systemPrompt);
+                _initializeCactusModel(modelName);
               }
               // Re-initialize agent with new settings
               if (_agent != null) {
                 _agent!.unload(); // Unload current agent
                 _initializeCactusModel(
                   modelName,
-                  systemPrompt: systemPrompt,
                 ); // Re-initialize with new settings
               }
             },
@@ -1193,15 +1169,43 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                                   );
                                 } else if (_messages.isEmpty) {
                                   return Center(
-                                    child: Text(
-                                      'Hello!',
-                                      style: TextStyle(
-                                        color: Colors.blue[400],
-                                        fontSize: 32,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
+                                    child: _modelDownloaded
+                                        ? Text(
+                                            'Hello!',
+                                            style: TextStyle(
+                                              color: Colors.blue[400],
+                                              fontSize: 32,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          )
+                                        : Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                                'No model found. Please download one to start chatting.',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleLarge,
+                                                textAlign: TextAlign.center,
+                                              ),
+                                              const SizedBox(height: 20),
+                                              ElevatedButton.icon(
+                                                onPressed: () {
+                                                  if (_selectedAgent != null) {
+                                                    _initializeCactusModel(
+                                                      _selectedAgent!.modelName,
+                                                    );
+                                                  }
+                                                },
+                                                icon: const Icon(
+                                                    Icons.download),
+                                                label: const Text(
+                                                    'Download Model'),
+                                              ),
+                                            ],
+                                          ),
                                   );
                                 } else {
                                   return ListView.builder(
@@ -1228,90 +1232,63 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     right: 12.0,
                     top: 8.0,
                   ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.grey[800]!
-                            : Colors.grey[300]!,
+                  child: TextField(
+                    controller: _textController,
+                    minLines: 1,
+                    maxLines: 6, // Allow up to 6 lines before scrolling
+                    textInputAction: TextInputAction.send,
+                    keyboardType: TextInputType.multiline, // Enable multiline keyboard
+                    decoration: InputDecoration(
+                      hintText: 'Ask Secret Agent',
+                      hintStyle: TextStyle(
+                        color: Theme.of(context).hintColor,
                       ),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: _textController,
-                                minLines: 1,
-                                maxLines:
-                                    6, // Allow up to 6 lines before scrolling
-                                textInputAction: TextInputAction.send,
-                                keyboardType: TextInputType
-                                    .multiline, // Enable multiline keyboard
-                                decoration: InputDecoration(
-                                  hintText: 'Ask Secret Agent',
-                                  hintStyle: TextStyle(
-                                    color: Theme.of(context).hintColor,
-                                  ),
-                                  border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    vertical: 8,
-                                    horizontal: 0,
-                                  ),
-                                ),
-                                style: TextStyle(
-                                  color: Theme.of(
-                                    context,
-                                  ).textTheme.bodyLarge?.color,
-                                ),
-                                onSubmitted: (_) => _sendMessage(),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            BottomBarButton(
-                              icon: Icons.attach_file,
+                      filled: true,
+                      fillColor: Theme.of(context).inputDecorationTheme.fillColor ?? Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 16,
+                      ),
+                      prefixIcon: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.attach_file),
+                            onPressed: () {
+                              _showAttachmentOptions(context);
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.refresh),
+                            onPressed: _resetChat,
+                          ),
+                        ],
+                      ),
+                      suffixIcon: _isGenerating
+                          ? IconButton(
+                              icon: const Icon(Icons.stop),
                               onPressed: () {
-                                _showAttachmentOptions(context);
+                                setState(() {
+                                  _cancellationToken = true;
+                                });
                               },
+                            )
+                          : IconButton(
+                              icon: const Icon(Icons.send),
+                              onPressed: _sendMessage,
                             ),
-                            const SizedBox(width: 8),
-                            BottomBarButton(
-                              icon: Icons.refresh,
-                              onPressed: _resetChat,
-                            ),
-                            const SizedBox(width: 8),
-                            BottomBarButton(
-                              icon: Icons.rocket_launch,
-                              onPressed: _isGenerating ? null : _sendMessage,
-                            ),
-                            if (_isGenerating) ...[
-                              const SizedBox(width: 8),
-                              BottomBarButton(
-                                icon: Icons.stop,
-                                onPressed: () {
-                                  setState(() {
-                                    _cancellationToken = true;
-                                  });
-                                },
-                              ),
-                            ],
-                          ],
-                        ),
-                      ],
                     ),
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodyLarge?.color,
+                    ),
+                    onSubmitted: (_) => _sendMessage(),
                   ),
                 ),
               ],
