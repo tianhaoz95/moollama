@@ -391,48 +391,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       }
     }
 
-    if (!hasLaunchedBefore ||
-        (modelsInDb.isEmpty && !anyDefaultModelFileExists)) {
-      // First time launch OR no models in DB and no default model files on disk
-      await prefs.setBool('has_launched_before', true);
-      final bool? downloadConfirmed = await showDialog<bool>(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Download Model'),
-            content: const Text(
-              'This is the first time you are opening the app or no models are found. Do you want to download the AI model now? This may take some time and data.',
-            ),
-            actions: <Widget>[
-              TextButton(
-                child: const Text('No'),
-                onPressed: () {
-                  Navigator.of(context).pop(false);
-                },
-              ),
-              TextButton(
-                child: const Text('Yes'),
-                onPressed: () {
-                  Navigator.of(context).pop(true);
-                },
-              ),
-            ],
-          );
-        },
-      );
-
-      if (downloadConfirmed == true) {
-        await _performAgentLoadingAndInitialization();
-      } else {
-        setState(() {
-          _isLoading = false;
-          _downloadStatus = 'Model not downloaded.';
-        });
-      }
-    } else {
-      // Not first time launch and models are either in DB or files exist
-      await _performAgentLoadingAndInitialization();
-    }
+    await prefs.setBool('has_launched_before', true);
+    await _performAgentLoadingAndInitialization();
   }
 
   Future<void> _performAgentLoadingAndInitialization() async {
@@ -1178,7 +1138,32 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                                 ],
                               ),
                             )
-                          : FutureBuilder<List<Message>>(
+                          : (_downloadStatus == 'Model not downloaded.' && !_isLoading)
+                              ? Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        'Model not downloaded. Please download the model to start chatting.',
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(context).textTheme.titleMedium,
+                                      ),
+                                      const SizedBox(height: 20),
+                                      ElevatedButton.icon(
+                                        onPressed: () {
+                                          _initializeCactusModel(_selectedModelName);
+                                        },
+                                        icon: const Icon(Icons.download),
+                                        label: const Text('Download Model'),
+                                        style: ElevatedButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                                          textStyle: const TextStyle(fontSize: 18),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : FutureBuilder<List<Message>>(
                               future: _messagesFuture,
                               builder: (context, snapshot) {
                                 if (snapshot.connectionState ==
