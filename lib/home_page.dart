@@ -1180,8 +1180,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                                                 onPressed: () {
                                                   if (_selectedAgent != null) {
                                                     _initializeCactusModel(
-                                                      _selectedAgent!
-                                                          .modelName,
+                                                      _selectedAgent!.modelName,
+                                                      systemPrompt: _systemPrompt,
                                                     );
                                                   }
                                                 },
