@@ -40,6 +40,7 @@ jobs:
             export ANDROID_HOME=$HOME/.android
             dart pub global activate patrol_cli
             patrol doctor
+            flutter devices
             patrol devices
             patrol test -d emulator-5554
             
