@@ -38,4 +38,4 @@ jobs:
           disk-size: 2000M
 
       - name: Run integration tests
-        run: patrol test --target integration_test/app_test.dart
+        run: patrol test --target integration_test/example_test.dart
