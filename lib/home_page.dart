@@ -16,6 +16,7 @@ import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:shake/shake.dart';
 import 'package:feedback/feedback.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 import 'dart:io';
 import 'package:moollama/models.dart';
 import 'package:moollama/widgets/bottom_bar_button.dart';
@@ -224,7 +225,20 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     super.dispose();
   }
 
-  // Removed duplicate and unreferenced _initializeCactusModel method
+  Future<String> _getModelFilePath(String modelName) async {
+    final models = await _dbHelper.getModels();
+    final model = models.firstWhere(
+      (m) => m['name'] == modelName,
+      orElse: () => <String, dynamic>{},
+    );
+    final filename = model['filename']; // Assuming 'filename' is stored in DB
+    if (filename == null) {
+      // Fallback or error handling if filename is not in DB
+      // For now, let's assume a default filename based on modelName if not found
+      return p.join((await getApplicationDocumentsDirectory()).path, '$modelName.gguf');
+    }
+    return p.join((await getApplicationDocumentsDirectory()).path, filename);
+  }
 
   Future<void> _initializeCactusModel(String modelName, {String? systemPrompt}) async {
     try {
@@ -232,32 +246,50 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         _isLoading = true;
         _downloadProgress = null;
         _initializationProgress = null; // Reset initialization progress
-        _downloadStatus = 'Downloading model...';
+        _downloadStatus = 'Checking model availability...'; // Updated status
       });
       _agent = CactusAgent();
-      final models = await _dbHelper.getModels();
-      final model = models.firstWhere(
-        (m) => m['name'] == modelName,
-        orElse: () => <String, dynamic>{},
-      );
-      final modelUrl = model['url'];
-      if (modelUrl == null) {
-        widget.talker.error('Model URL not found for $modelName');
-        throw Exception('Model URL not found for $modelName');
+
+      final modelFilePath = await _getModelFilePath(modelName);
+      final modelFile = File(modelFilePath);
+
+      bool modelExistsLocally = await modelFile.exists();
+
+      if (!modelExistsLocally) {
+        setState(() {
+          _downloadStatus = 'Downloading model...';
+        });
+        final models = await _dbHelper.getModels();
+        final model = models.firstWhere(
+          (m) => m['name'] == modelName,
+          orElse: () => <String, dynamic>{},
+        );
+        final modelUrl = model['url'];
+        if (modelUrl == null) {
+          widget.talker.error('Model URL not found for $modelName');
+          throw Exception('Model URL not found for $modelName');
+        }
+        await _agent!.download(
+          modelUrl: modelUrl,
+          onProgress: (progress, statusMessage, isError) {
+            setState(() {
+              _downloadProgress = progress;
+              _downloadStatus = statusMessage;
+              if (isError) {
+                _downloadStatus = 'Error: $statusMessage';
+              }
+            });
+          },
+        );
+      } else {
+        widget.talker.info('Model $modelName already exists locally at $modelFilePath. Skipping download.');
+        setState(() {
+          _downloadProgress = 1.0; // Indicate 100% downloaded
+          _downloadStatus = 'Model found locally.';
+        });
       }
-      await _agent!.download(
-        modelUrl: modelUrl,
-        onProgress: (progress, statusMessage, isError) {
-          setState(() {
-            _downloadProgress = progress;
-            _downloadStatus = statusMessage;
-            if (isError) {
-              _downloadStatus = 'Error: $statusMessage';
-            }
-          });
-        },
-      );
-      // After download, start initialization
+
+      // After download (or if already exists), start initialization
       setState(() {
         _downloadProgress = null; // Clear download progress
         _initializationProgress = 0.0; // Start initialization progress
@@ -319,8 +351,20 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     final prefs = await SharedPreferences.getInstance();
     final hasLaunchedBefore = prefs.getBool('has_launched_before') ?? false;
 
-    if (!hasLaunchedBefore) {
-      // First time launch
+    final modelsInDb = await _dbHelper.getModels();
+    bool anyDefaultModelFileExists = false;
+    final defaultModelNames = ['Qwen3 0.6B', 'Qwen3 1.7B', 'Qwen3 4B'];
+
+    for (String modelName in defaultModelNames) {
+      final modelFilePath = await _getModelFilePath(modelName);
+      if (await File(modelFilePath).exists()) {
+        anyDefaultModelFileExists = true;
+        break;
+      }
+    }
+
+    if (!hasLaunchedBefore || (modelsInDb.isEmpty && !anyDefaultModelFileExists)) {
+      // First time launch OR no models in DB and no default model files on disk
       await prefs.setBool('has_launched_before', true);
       final bool? downloadConfirmed = await showDialog<bool>(
         context: context,
@@ -328,7 +372,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           return AlertDialog(
             title: const Text('Download Model'),
             content: const Text(
-                'This is the first time you are opening the app. Do you want to download the AI model now? This may take some time and data.'),
+                'This is the first time you are opening the app or no models are found. Do you want to download the AI model now? This may take some time and data.'),
             actions: <Widget>[
               TextButton(
                 child: const Text('No'),
@@ -356,7 +400,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         });
       }
     } else {
-      // Not first time launch, proceed as usual
+      // Not first time launch and models are either in DB or files exist
       await _performAgentLoadingAndInitialization();
     }
   }
