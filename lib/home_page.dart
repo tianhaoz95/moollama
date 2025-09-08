@@ -11,6 +11,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:moollama/agent_helper.dart';
+import 'package:moollama/tools.dart';
 
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:shake/shake.dart';
@@ -377,7 +378,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       );
       final prefs = await SharedPreferences.getInstance();
       final selectedTools = prefs.getStringList('selectedTools') ?? [];
-      addAgentTools(_agent!, selectedTools);
+      addAgentTools(_agent!, selectedTools, allAgentTools);
       setState(() {
         _isLoading = false;
         _downloadProgress = null; // Ensure download progress is null
