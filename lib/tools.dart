@@ -1,8 +1,9 @@
 import 'package:cactus/cactus.dart';
-import 'package:dio/dio.dart';
 import 'package:sanitize_html/sanitize_html.dart';
 import 'package:html2md/html2md.dart' as html2md;
 import 'package:flutter_email_sender/flutter_email_sender.dart';
+import 'dart:io';
+import 'dart:convert';
 
 class AgentTool {
   final String name;
@@ -25,14 +26,19 @@ class FetchWebpageTool extends ToolExecutor {
     if (url == null) {
       return 'Error: URL is required.';
     }
+    HttpClient? client;
     try {
-      final dio = Dio();
-      final response = await dio.get(url);
-      final sanitizedHtml = sanitizeHtml(response.data.toString());
+      client = HttpClient();
+      final request = await client.getUrl(Uri.parse(url));
+      final response = await request.close();
+      final responseBody = await response.transform(utf8.decoder).join();
+      final sanitizedHtml = sanitizeHtml(responseBody);
       final markdown = html2md.convert(sanitizedHtml);
       return markdown;
     } catch (e) {
       return 'Error fetching webpage: $e';
+    } finally {
+      client?.close();
     }
   }
 }

@@ -25,6 +25,7 @@ import 'package:moollama/widgets/agent_settings_drawer_content.dart';
 import 'package:blur/blur.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:moollama/model_downloader.dart';
 
 final talker = TalkerFlutter.init();
 
@@ -294,8 +295,11 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           widget.talker.error('Model URL not found for $modelName');
           throw Exception('Model URL not found for $modelName');
         }
-        await _agent!.download(
-          modelUrl: modelUrl,
+        final modelDownloader = ModelDownloader();
+        await modelDownloader.downloadModel(
+          model['id'] as int,
+          modelName,
+          modelUrl,
           onProgress: (progress, statusMessage, isError) {
             setState(() {
               _downloadProgress = progress;
