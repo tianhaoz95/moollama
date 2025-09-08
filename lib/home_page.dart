@@ -51,6 +51,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   bool _isLoading = true;
   CactusAgent? _agent;
   double? _downloadProgress;
+  bool _isGenerating = false; // New: To track if AI is generating
+  bool _cancellationToken = false; // New: To signal cancellation
   double? _initializationProgress;
   String _downloadStatus = 'Initializing...';
   final ScrollController _scrollController = ScrollController();
@@ -480,71 +482,96 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         _selectedAgent!.id!,
         userMessageText,
         true, // isUser: true
-      ); 
+      );
       setState(() {
         _messages.add(Message(finalText: userMessageText, isUser: true));
         _messages.add(Message(finalText: '', isUser: false, isLoading: true));
         _textController.clear();
+        _isGenerating = true; // Set generating state
+        _cancellationToken = false; // Reset cancellation token
       });
       _scrollToBottom();
 
       // Generate response using CactusLM
       if (_agent != null) {
-        final List<ChatMessage> messages = [];
-        if (_systemPrompt.isNotEmpty) {
-          messages.add(ChatMessage(role: 'system', content: _systemPrompt));
-        }
-        messages.addAll(_messages.where((msg) => !msg.isLoading).map((msg) {
-          return ChatMessage(
-            role: msg.isUser ? 'user' : 'assistant',
-            content: msg.finalText,
+        try {
+          final List<ChatMessage> messages = [];
+          if (_systemPrompt.isNotEmpty) {
+            messages.add(ChatMessage(role: 'system', content: _systemPrompt));
+          }
+          messages.addAll(_messages.where((msg) => !msg.isLoading).map((msg) {
+            return ChatMessage(
+              role: msg.isUser ? 'user' : 'assistant',
+              content: msg.finalText,
+            );
+          }).toList());
+          final response = await _agent!.completionWithTools(
+            messages,
+            maxTokens: 2048,
+            temperature: _creativity / 100.0,
           );
-        }).toList());
-        final response = await _agent!.completionWithTools(
-          messages,
-          maxTokens: 2048,
-          temperature: _creativity / 100.0,
-        );
-        widget.talker.info(
-          'Response result: ${response.result}, tool calls: ${response.toolCalls}',
-        );
-        final ThinkingModelResponse parsedResponse = splitContentByThinkTags(
-          response.result ?? '',
-        );
 
-        final String? thinkingText = parsedResponse.thinkingSessions.isNotEmpty
-            ? parsedResponse.thinkingSessions.join('\n')
-            : null;
+          if (_cancellationToken) {
+            // If cancelled, update the last message to indicate cancellation
+            setState(() {
+              _messages.removeLast();
+              _messages.add(
+                Message(
+                  finalText: 'Generation stopped.',
+                  isUser: false,
+                  isLoading: false,
+                ),
+              );
+            });
+            _scrollToBottom();
+            return; // Exit early if cancelled
+          }
 
-        final List<String> toolCalls = response.toolCalls ?? [];
-
-        final String finalText = extractResponseFromJson(
-          parsedResponse.finalOutput,
-        );
-
-        // Store the combined message in the database
-        _dbHelper.insertMessage(
-          _selectedAgent!.id!,
-          response.result ?? '',
-          false, // isUser: false
-        );
-
-        setState(() {
-          _messages.removeLast();
-          _messages.add(
-            Message(
-              rawText: response.result ?? '',
-              thinkingText: thinkingText,
-              toolCalls: toolCalls,
-              finalText: finalText,
-              isUser: false,
-            ),
+          widget.talker.info(
+            'Response result: ${response.result}, tool calls: ${response.toolCalls}',
           );
-        });
-        _scrollToBottom();
+          final ThinkingModelResponse parsedResponse = splitContentByThinkTags(
+            response.result ?? '',
+          );
 
-        if (_isTtsEnabled && finalText.isNotEmpty) {
-          _flutterTts.speak(finalText);
+          final String? thinkingText = parsedResponse.thinkingSessions.isNotEmpty
+              ? parsedResponse.thinkingSessions.join('\n')
+              : null;
+
+          final List<String> toolCalls = response.toolCalls ?? [];
+
+          final String finalText = extractResponseFromJson(
+            parsedResponse.finalOutput,
+          );
+
+          // Store the combined message in the database
+          _dbHelper.insertMessage(
+            _selectedAgent!.id!,
+            response.result ?? '',
+            false, // isUser: false
+          );
+
+          setState(() {
+            _messages.removeLast();
+            _messages.add(
+              Message(
+                rawText: response.result ?? '',
+                thinkingText: thinkingText,
+                toolCalls: toolCalls,
+                finalText: finalText,
+                isUser: false,
+              ),
+            );
+          });
+          _scrollToBottom();
+
+          if (_isTtsEnabled && finalText.isNotEmpty) {
+            _flutterTts.speak(finalText);
+          }
+        } finally {
+          setState(() {
+            _isGenerating = false; // Reset generating state
+          });
         }
       }
     }
@@ -1178,8 +1205,19 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                             const SizedBox(width: 8),
                             BottomBarButton(
                               icon: Icons.rocket_launch,
-                              onPressed: _sendMessage,
+                              onPressed: _isGenerating ? null : _sendMessage,
                             ),
+                            if (_isGenerating) ...[
+                              const SizedBox(width: 8),
+                              BottomBarButton(
+                                icon: Icons.stop,
+                                onPressed: () {
+                                  setState(() {
+                                    _cancellationToken = true;
+                                  });
+                                },
+                              ),
+                            ],
                           ],
                         ),
                       ],
