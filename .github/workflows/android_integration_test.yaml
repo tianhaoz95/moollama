@@ -38,8 +38,8 @@ jobs:
           profile: pixel_7
           script: |
             export ANDROID_HOME=$HOME/.android
-            flutter devices
             dart pub global activate patrol_cli
             patrol doctor
+            patrol devices
             patrol test -d emulator-5554
             
