@@ -1,29 +1,15 @@
 import 'package:cactus/cactus.dart';
 import 'package:moollama/tools.dart';
 
-void addAgentTools(CactusAgent agent, List<String> selectedTools) {
-  if (selectedTools.contains('fetch_webpage')) {
-    agent.addTool(
-      fetchWebpageTool.name,
-      fetchWebpageTool.executor,
-      fetchWebpageTool.description,
-      fetchWebpageTool.parameters,
-    );
-  }
-  if (selectedTools.contains('send_email')) {
-    agent.addTool(
-      sendEmailAgentTool.name,
-      sendEmailAgentTool.executor,
-      sendEmailAgentTool.description,
-      sendEmailAgentTool.parameters,
-    );
-  }
-  if (selectedTools.contains('fetch_current_time')) {
-    agent.addTool(
-      fetchCurrentTimeTool.name,
-      fetchCurrentTimeTool.executor,
-      fetchCurrentTimeTool.description,
-      fetchCurrentTimeTool.parameters,
-    );
+void addAgentTools(CactusAgent agent, List<String> selectedTools, List<AgentTool> availableTools) {
+  for (final tool in availableTools) {
+    if (selectedTools.contains(tool.name)) {
+      agent.addTool(
+        tool.name,
+        tool.executor,
+        tool.description,
+        tool.parameters,
+      );
+    }
   }
 }
