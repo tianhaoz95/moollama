@@ -323,6 +323,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         _downloadStatus = 'Initializing model...';
       });
       await _agent!.init(
+        modelFilename: filename,
         contextSize: _contextWindowSize,
         gpuLayers: 99, // Offload all possible layers to GPU
         onProgress: (progress, statusMessage, isError) {
