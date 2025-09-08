@@ -1,10 +1,16 @@
-
 import 'package:flutter/material.dart';
 import 'package:moollama/database_helper.dart';
 import 'package:moollama/models.dart'; // Import models.dart to use the Model class if needed
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
+import 'dart:io';
+import 'package:cactus/cactus.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 class ManageModelsPage extends StatefulWidget {
-  const ManageModelsPage({super.key});
+  final Talker talker;
+
+  const ManageModelsPage({super.key, required this.talker});
 
   @override
   State<ManageModelsPage> createState() => _ManageModelsPageState();
@@ -13,6 +19,8 @@ class ManageModelsPage extends StatefulWidget {
 class _ManageModelsPageState extends State<ManageModelsPage> {
   final DatabaseHelper _dbHelper = DatabaseHelper();
   List<Map<String, dynamic>> _models = [];
+  final Map<String, double?> _downloadProgress = {};
+  final Map<String, String> _downloadStatus = {};
 
   @override
   void initState() {
@@ -20,10 +28,99 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
     _loadModels();
   }
 
+  Future<String> _getModelFilePath(String modelName, String? filename) async {
+    if (filename == null) {
+      return p.join(
+        (await getApplicationDocumentsDirectory()).path,
+        '$modelName.gguf',
+      );
+    }
+    return p.join((await getApplicationDocumentsDirectory()).path, filename);
+  }
+
+  Future<void> _downloadModel(Map<String, dynamic> model) async {
+    final modelName = model['name'];
+    final modelUrl = model['url'];
+    String? filename = model['filename'];
+
+    if (modelUrl == null) {
+      widget.talker.error('Model URL not found for $modelName');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: Model URL not found for $modelName')),
+      );
+      return;
+    }
+
+    setState(() {
+      _downloadProgress[modelName] = 0.0;
+      _downloadStatus[modelName] = 'Starting download...';
+    });
+
+    try {
+      final agent = CactusAgent();
+      await agent.download(
+        modelUrl: modelUrl,
+        onProgress: (progress, statusMessage, isError) {
+          setState(() {
+            _downloadProgress[modelName] = progress;
+            _downloadStatus[modelName] = statusMessage;
+            if (isError) {
+              _downloadStatus[modelName] = 'Error: $statusMessage';
+            }
+          });
+        },
+      );
+
+      // After successful download, update filename in DB if it was null
+      if (filename == null) {
+        filename = modelUrl.split('/').last;
+        await _dbHelper.updateModel({
+          'id': model['id'],
+          'name': modelName,
+          'url': modelUrl,
+          'filename': filename,
+        });
+      }
+
+      setState(() {
+        _downloadProgress[modelName] = 1.0;
+        _downloadStatus[modelName] = 'Download complete!';
+      });
+      _refreshModels(); // Refresh the list to show downloaded status
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Model $modelName downloaded successfully!')),
+      );
+    } catch (e, s) {
+      widget.talker.error('Error downloading model $modelName: $e', e, s);
+      setState(() {
+        _downloadProgress[modelName] = null;
+        _downloadStatus[modelName] = 'Download failed: $e';
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error downloading model $modelName: $e')),
+      );
+    }
+  }
+
   Future<void> _loadModels() async {
     final models = await _dbHelper.getModels();
+    List<Map<String, dynamic>> modelsWithStatus = [];
+    for (var model in models) {
+      final modelName = model['name'];
+      final filename = model['filename'];
+      final modelFilePath = await _getModelFilePath(modelName, filename);
+      final modelFile = File(modelFilePath);
+      final bool isDownloaded = await modelFile.exists();
+      modelsWithStatus.add({
+        ...model,
+        'isDownloaded': isDownloaded,
+      });
+    }
     setState(() {
-      _models = models;
+      _models = modelsWithStatus;
     });
   }
 
@@ -214,6 +311,26 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          if (model['isDownloaded'])
+                            const Icon(Icons.check_circle, color: Colors.green)
+                          else if (_downloadProgress[model['name']] != null)
+                            SizedBox(
+                              width: 80,
+                              child: LinearProgressIndicator(
+                                value: _downloadProgress[model['name']],
+                                backgroundColor: Colors.grey[300],
+                                color: Colors.blue,
+                              ),
+                            ),
+                          if (_downloadStatus[model['name']] != null &&
+                              _downloadProgress[model['name']] == null)
+                            Text(_downloadStatus[model['name']]!),
+                          if (!model['isDownloaded'] &&
+                              _downloadProgress[model['name']] == null)
+                            IconButton(
+                              icon: const Icon(Icons.download),
+                              onPressed: () => _downloadModel(model),
+                            ),
                           IconButton(
                             icon: const Icon(Icons.edit),
                             onPressed: () {
