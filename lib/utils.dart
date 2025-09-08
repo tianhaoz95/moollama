@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:device_info_plus/device_info_plus.dart';
 
 class ThinkingModelResponse {
   final List<String> thinkingSessions;
@@ -101,4 +103,16 @@ String extractResponseFromJson(String text) {
     // Do nothing, return original text
   }
   return text;
+}
+
+Future<bool> isEmulator() async {
+  DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+  if (Platform.isAndroid) {
+    AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+    return !androidInfo.isPhysicalDevice;
+  } else if (Platform.isIOS) {
+    IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+    return !iosInfo.isPhysicalDevice;
+  }
+  return false;
 }
