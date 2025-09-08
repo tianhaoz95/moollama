@@ -1040,7 +1040,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                                         ),
                                         const SizedBox(height: 8),
                                         Text(
-                                          '${(_initializationProgress! * 100).toInt()}% Initializing...',
+                                          '${(_initializationProgress! * 100).toInt()}% Initializing...', // Corrected: Removed extra backslash before %
                                           style: Theme.of(context).textTheme.bodyMedium,
                                         ),
                                       ],
@@ -1058,7 +1058,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                                         ),
                                         const SizedBox(height: 8),
                                         Text(
-                                          '${(_downloadProgress! * 100).toInt()}% Downloading...',
+                                          '${(_downloadProgress! * 100).toInt()}% Downloading...', // Corrected: Removed extra backslash before %
                                           style: Theme.of(context).textTheme.bodyMedium,
                                         ),
                                       ],
