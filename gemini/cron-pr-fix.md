@@ -16,10 +16,11 @@ While working on tasks, follow the following rules:
 Please fix and update pull requests by following the steps:
 
 1. Use command `gh pr list --state open --label "wip"` to find open and work in progress pull requests related to the current repository and pick the first one.
-2. Use command `gh pr view <PR_NUMBER> --json number,reviewThreads` to find all review comments and filter the unresolved reivew comments.
+2. Use command `gh pr view <PR_NUMBER> --comments` to find all comments that start with "/fix".
 3. Checkout to the branch of the pull request.
-4. Implement the requirements specified by the unresolved reivew comments from step 2, and use `flutter test` and `flutter build apk` command to verify the correctness of the implementation, fix any issue if present.
+4. Implement the requirements specified by the comments from step 2, and use `flutter test` and `flutter build apk` command to verify the correctness of the implementation, fix any issue if present.
 5. Commit the implementation with proper commit message on the branch and push the change.
-6. Use `gh` command to post a comment on the pull request summarize the changes made.
-7. Use `gh` command to remove the "wip" label from the pull request to indicate completion.
-8. Clean up the workspace.
+6. Use `gh` command to modify the comments content to change "/fix" to "/completed" to indicate the comments have been addressed.
+7. Use `gh` command to post a comment on the pull request summarize the changes made.
+8. Use `gh` command to remove the "wip" label from the pull request to indicate completion.
+9. Clean up the workspace.
