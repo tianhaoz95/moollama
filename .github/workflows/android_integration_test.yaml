@@ -32,15 +32,13 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: Start emulator
-        uses: reactivecircus/android-emulator-runner@v2
+        uses: reactivecircus/android-emulator-runner@v2.34.0
         with:
           api-level: 29
           profile: pixel_7
-          script: ./gradlew connectedCheck
-          
-      - name: Run tests
-        run: |
-          export ANDROID_HOME=$HOME/.android
-          dart pub global activate patrol_cli
-          patrol doctor
-          patrol test
+          script: |
+            export ANDROID_HOME=$HOME/.android
+            dart pub global activate patrol_cli
+            patrol doctor
+            patrol test
+            
