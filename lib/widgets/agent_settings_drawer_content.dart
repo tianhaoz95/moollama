@@ -276,7 +276,7 @@ class _AgentSettingsDrawerContentState
                     ),
                     const SizedBox(height: 24), // Add spacing
                     SwitchListTile(
-                      title: const Text('Enable Text-to-Speech'),
+                      title: const Text('enable TTS'),
                       value: _isTtsEnabled,
                       onChanged: (bool value) {
                         setState(() {
