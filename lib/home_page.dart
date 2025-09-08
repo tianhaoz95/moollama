@@ -19,7 +19,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'dart:io';
 import 'package:moollama/models.dart';
-import 'package:moollama/widgets/bottom_bar_button.dart';
+
 import 'package:moollama/widgets/agent_item.dart';
 import 'package:moollama/widgets/agent_settings_drawer_content.dart';
 import 'package:blur/blur.dart';
@@ -1231,90 +1231,63 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     right: 12.0,
                     top: 8.0,
                   ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.grey[800]!
-                            : Colors.grey[300]!,
+                  child: TextField(
+                    controller: _textController,
+                    minLines: 1,
+                    maxLines: 6, // Allow up to 6 lines before scrolling
+                    textInputAction: TextInputAction.send,
+                    keyboardType: TextInputType.multiline, // Enable multiline keyboard
+                    decoration: InputDecoration(
+                      hintText: 'Ask Secret Agent',
+                      hintStyle: TextStyle(
+                        color: Theme.of(context).hintColor,
                       ),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: _textController,
-                                minLines: 1,
-                                maxLines:
-                                    6, // Allow up to 6 lines before scrolling
-                                textInputAction: TextInputAction.send,
-                                keyboardType: TextInputType
-                                    .multiline, // Enable multiline keyboard
-                                decoration: InputDecoration(
-                                  hintText: 'Ask Secret Agent',
-                                  hintStyle: TextStyle(
-                                    color: Theme.of(context).hintColor,
-                                  ),
-                                  border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    vertical: 8,
-                                    horizontal: 0,
-                                  ),
-                                ),
-                                style: TextStyle(
-                                  color: Theme.of(
-                                    context,
-                                  ).textTheme.bodyLarge?.color,
-                                ),
-                                onSubmitted: (_) => _sendMessage(),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            BottomBarButton(
-                              icon: Icons.attach_file,
+                      filled: true,
+                      fillColor: Theme.of(context).inputDecorationTheme.fillColor ?? Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 16,
+                      ),
+                      prefixIcon: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.attach_file),
+                            onPressed: () {
+                              _showAttachmentOptions(context);
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.refresh),
+                            onPressed: _resetChat,
+                          ),
+                        ],
+                      ),
+                      suffixIcon: _isGenerating
+                          ? IconButton(
+                              icon: const Icon(Icons.stop),
                               onPressed: () {
-                                _showAttachmentOptions(context);
+                                setState(() {
+                                  _cancellationToken = true;
+                                });
                               },
+                            )
+                          : IconButton(
+                              icon: const Icon(Icons.send),
+                              onPressed: _sendMessage,
                             ),
-                            const SizedBox(width: 8),
-                            BottomBarButton(
-                              icon: Icons.refresh,
-                              onPressed: _resetChat,
-                            ),
-                            const SizedBox(width: 8),
-                            BottomBarButton(
-                              icon: Icons.rocket_launch,
-                              onPressed: _isGenerating ? null : _sendMessage,
-                            ),
-                            if (_isGenerating) ...[
-                              const SizedBox(width: 8),
-                              BottomBarButton(
-                                icon: Icons.stop,
-                                onPressed: () {
-                                  setState(() {
-                                    _cancellationToken = true;
-                                  });
-                                },
-                              ),
-                            ],
-                          ],
-                        ),
-                      ],
                     ),
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodyLarge?.color,
+                    ),
+                    onSubmitted: (_) => _sendMessage(),
                   ),
                 ),
               ],
