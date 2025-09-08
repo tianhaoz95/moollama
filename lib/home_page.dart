@@ -250,9 +250,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   }
 
   Future<void> _initializeCactusModel(
-    String modelName, {
-    String? systemPrompt,
-  }) async {
+    String modelName,
+  ) async {
     try {
       setState(() {
         _isLoading = true;
@@ -443,10 +442,26 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       final prefs = await SharedPreferences.getInstance();
       _systemPrompt =
           prefs.getString('systemPrompt_${_selectedAgent!.id}') ?? '';
-      _initializeCactusModel(
-        _selectedAgent!.modelName,
-        systemPrompt: _systemPrompt,
-      );
+
+      final modelFilePath = await _getModelFilePath(_selectedAgent!.modelName);
+      final modelFile = File(modelFilePath);
+      bool modelExistsLocally = await modelFile.exists();
+
+      setState(() {
+        _modelDownloaded = modelExistsLocally;
+      });
+
+      if (!modelExistsLocally) {
+        // Only initialize if model is not downloaded
+        _initializeCactusModel(
+          _selectedAgent!.modelName,
+        );
+      } else {
+        // If model exists, set loading to false immediately
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -607,7 +622,6 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       if (_selectedAgent != null) {
         _initializeCactusModel(
           _selectedAgent!.modelName,
-          systemPrompt: _systemPrompt,
         );
       }
     }
@@ -801,7 +815,6 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     });
     _initializeCactusModel(
       _selectedAgent!.modelName,
-      systemPrompt: _systemPrompt,
     ); // Initialize model for the new agent
   }
 
@@ -990,14 +1003,13 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
               await _setTtsEnabled(isTtsEnabled);
 
               if (needsReinitialization) {
-                _initializeCactusModel(modelName, systemPrompt: systemPrompt);
+                _initializeCactusModel(modelName);
               }
               // Re-initialize agent with new settings
               if (_agent != null) {
                 _agent!.unload(); // Unload current agent
                 _initializeCactusModel(
                   modelName,
-                  systemPrompt: systemPrompt,
                 ); // Re-initialize with new settings
               }
             },
@@ -1181,7 +1193,6 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                                                   if (_selectedAgent != null) {
                                                     _initializeCactusModel(
                                                       _selectedAgent!.modelName,
-                                                      systemPrompt: _systemPrompt,
                                                     );
                                                   }
                                                 },
