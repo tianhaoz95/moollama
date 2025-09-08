@@ -36,6 +36,7 @@ jobs:
         with:
           api-level: 29
           profile: pixel_7
+          arch: x86_64
           script: |
             export ANDROID_HOME=$HOME/.android
             dart pub global activate patrol_cli
