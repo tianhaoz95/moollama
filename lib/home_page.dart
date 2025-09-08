@@ -56,6 +56,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   CactusAgent? _agent;
   double? _downloadProgress;
   bool _isGenerating = false; // New: To track if AI is generating
+  bool _modelDownloaded = false;
   bool _cancellationToken = false; // New: To signal cancellation
   double? _initializationProgress;
   String _downloadStatus = 'Initializing...';
@@ -313,6 +314,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         setState(() {
           _downloadProgress = 1.0; // Indicate 100% downloaded
           _downloadStatus = 'Model found locally.';
+          _modelDownloaded = true;
         });
       }
 
@@ -345,6 +347,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         _downloadProgress = null; // Ensure download progress is null
         _initializationProgress = 1.0; // Set to 1.0 after successful init
         _downloadStatus = 'Model initialized';
+        _modelDownloaded = true;
       });
     } catch (e) {
       if (!mounted) return;
@@ -391,48 +394,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       }
     }
 
-    if (!hasLaunchedBefore ||
-        (modelsInDb.isEmpty && !anyDefaultModelFileExists)) {
-      // First time launch OR no models in DB and no default model files on disk
-      await prefs.setBool('has_launched_before', true);
-      final bool? downloadConfirmed = await showDialog<bool>(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Download Model'),
-            content: const Text(
-              'This is the first time you are opening the app or no models are found. Do you want to download the AI model now? This may take some time and data.',
-            ),
-            actions: <Widget>[
-              TextButton(
-                child: const Text('No'),
-                onPressed: () {
-                  Navigator.of(context).pop(false);
-                },
-              ),
-              TextButton(
-                child: const Text('Yes'),
-                onPressed: () {
-                  Navigator.of(context).pop(true);
-                },
-              ),
-            ],
-          );
-        },
-      );
-
-      if (downloadConfirmed == true) {
-        await _performAgentLoadingAndInitialization();
-      } else {
-        setState(() {
-          _isLoading = false;
-          _downloadStatus = 'Model not downloaded.';
-        });
-      }
-    } else {
-      // Not first time launch and models are either in DB or files exist
-      await _performAgentLoadingAndInitialization();
-    }
+    await _performAgentLoadingAndInitialization();
   }
 
   Future<void> _performAgentLoadingAndInitialization() async {
@@ -1192,15 +1154,44 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                                   );
                                 } else if (_messages.isEmpty) {
                                   return Center(
-                                    child: Text(
-                                      'Hello!',
-                                      style: TextStyle(
-                                        color: Colors.blue[400],
-                                        fontSize: 32,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
+                                    child: _modelDownloaded
+                                        ? Text(
+                                            'Hello!',
+                                            style: TextStyle(
+                                              color: Colors.blue[400],
+                                              fontSize: 32,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          )
+                                        : Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                                'No model found. Please download one to start chatting.',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleLarge,
+                                                textAlign: TextAlign.center,
+                                              ),
+                                              const SizedBox(height: 20),
+                                              ElevatedButton.icon(
+                                                onPressed: () {
+                                                  if (_selectedAgent != null) {
+                                                    _initializeCactusModel(
+                                                      _selectedAgent!
+                                                          .modelName,
+                                                    );
+                                                  }
+                                                },
+                                                icon: const Icon(
+                                                    Icons.download),
+                                                label: const Text(
+                                                    'Download Model'),
+                                              ),
+                                            ],
+                                          ),
                                   );
                                 } else {
                                   return ListView.builder(
