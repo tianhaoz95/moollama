@@ -197,14 +197,9 @@ class DatabaseHelper {
 
   Future<String> getModelFilePath(String modelName) async {
     final model = await getModelByName(modelName);
-    final filename = model['filename']; // Assuming 'filename' is stored in DB
-    if (filename == null) {
-      // Fallback or error handling if filename is not in DB
-      // For now, let's assume a default filename based on modelName if not found
-      return p.join(
-        (await getApplicationDocumentsDirectory()).path,
-        '$modelName.gguf',
-      );
+    var filename = model['filename']; // Assuming 'filename' is stored in DB
+    if (filename == null && model['url'] != null) {
+      filename = p.basename(model['url']);
     }
     return p.join((await getApplicationDocumentsDirectory()).path, filename);
   }

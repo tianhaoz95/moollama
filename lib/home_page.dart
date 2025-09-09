@@ -674,22 +674,6 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     }
   }
 
-  void _debugAction() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => TalkerScreen(
-          talker: widget.talker,
-          theme: TalkerScreenTheme(
-            cardColor: Theme.of(context).cardColor,
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            textColor:
-                Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white,
-          ),
-        ),
-      ),
-    );
-  }
-
   void _showAddAgentDialog(BuildContext context) async {
     final TextEditingController addAgentController = TextEditingController();
     final newAgentName = await showDialog<String>(
