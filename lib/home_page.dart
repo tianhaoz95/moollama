@@ -397,8 +397,6 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         _selectedAgent = _agents.first;
       });
     }
-    // After agents are loaded and a default/selected agent is set, load messages
-    _messagesFuture = _loadMessages();
     if (_selectedAgent != null) {
       final prefs = await SharedPreferences.getInstance();
       _systemPrompt =
@@ -427,6 +425,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           _modelDownloaded = true;
         });
       }
+      // After agents are loaded and a default/selected agent is set, load messages
+      // Since the UI is dictated by _messagesFuture, set it last to reflect changes in download state.
+      _messagesFuture = _loadMessages();
     }
   }
 
