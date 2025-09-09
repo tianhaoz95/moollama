@@ -911,15 +911,39 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
               // Save TTS setting to SharedPreferences
               await _setTtsEnabled(isTtsEnabled);
 
+              final modelFilePath = await _dbHelper.getModelFilePath(modelName);
+              final modelFile = File(modelFilePath);
+              bool modelExistsLocally = await modelFile.exists();
+
               if (needsReinitialization) {
-                _initializeCactusModel(modelName);
+                if (_selectedAgent != null && _selectedAgent!.id != null) {
+                  await _dbHelper.clearMessages(_selectedAgent!.id!);
+                }
+                setState(() {
+                  _messages.clear();
+                });
+                if (modelExistsLocally) {
+                  _initializeCactusModel(modelName);
+                } else {
+                  setState(() {
+                    _modelDownloaded = false;
+                    _isLoading = false;
+                  });
+                }
               }
               // Re-initialize agent with new settings
               if (_agent != null) {
                 _agent!.unload(); // Unload current agent
-                _initializeCactusModel(
-                  modelName,
-                ); // Re-initialize with new settings
+                if (modelExistsLocally) {
+                  _initializeCactusModel(
+                    modelName,
+                  ); // Re-initialize with new settings
+                } else {
+                  setState(() {
+                    _modelDownloaded = false;
+                    _isLoading = false;
+                  });
+                }
               }
             },
       ),
