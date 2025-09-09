@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'dart:io';
 import 'package:cactus/cactus.dart';
 import 'package:talker_flutter/talker_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ManageModelsPage extends StatefulWidget {
   final Talker talker;
@@ -307,7 +308,29 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
                     margin: const EdgeInsets.symmetric(vertical: 8.0),
                     child: ListTile(
                       title: Text(model['name']),
-                      subtitle: Text(model['url']),
+                      subtitle: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              model['url'],
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.link),
+                            onPressed: () async {
+                              final url = Uri.parse(model['url']);
+                              if (await canLaunchUrl(url)) {
+                                await launchUrl(url);
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Could not launch ${model['url']}')),
+                                );
+                              }
+                            },
+                          ),
+                        ],
+                      ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
