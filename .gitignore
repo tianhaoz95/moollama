@@ -49,4 +49,4 @@ gha-creds-*.json
 
 lib/model_downloader.dart
 
-.vscdoe
+.vscode
