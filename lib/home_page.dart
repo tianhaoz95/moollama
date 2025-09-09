@@ -13,10 +13,9 @@ import 'package:share_plus/share_plus.dart';
 import 'package:moollama/agent_helper.dart';
 import 'package:moollama/tools.dart';
 
-import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:shake/shake.dart';
 import 'package:feedback/feedback.dart';
-import 'package:path_provider/path_provider.dart';
+
 import 'package:path/path.dart' as p;
 import 'dart:io';
 import 'package:moollama/models.dart';
@@ -61,6 +60,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   bool _cancellationToken = false; // New: To signal cancellation
   double? _initializationProgress;
   String _downloadStatus = 'Initializing...';
+
   final ScrollController _scrollController = ScrollController();
   bool _isListening = false;
   OverlayEntry? _listeningPopupEntry;
@@ -227,24 +227,6 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     super.dispose();
   }
 
-  Future<String> _getModelFilePath(String modelName) async {
-    final models = await _dbHelper.getModels();
-    final model = models.firstWhere(
-      (m) => m['name'] == modelName,
-      orElse: () => <String, dynamic>{},
-    );
-    final filename = model['filename']; // Assuming 'filename' is stored in DB
-    if (filename == null) {
-      // Fallback or error handling if filename is not in DB
-      // For now, let's assume a default filename based on modelName if not found
-      return p.join(
-        (await getApplicationDocumentsDirectory()).path,
-        '$modelName.gguf',
-      );
-    }
-    return p.join((await getApplicationDocumentsDirectory()).path, filename);
-  }
-
   Future<void> _initializeCactusModel(String modelName) async {
     try {
       setState(() {
@@ -255,21 +237,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       });
       _agent = CactusAgent();
 
-      final models = await _dbHelper.getModels();
-      final model = models.firstWhere(
-        (m) => m['name'] == modelName,
-        orElse: () => <String, dynamic>{},
-      );
-      String? filename = model['filename'];
-      if (filename == null && model['url'] != null) {
-        // Parse filename from URL if not present in DB
-        final url = model['url'] as String;
-        filename = url.split('/').last;
-      }
-      final modelFilePath = p.join(
-        (await getApplicationDocumentsDirectory()).path,
-        filename ?? '$modelName.gguf',
-      );
+      final modelFilePath = await _dbHelper.getModelFilePath(modelName);
       final modelFile = File(modelFilePath);
 
       bool modelExistsLocally = await modelFile.exists();
@@ -319,7 +287,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       });
       final gpuLayerCount = await getGpuLayerCount();
       await _agent!.init(
-        modelFilename: filename,
+        modelFilename: p.basename(modelFilePath),
         contextSize: _contextWindowSize,
         gpuLayers: gpuLayerCount, // Offload all possible layers to GPU
         onProgress: (progress, statusMessage, isError) {
@@ -381,7 +349,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     final defaultModelNames = ['Qwen3 0.6B', 'Qwen3 1.7B', 'Qwen3 4B'];
 
     for (String modelName in defaultModelNames) {
-      final modelFilePath = await _getModelFilePath(modelName);
+      final modelFilePath = await _dbHelper.getModelFilePath(modelName);
       if (await File(modelFilePath).exists()) {
         anyDefaultModelFileExists = true;
         break;
@@ -438,7 +406,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       _systemPrompt =
           prefs.getString('systemPrompt_${_selectedAgent!.id}') ?? '';
 
-      final modelFilePath = await _getModelFilePath(_selectedAgent!.modelName);
+      final modelFilePath = await _dbHelper.getModelFilePath(
+        _selectedAgent!.modelName,
+      );
       final modelFile = File(modelFilePath);
       bool modelExistsLocally = await modelFile.exists();
 
