@@ -187,12 +187,16 @@ class DatabaseHelper {
     return maps.map((map) => map['name'] as String).toList();
   }
 
-  Future<String> getModelFilePath(String modelName) async {
+  Future<Map<String, dynamic>> getModelByName(String modelName) async {
     final models = await getModels();
-    final model = models.firstWhere(
+    return models.firstWhere(
       (m) => m['name'] == modelName,
       orElse: () => <String, dynamic>{},
     );
+  }
+
+  Future<String> getModelFilePath(String modelName) async {
+    final model = await getModelByName(modelName);
     final filename = model['filename']; // Assuming 'filename' is stored in DB
     if (filename == null) {
       // Fallback or error handling if filename is not in DB

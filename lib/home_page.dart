@@ -246,11 +246,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         setState(() {
           _downloadStatus = 'Downloading model...';
         });
-        final models = await _dbHelper.getModels();
-        final model = models.firstWhere(
-          (m) => m['name'] == modelName,
-          orElse: () => <String, dynamic>{},
-        );
+        final model = await _dbHelper.getModelByName(modelName);
         final modelUrl = model['url'];
         if (modelUrl == null) {
           widget.talker.error('Model URL not found for $modelName');
