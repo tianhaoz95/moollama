@@ -310,12 +310,6 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
                       title: Text(model['name']),
                       subtitle: Row(
                         children: [
-                          Expanded(
-                            child: Text(
-                              model['url'],
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
                           IconButton(
                             icon: const Icon(Icons.link),
                             onPressed: () async {
