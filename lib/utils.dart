@@ -1,6 +1,24 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:feedback/feedback.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:talker/talker.dart';
+import 'dart:typed_data';
+
+
+Future<File> saveFeedback(UserFeedback feedback, Talker talker) async {
+  final directory = await getTemporaryDirectory();
+  final file = File('${directory.path}/feedback_screenshot.png');
+  await file.writeAsBytes(feedback.screenshot);
+
+  talker.info('Feedback saved to: ${file.path}');
+  if (feedback.text.isNotEmpty) {
+    talker.info('Feedback text: ${feedback.text}');
+  }
+
+  return file;
+}
 
 class ThinkingModelResponse {
   final List<String> thinkingSessions;
