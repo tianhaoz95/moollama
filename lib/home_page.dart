@@ -21,11 +21,13 @@ import 'package:path/path.dart' as p;
 import 'dart:io';
 import 'package:moollama/models.dart';
 
-import 'package:moollama/widgets/agent_item.dart';
-import 'package:moollama/widgets/agent_settings_drawer_content.dart';
-import 'package:blur/blur.dart';
+import 'package:moollama/widgets/agent_drawer.dart';
+import 'package:moollama/widgets/chat_view.dart';
+import 'package:moollama/widgets/message_input_bar.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:moollama/widgets/agent_settings_drawer_content.dart';
+import 'package:blur/blur.dart';
 
 final talker = TalkerFlutter.init();
 
@@ -906,59 +908,14 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: Drawer(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: <Widget>[
-                  const DrawerHeader(
-                    child: Text('Agents', style: TextStyle(fontSize: 24)),
-                  ),
-                  ..._agents.asMap().entries.map((entry) {
-                    Agent agent = entry.value;
-                    return AgentItem(
-                      agent: agent,
-                      onRename: () => _showRenameDialog(context, agent),
-                      onTap: () => _selectAgent(agent),
-                      onLongPress: () => _handleAgentLongPress(
-                        agent,
-                      ), // Always call the handler
-                    );
-                  }),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 32.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: () {
-                      _showAddAgentDialog(context);
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.settings),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => SettingsPage(
-                            agentId: _selectedAgent?.id,
-                            talker: widget.talker,
-                          ), // Pass talker
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+      drawer: AgentDrawer(
+        agents: _agents,
+        onRenameAgent: (agent) => _showRenameDialog(context, agent),
+        onSelectAgent: _selectAgent,
+        onDeleteAgent: _deleteAgent,
+        onAddAgent: _showAddAgentDialog,
+        selectedAgent: _selectedAgent,
+        talker: widget.talker,
       ),
       endDrawer: AgentSettingsDrawerContent(
         initialModelName: _selectedModelName,
@@ -1102,194 +1059,34 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                         _sendMessage();
                       }
                     },
-                    child: Container(
-                      // Wrap with Container to fill available space
-                      color: Colors
-                          .transparent, // Make it transparent so content below is visible
-                      child: _isLoading
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const CircularProgressIndicator(),
-                                  const SizedBox(height: 16),
-                                  if (_initializationProgress != null)
-                                    Column(
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 32.0,
-                                          ),
-                                          child: LinearProgressIndicator(
-                                            value: _initializationProgress,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          '${(_initializationProgress! * 100).toInt()}% Initializing...',
-                                          style: Theme.of(
-                                            context,
-                                          ).textTheme.bodyMedium,
-                                        ),
-                                      ],
-                                    )
-                                  else if (_downloadProgress != null)
-                                    Column(
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 32.0,
-                                          ),
-                                          child: LinearProgressIndicator(
-                                            value: _downloadProgress,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          '${(_downloadProgress! * 100).toInt()}% Downloading...',
-                                          style: Theme.of(
-                                            context,
-                                          ).textTheme.bodyMedium,
-                                        ),
-                                      ],
-                                    ),
-                                ],
-                              ),
-                            )
-                          : FutureBuilder<List<Message>>(
-                              future: _messagesFuture,
-                              builder: (context, snapshot) {
-                                if (snapshot.connectionState ==
-                                    ConnectionState.waiting) {
-                                  return const Center(
-                                    child: CircularProgressIndicator(),
-                                  );
-                                } else if (snapshot.hasError) {
-                                  return Center(
-                                    child: Text('Error: ${snapshot.error}'),
-                                  );
-                                } else if (_messages.isEmpty) {
-                                  return Center(
-                                    child: _modelDownloaded
-                                        ? Text(
-                                            'Hello!',
-                                            style: TextStyle(
-                                              color: Colors.blue[400],
-                                              fontSize: 32,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          )
-                                        : Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Text(
-                                                'No model found. Please download one to start chatting.',
-                                                style: Theme.of(
-                                                  context,
-                                                ).textTheme.titleLarge,
-                                                textAlign: TextAlign.center,
-                                              ),
-                                              const SizedBox(height: 20),
-                                              ElevatedButton.icon(
-                                                onPressed: () {
-                                                  if (_selectedAgent != null) {
-                                                    _initializeCactusModel(
-                                                      _selectedAgent!.modelName,
-                                                    );
-                                                  }
-                                                },
-                                                icon: const Icon(
-                                                  Icons.download,
-                                                ),
-                                                label: const Text(
-                                                  'Download Model',
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                  );
-                                } else {
-                                  return ListView.builder(
-                                    controller: _scrollController,
-                                    padding: const EdgeInsets.all(8.0),
-                                    itemCount: _messages.length,
-                                    itemBuilder: (context, index) {
-                                      return _buildMessageBubble(
-                                        _messages[index],
-                                      );
-                                    },
-                                  );
-                                }
-                              },
-                            ),
+                    child: ChatView(
+                      isLoading: _isLoading,
+                      modelDownloaded: _modelDownloaded,
+                      messagesFuture: _messagesFuture,
+                      scrollController: _scrollController,
+                      downloadProgress: _downloadProgress,
+                      initializationProgress: _initializationProgress,
+                      initializeCactusModel: (modelName) {
+                        _initializeCactusModel(modelName);
+                      },
+                      messages: _messages,
+                      showRawResponseDialog: _showRawResponseDialog,
                     ),
                   ),
                 ),
                 // Bottom bar
-                Padding(
-                  padding: const EdgeInsets.only(
-                    bottom: 16.0,
-                    left: 12.0,
-                    right: 12.0,
-                    top: 8.0,
-                  ),
-                  child: TextField(
-                    controller: _textController,
-                    minLines: 1,
-                    maxLines: 6, // Allow up to 6 lines before scrolling
-                    textInputAction: TextInputAction.send,
-                    keyboardType:
-                        TextInputType.multiline, // Enable multiline keyboard
-                    decoration: InputDecoration(
-                      hintText: 'Ask Secret Agent',
-                      hintStyle: TextStyle(color: Theme.of(context).hintColor),
-                      filled: true,
-                      fillColor:
-                          Theme.of(context).inputDecorationTheme.fillColor ??
-                          Theme.of(
-                            context,
-                          ).colorScheme.surfaceVariant.withOpacity(0.5),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 16,
-                      ),
-                      prefixIcon: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.attach_file),
-                            onPressed: () {
-                              _showAttachmentOptions(context);
-                            },
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                      ),
-                      suffixIcon: _isGenerating
-                          ? IconButton(
-                              icon: const Icon(Icons.stop),
-                              onPressed: () {
-                                setState(() {
-                                  _cancellationToken = true;
-                                });
-                              },
-                            )
-                          : IconButton(
-                              icon: const Icon(Icons.send),
-                              onPressed: _sendMessage,
-                            ),
-                    ),
-                    style: TextStyle(
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
-                    ),
-                    onSubmitted: (_) => _sendMessage(),
-                  ),
+                MessageInputBar(
+                  textController: _textController,
+                  isGenerating: _isGenerating,
+                  onSendMessage: _sendMessage,
+                  onStopGeneration: () {
+                    setState(() {
+                      _cancellationToken = true;
+                    });
+                  },
+                  onShowAttachmentOptions: () {
+                    _showAttachmentOptions(context);
+                  },
                 ),
               ],
             ),
@@ -1309,117 +1106,5 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     );
   }
 
-  Widget _buildMessageBubble(Message message) {
-    if (message.isLoading) {
-      return Align(
-        alignment: Alignment.centerLeft,
-        child: const CardLoading(
-          height: 50,
-          width: 150,
-          borderRadius: BorderRadius.all(Radius.circular(20)),
-          margin: EdgeInsets.symmetric(vertical: 4.0),
-        ),
-      );
-    }
-
-    final alignment = message.isUser
-        ? Alignment.centerRight
-        : Alignment.centerLeft;
-    final color = message.isUser
-        ? Theme.of(context).colorScheme.primary
-        : Theme.of(context).colorScheme.surfaceVariant;
-    final textColor = message.isUser
-        ? Theme.of(context).colorScheme.onPrimary
-        : Theme.of(context).colorScheme.onSurfaceVariant;
-
-    return GestureDetector(
-      onDoubleTap: () {
-        if (!message.isUser) {
-          _showRawResponseDialog(message.rawText);
-        }
-      },
-      child: Align(
-        alignment: alignment,
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 4.0),
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(20.0),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (message.thinkingText != null &&
-                  message.thinkingText!.isNotEmpty)
-                Theme(
-                  data: Theme.of(
-                    context,
-                  ).copyWith(dividerColor: Colors.transparent),
-                  child: ExpansionTile(
-                    title: Text(
-                      '🤔 Thinking...', // Corrected: Removed extra backslash before 🤔
-                      style: TextStyle(color: textColor),
-                    ),
-                    initiallyExpanded: false,
-                    tilePadding: EdgeInsets.zero,
-                    childrenPadding: EdgeInsets.zero,
-                    expandedCrossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      MarkdownBody(
-                        data: message.thinkingText!,
-                        styleSheet: MarkdownStyleSheet.fromTheme(
-                          Theme.of(context),
-                        ).copyWith(p: TextStyle(color: textColor)),
-                      ),
-                    ],
-                  ),
-                ),
-              if (message.toolCalls != null && message.toolCalls!.isNotEmpty)
-                Theme(
-                  data: Theme.of(
-                    context,
-                  ).copyWith(dividerColor: Colors.transparent),
-                  child: ExpansionTile(
-                    title: Text(
-                      '🛠️ Tool Calls',
-                      style: TextStyle(color: textColor),
-                    ),
-                    initiallyExpanded: false,
-                    tilePadding: EdgeInsets.zero,
-                    childrenPadding: EdgeInsets.zero,
-                    expandedCrossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Align(
-                        alignment: Alignment.topLeft,
-                        child: Wrap(
-                          alignment: WrapAlignment.start,
-                          spacing: 8.0,
-                          runSpacing: 4.0,
-                          children: message.toolCalls!
-                              .map(
-                                (toolCall) => Chip(
-                                  label: Text(toolCall),
-                                  backgroundColor: Colors.blueGrey[100],
-                                  labelStyle: TextStyle(color: Colors.black),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              MarkdownBody(
-                data: message.finalText,
-                styleSheet: MarkdownStyleSheet.fromTheme(
-                  Theme.of(context),
-                ).copyWith(p: TextStyle(color: textColor)),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  
 }
