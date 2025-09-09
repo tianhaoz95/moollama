@@ -23,6 +23,7 @@ import 'package:moollama/models.dart';
 import 'package:moollama/widgets/agent_item.dart';
 import 'package:moollama/widgets/agent_settings_drawer_content.dart';
 import 'package:moollama/widgets/delete_agent_dialog.dart';
+import 'package:moollama/widgets/rename_agent_dialog.dart';
 import 'package:blur/blur.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -660,27 +661,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     final newName = await showDialog<String>(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Rename Agent'),
-          content: TextField(
-            controller: renameController,
-            decoration: const InputDecoration(hintText: "Enter new agent name"),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Rename'),
-              onPressed: () {
-                Navigator.of(context).pop(renameController.text);
-              },
-            ),
-          ],
-        );
+        return RenameAgentDialog(initialAgentName: agent.name);
       },
     );
 
