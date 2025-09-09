@@ -192,13 +192,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       onPhoneShake: () async {
         // Show feedback UI
         BetterFeedback.of(context).show((feedback) async {
-          // Save the screenshot to a temporary file
-          final directory = await getTemporaryDirectory();
-          final file = File('${directory.path}/feedback_screenshot.png');
-          await file.writeAsBytes(feedback.screenshot);
+          final file = await saveFeedback(feedback, widget.talker);
 
-          widget.talker.info('Feedback saved to: ${file.path}');
-          widget.talker.info('Feedback text: ${feedback.text}');
           // In a real app, you would send this feedback to a backend service.
           try {
             final result = await Share.shareXFiles([
