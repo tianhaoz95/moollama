@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:moollama/database_helper.dart';
-import 'package:moollama/home_page.dart'; // Import the new home page
+import 'package:moollama/widgets/home_page.dart'; // Import the new home page
 import 'package:feedback/feedback.dart';
 
 import 'package:talker_flutter/talker_flutter.dart'; // Import talker

@@ -2,7 +2,7 @@ import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:moollama/database_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:moollama/settings_page.dart';
+import 'package:moollama/widgets/settings_page.dart';
 import 'package:cactus/cactus.dart';
 import 'package:moollama/utils.dart';
 import 'package:siri_wave/siri_wave.dart';

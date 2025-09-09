@@ -3,7 +3,7 @@ import 'package:moollama/database_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:restart_app/restart_app.dart';
 import 'package:talker_flutter/talker_flutter.dart';
-import 'package:moollama/manage_models_page.dart';
+import 'package:moollama/widgets/manage_models_page.dart';
 
 class SettingsPage extends StatefulWidget {
   final int? agentId;
