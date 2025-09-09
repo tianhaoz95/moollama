@@ -463,6 +463,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         setState(() {
           _isLoading = false;
           _modelDownloaded = true;
+          _downloadProgress = 1.0; // Indicate 100% downloaded
+          _downloadStatus = 'Model found locally.';
         });
       }
     }
