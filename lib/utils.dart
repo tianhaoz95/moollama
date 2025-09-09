@@ -48,7 +48,6 @@ ThinkingModelResponse splitContentByThinkTags(String? content) {
     finalOutput = finalOutput.trim(); // Trim even if no im_end tag
   }
 
-
   return ThinkingModelResponse(
     thinkingSessions: thinkingSessions,
     finalOutput: finalOutput,
@@ -97,8 +96,7 @@ String extractResponseFromJson(String text) {
         }
       }
     }
-  }
-  catch (e) {
+  } catch (e) {
     // Not a valid JSON or doesn't contain the expected structure
     // Do nothing, return original text
   }
@@ -115,4 +113,9 @@ Future<bool> isEmulator() async {
     return !iosInfo.isPhysicalDevice;
   }
   return false;
+}
+
+Future<int> getGpuLayerCount() async {
+  final emulator = await isEmulator();
+  return emulator ? 0 : 99;
 }

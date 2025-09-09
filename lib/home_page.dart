@@ -250,9 +250,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     return p.join((await getApplicationDocumentsDirectory()).path, filename);
   }
 
-  Future<void> _initializeCactusModel(
-    String modelName,
-  ) async {
+  Future<void> _initializeCactusModel(String modelName) async {
     try {
       setState(() {
         _isLoading = true;
@@ -324,10 +322,11 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         _initializationProgress = 0.0; // Start initialization progress
         _downloadStatus = 'Initializing model...';
       });
+      final gpuLayerCount = await getGpuLayerCount();
       await _agent!.init(
         modelFilename: filename,
         contextSize: _contextWindowSize,
-        gpuLayers: 99, // Offload all possible layers to GPU
+        gpuLayers: gpuLayerCount, // Offload all possible layers to GPU
         onProgress: (progress, statusMessage, isError) {
           setState(() {
             _initializationProgress =
@@ -623,9 +622,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       // Dispose and re-initialize the agent
       _agent?.unload();
       if (_selectedAgent != null) {
-        _initializeCactusModel(
-          _selectedAgent!.modelName,
-        );
+        _initializeCactusModel(_selectedAgent!.modelName);
       }
     }
   }
@@ -1189,9 +1186,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                                             children: [
                                               Text(
                                                 'No model found. Please download one to start chatting.',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .titleLarge,
+                                                style: Theme.of(
+                                                  context,
+                                                ).textTheme.titleLarge,
                                                 textAlign: TextAlign.center,
                                               ),
                                               const SizedBox(height: 20),
@@ -1204,9 +1201,11 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                                                   }
                                                 },
                                                 icon: const Icon(
-                                                    Icons.download),
+                                                  Icons.download,
+                                                ),
                                                 label: const Text(
-                                                    'Download Model'),
+                                                  'Download Model',
+                                                ),
                                               ),
                                             ],
                                           ),
@@ -1241,14 +1240,17 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     minLines: 1,
                     maxLines: 6, // Allow up to 6 lines before scrolling
                     textInputAction: TextInputAction.send,
-                    keyboardType: TextInputType.multiline, // Enable multiline keyboard
+                    keyboardType:
+                        TextInputType.multiline, // Enable multiline keyboard
                     decoration: InputDecoration(
                       hintText: 'Ask Secret Agent',
-                      hintStyle: TextStyle(
-                        color: Theme.of(context).hintColor,
-                      ),
+                      hintStyle: TextStyle(color: Theme.of(context).hintColor),
                       filled: true,
-                      fillColor: Theme.of(context).inputDecorationTheme.fillColor ?? Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                      fillColor:
+                          Theme.of(context).inputDecorationTheme.fillColor ??
+                          Theme.of(
+                            context,
+                          ).colorScheme.surfaceVariant.withOpacity(0.5),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
                         borderSide: BorderSide.none,
@@ -1267,7 +1269,6 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                             },
                           ),
                           const SizedBox(width: 8),
-                          
                         ],
                       ),
                       suffixIcon: _isGenerating
@@ -1285,9 +1286,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                             ),
                     ),
                     style: TextStyle(
-                      color: Theme.of(
-                        context,
-                      ).textTheme.bodyLarge?.color,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                     onSubmitted: (_) => _sendMessage(),
                   ),
