@@ -337,16 +337,26 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
                           if (model['isDownloaded'])
                             const Icon(Icons.check_circle, color: Colors.green)
                           else if (_downloadProgress[model['name']] != null)
-                            SizedBox(
-                              width: 80,
-                              child: LinearProgressIndicator(
-                                value: _downloadProgress[model['name']],
-                                backgroundColor: Colors.grey[300],
-                                color: Colors.blue,
-                              ),
-                            ),
-                          if (_downloadStatus[model['name']] != null &&
-                              _downloadProgress[model['name']] == null)
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                SizedBox(
+                                  width: 80,
+                                  child: LinearProgressIndicator(
+                                    value: _downloadProgress[model['name']],
+                                    backgroundColor: Colors.grey[300],
+                                    color: Colors.blue,
+                                  ),
+                                ),
+                                if (_downloadStatus[model['name']] != null)
+                                  Text(
+                                    _downloadStatus[model['name']]!,
+                                    style: const TextStyle(fontSize: 10),
+                                  ),
+                              ],
+                            )
+                          else if (_downloadStatus[model['name']] != null)
                             Text(_downloadStatus[model['name']]!),
                           if (!model['isDownloaded'] &&
                               _downloadProgress[model['name']] == null)
