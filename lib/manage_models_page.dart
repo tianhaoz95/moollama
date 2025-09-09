@@ -115,6 +115,13 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
       final modelFilePath = await _getModelFilePath(modelName, filename);
       final modelFile = File(modelFilePath);
       final bool isDownloaded = await modelFile.exists();
+      if (isDownloaded) {
+        _downloadProgress[modelName] = 1.0;
+        _downloadStatus[modelName] = 'Downloaded';
+      } else {
+        _downloadProgress[modelName] = null;
+        _downloadStatus[modelName] = '';
+      }
       modelsWithStatus.add({
         ...model,
         'isDownloaded': isDownloaded,
