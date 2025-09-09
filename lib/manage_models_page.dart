@@ -343,7 +343,7 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
                         children: [
                           if (model['isDownloaded'])
                             const Icon(Icons.check_circle, color: Colors.green)
-                          else if (_downloadProgress[model['name']] != null)
+                          else if (_downloadProgress[model['name']] != null && _downloadProgress[model['name']]! < 1.0)
                             SizedBox(
                               width: 80,
                               child: LinearProgressIndicator(
@@ -351,12 +351,10 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
                                 backgroundColor: Colors.grey[300],
                                 color: Colors.blue,
                               ),
-                            ),
-                          if (_downloadStatus[model['name']] != null &&
-                              _downloadProgress[model['name']] == null)
-                            Text(_downloadStatus[model['name']]!),
-                          if (!model['isDownloaded'] &&
-                              _downloadProgress[model['name']] == null)
+                            )
+                          else if (_downloadStatus[model['name']] != null && _downloadStatus[model['name']]!.isNotEmpty)
+                            Text(_downloadStatus[model['name']]!)
+                          else
                             IconButton(
                               icon: const Icon(Icons.download),
                               onPressed: () => _downloadModel(model),
