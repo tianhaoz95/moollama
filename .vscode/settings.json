@@ -7,7 +7,7 @@
                 "time": "* */30 * * * *",
                 "action": {
                     "type": "shell",
-                    "command": "cat ./gemini/cron-pr.md | gemini --yolo && git fetch origin && git reset --hard origin/main && git checkout main && cat ./gemini/cron-pr-fix.md | gemini --yolo && git reset --hard origin/main && git checkout main",
+                    "command": "./gemini/cron.sh",
                     "silent": false,
                     "wait": true
                 },
