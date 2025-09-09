@@ -22,6 +22,7 @@ import 'package:moollama/models.dart';
 
 import 'package:moollama/widgets/agent_item.dart';
 import 'package:moollama/widgets/agent_settings_drawer_content.dart';
+import 'package:moollama/widgets/delete_agent_dialog.dart';
 import 'package:blur/blur.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -627,26 +628,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         await showDialog(
           context: context,
           builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Delete Agent'),
-              content: Text(
-                'Are you sure you want to delete agent "${agentToDelete.name}"?',
-              ),
-              actions: <Widget>[
-                TextButton(
-                  child: const Text('Cancel'),
-                  onPressed: () {
-                    Navigator.of(context).pop(false); // User cancelled
-                  },
-                ),
-                TextButton(
-                  child: const Text('Delete'),
-                  onPressed: () {
-                    Navigator.of(context).pop(true); // User confirmed
-                  },
-                ),
-              ],
-            );
+            return DeleteAgentDialog(agentName: agentToDelete.name);
           },
         ) ??
         false; // Default to false if dialog is dismissed
