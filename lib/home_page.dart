@@ -25,6 +25,7 @@ import 'package:moollama/widgets/agent_settings_drawer_content.dart';
 import 'package:moollama/widgets/delete_agent_dialog.dart';
 import 'package:moollama/widgets/rename_agent_dialog.dart';
 import 'package:blur/blur.dart';
+import 'package:moollama/widgets/listening_popup.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -99,33 +100,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
 
   void _showListeningPopup(BuildContext context) async {
     _listeningPopupEntry = OverlayEntry(
-      builder: (context) => Center(
-        child: Card(
-          color: Theme.of(
-            context,
-          ).dialogBackgroundColor, // Use dialog background color
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30.0),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SiriWaveform.ios9(),
-                const SizedBox(height: 10),
-                Text(
-                  _lastWords.isEmpty ? 'Listening...' : _lastWords,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontSize: 24,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+      builder: (context) => ListeningPopup(lastWords: _lastWords),
     );
     Overlay.of(context).insert(_listeningPopupEntry!);
     setState(() {
@@ -139,7 +114,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           setState(() {
             _lastWords = result.recognizedWords;
           });
-          _listeningPopupEntry?.markNeedsBuild();
+          
         },
         listenFor: const Duration(seconds: 30),
         pauseFor: const Duration(seconds: 5),
