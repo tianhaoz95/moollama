@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:path/path.dart';
+import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'models.dart';
+import 'package:path_provider/path_provider.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -26,7 +27,7 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    String path = join(await getDatabasesPath(), 'secret_agent_data.db');
+    String path = p.join(await getDatabasesPath(), 'secret_agent_data.db');
     return await openDatabase(
       path,
       version: 2,
@@ -65,7 +66,12 @@ class DatabaseHelper {
 
   Future<void> _populateDefaultModels(Database db) async {
     for (var entry in defaultModelUrls.entries) {
-      await db.insert('models', {'name': entry.key, 'url': entry.value, 'filename': null, 'type': 'LM'});
+      await db.insert('models', {
+        'name': entry.key,
+        'url': entry.value,
+        'filename': null,
+        'type': 'LM',
+      });
     }
   }
 
@@ -179,5 +185,22 @@ class DatabaseHelper {
       columns: ['name'],
     );
     return maps.map((map) => map['name'] as String).toList();
+  }
+
+  Future<Map<String, dynamic>> getModelByName(String modelName) async {
+    final models = await getModels();
+    return models.firstWhere(
+      (m) => m['name'] == modelName,
+      orElse: () => <String, dynamic>{},
+    );
+  }
+
+  Future<String> getModelFilePath(String modelName) async {
+    final model = await getModelByName(modelName);
+    var filename = model['filename']; // Assuming 'filename' is stored in DB
+    if (filename == null && model['url'] != null) {
+      filename = p.basename(model['url']);
+    }
+    return p.join((await getApplicationDocumentsDirectory()).path, filename);
   }
 }

@@ -13,16 +13,17 @@ import 'package:share_plus/share_plus.dart';
 import 'package:moollama/agent_helper.dart';
 import 'package:moollama/tools.dart';
 
-import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:shake/shake.dart';
 import 'package:feedback/feedback.dart';
-import 'package:path_provider/path_provider.dart';
+
 import 'package:path/path.dart' as p;
 import 'dart:io';
 import 'package:moollama/models.dart';
 
 import 'package:moollama/widgets/agent_item.dart';
 import 'package:moollama/widgets/agent_settings_drawer_content.dart';
+import 'package:moollama/widgets/delete_agent_dialog.dart';
+import 'package:moollama/widgets/rename_agent_dialog.dart';
 import 'package:blur/blur.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -61,6 +62,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   bool _cancellationToken = false; // New: To signal cancellation
   double? _initializationProgress;
   String _downloadStatus = 'Initializing...';
+
   final ScrollController _scrollController = ScrollController();
   bool _isListening = false;
   OverlayEntry? _listeningPopupEntry;
@@ -192,13 +194,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       onPhoneShake: () async {
         // Show feedback UI
         BetterFeedback.of(context).show((feedback) async {
-          // Save the screenshot to a temporary file
-          final directory = await getTemporaryDirectory();
-          final file = File('${directory.path}/feedback_screenshot.png');
-          await file.writeAsBytes(feedback.screenshot);
+          final file = await saveFeedback(feedback, widget.talker);
 
-          widget.talker.info('Feedback saved to: ${file.path}');
-          widget.talker.info('Feedback text: ${feedback.text}');
           // In a real app, you would send this feedback to a backend service.
           try {
             final result = await Share.shareXFiles([
@@ -232,24 +229,6 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     super.dispose();
   }
 
-  Future<String> _getModelFilePath(String modelName) async {
-    final models = await _dbHelper.getModels();
-    final model = models.firstWhere(
-      (m) => m['name'] == modelName,
-      orElse: () => <String, dynamic>{},
-    );
-    final filename = model['filename']; // Assuming 'filename' is stored in DB
-    if (filename == null) {
-      // Fallback or error handling if filename is not in DB
-      // For now, let's assume a default filename based on modelName if not found
-      return p.join(
-        (await getApplicationDocumentsDirectory()).path,
-        '$modelName.gguf',
-      );
-    }
-    return p.join((await getApplicationDocumentsDirectory()).path, filename);
-  }
-
   Future<void> _initializeCactusModel(String modelName) async {
     try {
       setState(() {
@@ -260,21 +239,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       });
       _agent = CactusAgent();
 
-      final models = await _dbHelper.getModels();
-      final model = models.firstWhere(
-        (m) => m['name'] == modelName,
-        orElse: () => <String, dynamic>{},
-      );
-      String? filename = model['filename'];
-      if (filename == null && model['url'] != null) {
-        // Parse filename from URL if not present in DB
-        final url = model['url'] as String;
-        filename = url.split('/').last;
-      }
-      final modelFilePath = p.join(
-        (await getApplicationDocumentsDirectory()).path,
-        filename ?? '$modelName.gguf',
-      );
+      final modelFilePath = await _dbHelper.getModelFilePath(modelName);
       final modelFile = File(modelFilePath);
 
       bool modelExistsLocally = await modelFile.exists();
@@ -283,11 +248,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         setState(() {
           _downloadStatus = 'Downloading model...';
         });
-        final models = await _dbHelper.getModels();
-        final model = models.firstWhere(
-          (m) => m['name'] == modelName,
-          orElse: () => <String, dynamic>{},
-        );
+        final model = await _dbHelper.getModelByName(modelName);
         final modelUrl = model['url'];
         if (modelUrl == null) {
           widget.talker.error('Model URL not found for $modelName');
@@ -324,7 +285,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       });
       final gpuLayerCount = await getGpuLayerCount();
       await _agent!.init(
-        modelFilename: filename,
+        modelFilename: p.basename(modelFilePath),
         contextSize: _contextWindowSize,
         gpuLayers: gpuLayerCount, // Offload all possible layers to GPU
         onProgress: (progress, statusMessage, isError) {
@@ -386,7 +347,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     final defaultModelNames = ['Qwen3 0.6B', 'Qwen3 1.7B', 'Qwen3 4B'];
 
     for (String modelName in defaultModelNames) {
-      final modelFilePath = await _getModelFilePath(modelName);
+      final modelFilePath = await _dbHelper.getModelFilePath(modelName);
       if (await File(modelFilePath).exists()) {
         anyDefaultModelFileExists = true;
         break;
@@ -436,14 +397,14 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         _selectedAgent = _agents.first;
       });
     }
-    // After agents are loaded and a default/selected agent is set, load messages
-    _messagesFuture = _loadMessages();
     if (_selectedAgent != null) {
       final prefs = await SharedPreferences.getInstance();
       _systemPrompt =
           prefs.getString('systemPrompt_${_selectedAgent!.id}') ?? '';
 
-      final modelFilePath = await _getModelFilePath(_selectedAgent!.modelName);
+      final modelFilePath = await _dbHelper.getModelFilePath(
+        _selectedAgent!.modelName,
+      );
       final modelFile = File(modelFilePath);
       bool modelExistsLocally = await modelFile.exists();
 
@@ -464,6 +425,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           _modelDownloaded = true;
         });
       }
+      // After agents are loaded and a default/selected agent is set, load messages
+      // Since the UI is dictated by _messagesFuture, set it last to reflect changes in download state.
+      _messagesFuture = _loadMessages();
     }
   }
 
@@ -666,26 +630,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         await showDialog(
           context: context,
           builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Delete Agent'),
-              content: Text(
-                'Are you sure you want to delete agent "${agentToDelete.name}"?',
-              ),
-              actions: <Widget>[
-                TextButton(
-                  child: const Text('Cancel'),
-                  onPressed: () {
-                    Navigator.of(context).pop(false); // User cancelled
-                  },
-                ),
-                TextButton(
-                  child: const Text('Delete'),
-                  onPressed: () {
-                    Navigator.of(context).pop(true); // User confirmed
-                  },
-                ),
-              ],
-            );
+            return DeleteAgentDialog(agentName: agentToDelete.name);
           },
         ) ??
         false; // Default to false if dialog is dismissed
@@ -717,27 +662,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     final newName = await showDialog<String>(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Rename Agent'),
-          content: TextField(
-            controller: renameController,
-            decoration: const InputDecoration(hintText: "Enter new agent name"),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Rename'),
-              onPressed: () {
-                Navigator.of(context).pop(renameController.text);
-              },
-            ),
-          ],
-        );
+        return RenameAgentDialog(initialAgentName: agent.name);
       },
     );
 
@@ -748,22 +673,6 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         _renameAgent(index, newName);
       }
     }
-  }
-
-  void _debugAction() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => TalkerScreen(
-          talker: widget.talker,
-          theme: TalkerScreenTheme(
-            cardColor: Theme.of(context).cardColor,
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            textColor:
-                Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white,
-          ),
-        ),
-      ),
-    );
   }
 
   void _showAddAgentDialog(BuildContext context) async {
@@ -1002,15 +911,39 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
               // Save TTS setting to SharedPreferences
               await _setTtsEnabled(isTtsEnabled);
 
+              final modelFilePath = await _dbHelper.getModelFilePath(modelName);
+              final modelFile = File(modelFilePath);
+              bool modelExistsLocally = await modelFile.exists();
+
               if (needsReinitialization) {
-                _initializeCactusModel(modelName);
+                if (_selectedAgent != null && _selectedAgent!.id != null) {
+                  await _dbHelper.clearMessages(_selectedAgent!.id!);
+                }
+                setState(() {
+                  _messages.clear();
+                });
+                if (modelExistsLocally) {
+                  _initializeCactusModel(modelName);
+                } else {
+                  setState(() {
+                    _modelDownloaded = false;
+                    _isLoading = false;
+                  });
+                }
               }
               // Re-initialize agent with new settings
               if (_agent != null) {
                 _agent!.unload(); // Unload current agent
-                _initializeCactusModel(
-                  modelName,
-                ); // Re-initialize with new settings
+                if (modelExistsLocally) {
+                  _initializeCactusModel(
+                    modelName,
+                  ); // Re-initialize with new settings
+                } else {
+                  setState(() {
+                    _modelDownloaded = false;
+                    _isLoading = false;
+                  });
+                }
               }
             },
       ),
