@@ -313,7 +313,11 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
                           IconButton(
                             icon: const Icon(Icons.link),
                             onPressed: () async {
-                              final url = Uri.parse(model['url']);
+                              String urlString = model['url'];
+                              if (!urlString.startsWith('http://') && !urlString.startsWith('https://')) {
+                                urlString = 'https://' + urlString;
+                              }
+                              final url = Uri.parse(urlString);
                               if (await canLaunchUrl(url)) {
                                 await launchUrl(url);
                               } else {
