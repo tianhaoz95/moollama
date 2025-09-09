@@ -27,6 +27,7 @@ import 'package:blur/blur.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:background_downloader/background_downloader.dart';
+import 'dart:async';
 
 const bool USE_BACKGROUND_DOWNLOADER = true;
 
@@ -73,6 +74,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   late ShakeDetector _shakeDetector;
   late FlutterTts _flutterTts;
   bool _isTtsEnabled = false;
+  StreamSubscription<TaskUpdate>? _downloadSubscription;
 
   void _handleAgentLongPress(Agent agent) async {
     if (_agents.length == 1) {
@@ -232,6 +234,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   void dispose() {
     _scrollController.dispose();
     _shakeDetector.stopListening(); // Changed from stop() to stopListening()
+    _downloadSubscription?.cancel(); // Cancel download subscription
     super.dispose();
   }
 
@@ -309,7 +312,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           );
 
           await FileDownloader().enqueue(task);
-          FileDownloader().updates.listen((statusUpdate) {
+          _downloadSubscription?.cancel(); // Cancel any previous subscription
+          _downloadSubscription = FileDownloader().updates.listen((statusUpdate) {
             if (statusUpdate is TaskProgressUpdate) {
               setState(() {
                 _downloadProgress = statusUpdate.progress / 100;
