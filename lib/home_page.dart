@@ -114,7 +114,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           setState(() {
             _lastWords = result.recognizedWords;
           });
-          
+          _listeningPopupEntry?.markNeedsBuild();
         },
         listenFor: const Duration(seconds: 30),
         pauseFor: const Duration(seconds: 5),
