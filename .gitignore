@@ -48,3 +48,5 @@ app.*.map.json
 gha-creds-*.json
 
 lib/model_downloader.dart
+
+.vscdoe
