@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:cactus/cactus.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 
 class ManageModelsPage extends StatefulWidget {
   final Talker talker;
@@ -348,6 +349,21 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
                               icon: const Icon(Icons.download),
                               onPressed: () => _downloadModel(model),
                             ),
+                          IconButton(
+                            icon: const Icon(Icons.ios_share),
+                            onPressed: () async {
+                              final directory = await getApplicationDocumentsDirectory();
+                              final filePath = '${directory.path}/${model['name']}';
+                              final file = XFile(filePath);
+                              try {
+                                await Share.shareXFiles([file], text: 'Sharing model file');
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Error sharing file: $e')),
+                                );
+                              }
+                            },
+                          ),
                           IconButton(
                             icon: const Icon(Icons.edit),
                             onPressed: () {
