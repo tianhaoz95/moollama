@@ -28,6 +28,7 @@ import 'package:blur/blur.dart';
 import 'package:moollama/widgets/listening_popup.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:moollama/widgets/bottom_input_bar.dart';
 
 final talker = TalkerFlutter.init();
 
@@ -1133,68 +1134,16 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                   ),
                 ),
                 // Bottom bar
-                Padding(
-                  padding: const EdgeInsets.only(
-                    bottom: 16.0,
-                    left: 12.0,
-                    right: 12.0,
-                    top: 8.0,
-                  ),
-                  child: TextField(
-                    controller: _textController,
-                    minLines: 1,
-                    maxLines: 6, // Allow up to 6 lines before scrolling
-                    textInputAction: TextInputAction.send,
-                    keyboardType:
-                        TextInputType.multiline, // Enable multiline keyboard
-                    decoration: InputDecoration(
-                      hintText: 'Ask Secret Agent',
-                      hintStyle: TextStyle(color: Theme.of(context).hintColor),
-                      filled: true,
-                      fillColor:
-                          Theme.of(context).inputDecorationTheme.fillColor ??
-                          Theme.of(
-                            context,
-                          ).colorScheme.surfaceVariant.withOpacity(0.5),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 16,
-                      ),
-                      prefixIcon: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.attach_file),
-                            onPressed: () {
-                              _showAttachmentOptions(context);
-                            },
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                      ),
-                      suffixIcon: _isGenerating
-                          ? IconButton(
-                              icon: const Icon(Icons.stop),
-                              onPressed: () {
-                                setState(() {
-                                  _cancellationToken = true;
-                                });
-                              },
-                            )
-                          : IconButton(
-                              icon: const Icon(Icons.send),
-                              onPressed: _sendMessage,
-                            ),
-                    ),
-                    style: TextStyle(
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
-                    ),
-                    onSubmitted: (_) => _sendMessage(),
-                  ),
+                BottomInputBar(
+                  textController: _textController,
+                  isGenerating: _isGenerating,
+                  onSendMessage: _sendMessage,
+                  onStopGenerating: () {
+                    setState(() {
+                      _cancellationToken = true;
+                    });
+                  },
+                  onShowAttachmentOptions: _showAttachmentOptions,
                 ),
               ],
             ),
