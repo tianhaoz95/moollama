@@ -3,6 +3,7 @@
 git fetch origin
 git reset --hard origin/main
 git checkout main
+git pull
 git branch | grep -v "main" | xargs git branch -D
 
 issue_count=$(gh issue list --search "label:gemini" --limit 1 | wc -l)
