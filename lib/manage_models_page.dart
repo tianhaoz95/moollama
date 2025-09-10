@@ -8,6 +8,7 @@ import 'package:cactus/cactus.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:file_picker/file_picker.dart'; // Added import
 
 class ManageModelsPage extends StatefulWidget {
   final Talker talker;
@@ -130,6 +131,55 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
     _loadModels();
   }
 
+  Future<void> _pickAndCopyFile(BuildContext context) async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['gguf'],
+      );
+
+      if (result != null) {
+        PlatformFile file = result.files.first;
+        if (file.extension?.toLowerCase() != 'gguf') {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please select a .gguf file.')),
+          );
+          return;
+        }
+
+        final appDocDir = await getApplicationDocumentsDirectory();
+        final newFilePath = p.join(appDocDir.path, file.name!);
+        final newFile = File(newFilePath);
+
+        if (file.path != null) {
+          await File(file.path!).copy(newFile.path);
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('File ${file.name} copied successfully!')),
+          );
+        } else {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Error: File path is null.')),
+          );
+        }
+      } else {
+        // User canceled the picker
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('File selection cancelled.')),
+        );
+      }
+    } catch (e) {
+      widget.talker.error('Error picking or copying file: $e', e);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking or copying file: $e')),
+      );
+    }
+  }
+
   void _showAddModelDialog(BuildContext context) {
     final TextEditingController nicknameController = TextEditingController();
     final TextEditingController urlController = TextEditingController();
@@ -160,10 +210,7 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // TODO: Implement file selection
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('File selection not yet implemented.')),
-                    );
+                    _pickAndCopyFile(context);
                   },
                   child: const Text('Select from Files'),
                 ),
