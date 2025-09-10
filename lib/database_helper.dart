@@ -30,7 +30,7 @@ class DatabaseHelper {
     String path = p.join(await getDatabasesPath(), 'secret_agent_data.db');
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -42,7 +42,8 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         agent_id INTEGER,
         text TEXT,
-        is_user INTEGER
+        is_user INTEGER,
+        image_path TEXT
       )
     ''');
     await db.execute('''
@@ -80,14 +81,18 @@ class DatabaseHelper {
       await db.execute('ALTER TABLE models ADD COLUMN filename TEXT;');
       await db.execute('ALTER TABLE models ADD COLUMN type TEXT;');
     }
+    if (oldVersion < 3) {
+      await db.execute('ALTER TABLE messages ADD COLUMN image_path TEXT;');
+    }
   }
 
-  Future<int> insertMessage(int agentId, String message, bool isUser) async {
+  Future<int> insertMessage(int agentId, String message, bool isUser, {String? imagePath}) async {
     final db = await database;
     return await db.insert('messages', {
       'agent_id': agentId,
       'text': message,
       'is_user': isUser ? 1 : 0,
+      'image_path': imagePath,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 

@@ -415,27 +415,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       _messages.addAll(
         maps.map((map) {
           final bool isUser = map['is_user'] == 1;
-          if (isUser) {
-            return Message(finalText: map['text'], isUser: true);
-          } else {
-            final ThinkingModelResponse parsedResponse =
-                splitContentByThinkTags(map['text']);
-            final String? thinkingText =
-                parsedResponse.thinkingSessions.isNotEmpty
-                ? parsedResponse.thinkingSessions.join('\n')
-                : null;
-            final List<String> toolCalls = [];
-            final String finalText = extractResponseFromJson(
-              parsedResponse.finalOutput,
-            );
-            return Message(
-              rawText: map['text'],
-              thinkingText: thinkingText,
-              toolCalls: toolCalls,
-              finalText: finalText,
-              isUser: false,
-            );
-          }
+          return Message.fromMap(map);
         }),
       );
     });
@@ -770,9 +750,30 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
 
     if (image != null) {
       widget.talker.info('Picked image path: ${image.path}');
-      // For now, just log the path. In a real scenario, you'd process this image,
-      // e.g., display it in the chat, send it to the agent, etc.
-      // You might want to add a new Message type for images.
+
+      // Create a message with the image path
+      final imageMessage = Message(
+        finalText: 'Image attached: ${image.path.split('/').last}',
+        isUser: true,
+        imagePath: image.path,
+      );
+
+      // Add to UI
+      setState(() {
+        _messages.add(imageMessage);
+      });
+
+      // Store in database
+      if (_selectedAgent != null && _selectedAgent!.id != null) {
+        await _dbHelper.insertMessage(
+          _selectedAgent!.id!,
+          imageMessage.finalText,
+          true,
+          imagePath: imageMessage.imagePath,
+        );
+      }
+      _scrollToBottom();
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1255,6 +1256,15 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (message.imagePath != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Image.file(
+                    File(message.imagePath!),
+                    height: 200,
+                    fit: BoxFit.cover,
+                  ),
+                ),
               if (message.thinkingText != null &&
                   message.thinkingText!.isNotEmpty)
                 Theme(
