@@ -43,6 +43,7 @@ class Message {
   final String finalText;
   final bool isUser;
   final bool isLoading;
+  final String? imagePath; // New field for image path
 
   Message({
     this.rawText,
@@ -51,5 +52,6 @@ class Message {
     required this.finalText,
     required this.isUser,
     this.isLoading = false,
+    this.imagePath, // Initialize new field
   });
 }
