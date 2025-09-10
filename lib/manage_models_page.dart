@@ -353,7 +353,11 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
                             icon: const Icon(Icons.ios_share),
                             onPressed: () async {
                               final directory = await getApplicationDocumentsDirectory();
-                              final filePath = '${directory.path}/${model['name']}';
+                              String filename = model['filename'];
+                              if (filename == null && model['url'] != null) {
+                                filename = p.basename(model['url']);
+                              }
+                              final filePath = '${directory.path}/$filename';
                               final file = XFile(filePath);
                               try {
                                 await Share.shareXFiles([file], text: 'Sharing model file');
