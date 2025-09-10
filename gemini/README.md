@@ -31,7 +31,7 @@ For `.vscode/settings.json`:
             {
                 "name": "Gemini CLI auto PR creation/update flow",
                 "description": "Run Gemini CLI autonomous PR implementation flow every 30 mintues.",
-                "time": "* */30 * * * *",
+                "time": "* */5 * * * *",
                 "action": {
                     "type": "shell",
                     "command": "./gemini/cron.sh",
