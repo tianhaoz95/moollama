@@ -24,6 +24,7 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
   List<Map<String, dynamic>> _models = [];
   final Map<String, double?> _downloadProgress = {};
   final Map<String, String> _downloadStatus = {};
+  PlatformFile? _pickedFile;
 
   @override
   void initState() {
@@ -131,7 +132,7 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
     _loadModels();
   }
 
-  Future<void> _pickAndCopyFile(BuildContext context) async {
+  Future<PlatformFile?> _pickFile() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -141,48 +142,47 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
       if (result != null) {
         PlatformFile file = result.files.first;
         if (file.extension?.toLowerCase() != 'gguf') {
-          if (!context.mounted) return;
+          if (!mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Please select a .gguf file.')),
           );
-          return;
+          return null;
         }
-
-        final appDocDir = await getApplicationDocumentsDirectory();
-        final newFilePath = p.join(appDocDir.path, file.name!);
-        final newFile = File(newFilePath);
-
-        if (file.path != null) {
-          await File(file.path!).copy(newFile.path);
-          if (!context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('File ${file.name} copied successfully!')),
-          );
-        } else {
-          if (!context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Error: File path is null.')),
-          );
-        }
+        return file;
       } else {
         // User canceled the picker
-        if (!context.mounted) return;
+        if (!mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('File selection cancelled.')),
         );
+        return null;
       }
     } catch (e) {
-      widget.talker.error('Error picking or copying file: $e', e);
-      if (!context.mounted) return;
+      widget.talker.error('Error picking file: $e', e);
+      if (!mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking or copying file: $e')),
+        SnackBar(content: Text('Error picking file: $e')),
       );
+      return null;
     }
   }
 
   void _showAddModelDialog(BuildContext context) {
     final TextEditingController nicknameController = TextEditingController();
     final TextEditingController urlController = TextEditingController();
+    final TextEditingController filenameController = TextEditingController();
+
+    // Listener to update filename from URL
+    urlController.addListener(() {
+      try {
+        final uri = Uri.parse(urlController.text);
+        if (uri.pathSegments.isNotEmpty) {
+          filenameController.text = uri.pathSegments.last;
+        }
+      } catch (e) {
+        // Ignore parsing errors, filename will remain empty or as set by file picker
+      }
+    });
 
     showDialog(
       context: context,
@@ -206,11 +206,22 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
                 ),
               ),
               const SizedBox(height: 16),
+              TextField(
+                controller: filenameController,
+                decoration: const InputDecoration(
+                  labelText: 'Filename (optional)',
+                ),
+              ),
+              const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    _pickAndCopyFile(context);
+                  onPressed: () async {
+                    final result = await _pickFile();
+                    if (result != null) {
+                      _pickedFile = result; // Store the picked file
+                      filenameController.text = result.name;
+                    }
                   },
                   child: const Text('Select from Files'),
                 ),
@@ -228,8 +239,19 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
               onPressed: () async {
                 final String nickname = nicknameController.text;
                 final String url = urlController.text;
+                final String filename = filenameController.text;
                 if (nickname.isNotEmpty && url.isNotEmpty) {
-                  await _dbHelper.insertModel({'name': nickname, 'url': url});
+                  if (_pickedFile != null && _pickedFile!.path != null) {
+                    final appDocDir = await getApplicationDocumentsDirectory();
+                    final newFilePath = p.join(appDocDir.path, _pickedFile!.name);
+                    final newFile = File(newFilePath);
+                    await File(_pickedFile!.path!).copy(newFile.path);
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('File ${_pickedFile!.name} copied successfully!')),
+                    );
+                  }
+                  await _dbHelper.insertModel({'name': nickname, 'url': url, 'filename': filename.isNotEmpty ? filename : null});
                   _refreshModels();
                   if (!context.mounted) return;
                   Navigator.of(context).pop(); // Dismiss the dialog
