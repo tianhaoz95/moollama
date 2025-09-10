@@ -13,6 +13,13 @@ For `.gemini/settings.json`:
       "args": [
         "mcp-server"
       ]
+    },
+    "github": {
+      "httpUrl": "https://api.githubcopilot.com/mcp/",
+      "trust": true,
+      "headers": {
+        "Authorization": "Bearer $GITHUB_PAT"
+      }
     }
   }
 }
