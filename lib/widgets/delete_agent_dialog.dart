@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moollama/widgets/custom_alert_dialog.dart';
 
 class DeleteAgentDialog extends StatelessWidget {
   final String agentName;
@@ -7,7 +8,7 @@ class DeleteAgentDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
+    return CustomAlertDialog(
       title: const Text('Delete Agent'),
       content: Text(
         'Are you sure you want to delete agent "$agentName"?',

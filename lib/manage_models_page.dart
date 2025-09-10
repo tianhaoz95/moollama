@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:cactus/cactus.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:moollama/widgets/custom_alert_dialog.dart';
 
 class ManageModelsPage extends StatefulWidget {
   final Talker talker;
@@ -136,7 +137,7 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
+        return CustomAlertDialog(
           title: const Text('Add New Model'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -211,7 +212,7 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
+        return CustomAlertDialog(
           title: const Text('Edit Model'),
           content: Column(
             mainAxisSize: MainAxisSize.min,

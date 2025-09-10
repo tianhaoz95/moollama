@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moollama/widgets/custom_alert_dialog.dart';
 
 class RenameAgentDialog extends StatefulWidget {
   final String initialAgentName;
@@ -26,7 +27,7 @@ class _RenameAgentDialogState extends State<RenameAgentDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
+    return CustomAlertDialog(
       title: const Text('Rename Agent'),
       content: TextField(
         controller: _renameController,

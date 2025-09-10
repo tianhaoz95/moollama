@@ -28,6 +28,7 @@ import 'package:blur/blur.dart';
 import 'package:moollama/widgets/listening_popup.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:moollama/widgets/custom_alert_dialog.dart';
 
 final talker = TalkerFlutter.init();
 
@@ -79,7 +80,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       showDialog(
         context: context,
         builder: (BuildContext context) {
-          return AlertDialog(
+          return CustomAlertDialog(
             title: const Text('Cannot Delete Last Agent'),
             content: const Text('You cannot delete the last remaining agent.'),
             actions: <Widget>[
@@ -289,7 +290,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       showDialog(
         context: context,
         builder: (BuildContext context) {
-          return AlertDialog(
+          return CustomAlertDialog(
             title: const Text('Error'),
             content: Text('Error initializing Cactus model: $e'),
             actions: <Widget>[
@@ -580,7 +581,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       showDialog(
         context: context,
         builder: (BuildContext context) {
-          return AlertDialog(
+          return CustomAlertDialog(
             title: const Text('Cannot Delete Last Agent'),
             content: const Text('You cannot delete the last remaining agent.'),
             actions: <Widget>[
@@ -652,7 +653,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     final newAgentName = await showDialog<String>(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
+        return CustomAlertDialog(
           title: const Text('Add New Agent'),
           content: TextField(
             controller: addAgentController,
@@ -718,7 +719,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
+        return CustomAlertDialog(
           title: const Text('Raw Response'),
           content: SingleChildScrollView(child: Text(rawText)),
           actions: <Widget>[

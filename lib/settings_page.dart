@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:restart_app/restart_app.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:moollama/manage_models_page.dart';
+import 'package:moollama/widgets/custom_alert_dialog.dart';
 
 class SettingsPage extends StatefulWidget {
   final int? agentId;
@@ -106,7 +107,7 @@ class _SettingsPageState extends State<SettingsPage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
+        return CustomAlertDialog(
           title: const Text('Confirm Deletion'),
           content: const Text('Are you sure you want to delete all preferences? This action cannot be undone.'),
           actions: <Widget>[
@@ -139,7 +140,7 @@ class _SettingsPageState extends State<SettingsPage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
+        return CustomAlertDialog(
           title: const Text('Confirm Deletion'),
           content: const Text('Are you sure you want to delete all data? This action cannot be undone.'),
           actions: <Widget>[
