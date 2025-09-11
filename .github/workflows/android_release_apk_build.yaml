@@ -1,0 +1,60 @@
+name: Android Release APK Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request_target:
+    branches:
+      - main
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      - name: Get Flutter packages
+        run: flutter pub get
+      - name: Build Android Release APK
+        run: flutter build apk --release
+
+      - name: Upload Release APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Comment Release APK download link on PR
+        if: github.event_name == 'pull_request_target'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { repo, issue } = context;
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: repo.owner,
+              repo: repo.repo,
+              run_id: context.runId,
+            });
+            const releaseApkArtifact = artifacts.data.artifacts.find(artifact => artifact.name === 'app-release-apk');
+            if (releaseApkArtifact) {
+              const releaseDownloadUrl = `https://github.com/${repo.owner}/${repo.repo}/actions/runs/${context.runId}/artifacts/${releaseApkArtifact.id}`;
+              github.rest.issues.createComment({
+                owner: repo.owner,
+                repo: repo.repo,
+                issue_number: issue.number,
+                body: `📦 Android Release APK available for download: ${releaseDownloadUrl}`
+              });
+            }
