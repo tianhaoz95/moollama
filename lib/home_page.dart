@@ -31,6 +31,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:background_downloader/background_downloader.dart';
 import 'package:path_provider/path_provider.dart';
+import 'dart:async';
 
 const bool FLAG_USE_BACKGROUND_DOWNLOADER = true;
 
@@ -78,6 +79,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   late ShakeDetector _shakeDetector;
   late FlutterTts _flutterTts;
   bool _isTtsEnabled = false;
+  StreamSubscription<dynamic>? _downloadSubscription;
 
   void _handleAgentLongPress(Agent agent) async {
     if (_agents.length == 1) {
@@ -206,6 +208,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   void dispose() {
     _scrollController.dispose();
     _shakeDetector.stopListening(); // Changed from stop() to stopListening()
+    _downloadSubscription?.cancel(); // Cancel the download subscription
     super.dispose();
   }
 
@@ -253,7 +256,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           );
           await FileDownloader().enqueue(downloadTask);
           widget.talker.info('Download task initiated with ID: ${downloadTask.taskId}');
-          FileDownloader().updates.listen((update) {
+          _downloadSubscription = FileDownloader().updates.listen((update) {
             if (update.task.taskId == downloadTask.taskId) { // Filter updates for the current task
               if (update is TaskProgressUpdate) {
                 widget.talker.info('Download progress update: ${update.progress}');
