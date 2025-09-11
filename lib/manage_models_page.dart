@@ -206,10 +206,19 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              TextField(
-                controller: filenameController,
-                decoration: const InputDecoration(
-                  labelText: 'Filename (optional)',
+              // Display filename as text, not editable
+              Align(
+                alignment: Alignment.centerLeft,
+                child: ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: filenameController,
+                  builder: (context, value, child) {
+                    return Text(
+                      value.text.isEmpty
+                          ? 'Filename: (auto-generated or selected)'
+                          : 'Filename: ${value.text}',
+                      style: const TextStyle(fontSize: 16),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 16),
