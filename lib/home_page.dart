@@ -1,5 +1,6 @@
 import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:moollama/database_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:moollama/settings_page.dart';
@@ -1167,12 +1168,13 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                       prefixIcon: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.attach_file),
-                            onPressed: () {
-                              _showAttachmentOptions(context);
-                            },
-                          ),
+                          if (!kReleaseMode)
+                            IconButton(
+                              icon: const Icon(Icons.attach_file),
+                              onPressed: () {
+                                _showAttachmentOptions(context);
+                              },
+                            ),
                           const SizedBox(width: 8),
                         ],
                       ),
