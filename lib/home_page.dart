@@ -244,18 +244,17 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             _downloadStatus = 'Downloading model...';
           });
           widget.talker.info('Attempting to download using background_downloader...');
-          final taskId = await FileDownloader().download(
-            DownloadTask(
-              url: modelUrl,
-              filename: p.basename(modelUrl),
-              directory: documentsDirectory.path,
-              updates: Updates.progress, // Only request progress updates here
-              requiresWiFi: false,
-            ),
+          final DownloadTask downloadTask = DownloadTask(
+            url: modelUrl,
+            filename: p.basename(modelUrl),
+            directory: documentsDirectory.path,
+            updates: Updates.progress, // Only request progress updates here
+            requiresWiFi: false,
           );
-          widget.talker.info('Download task initiated with ID: $taskId');
+          await FileDownloader().enqueue(downloadTask);
+          widget.talker.info('Download task initiated with ID: ${downloadTask.taskId}');
           FileDownloader().updates.listen((update) {
-            if (update.task.taskId == taskId) { // Filter updates for the current task
+            if (update.task.taskId == downloadTask.taskId) { // Filter updates for the current task
               if (update is TaskProgressUpdate) {
                 widget.talker.info('Download progress update: ${update.progress}');
                 setState(() {
