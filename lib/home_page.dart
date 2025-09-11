@@ -225,6 +225,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       bool modelExistsLocally = await modelFile.exists();
 
       if (!modelExistsLocally) {
+        widget.talker.info('Model $modelName not found locally. Initiating download.');
         setState(() {
           _downloadStatus = 'Downloading model...';
         });
@@ -234,6 +235,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           widget.talker.error('Model URL not found for $modelName');
           throw Exception('Model URL not found for $modelName');
         }
+        widget.talker.info('Model URL for $modelName: $modelUrl');
         if (FLAG_USE_BACKGROUND_DOWNLOADER) {
           final documentsDirectory = await getApplicationDocumentsDirectory();
           final filePath = p.join(documentsDirectory.path, p.basename(modelUrl));
@@ -241,6 +243,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             _downloadProgress = 0.0; // Initialize progress to 0.0
             _downloadStatus = 'Downloading model...';
           });
+          widget.talker.info('Attempting to download using background_downloader...');
           final taskId = await FileDownloader().download(
             DownloadTask(
               url: modelUrl,
@@ -250,14 +253,17 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
               requiresWiFi: false,
             ),
           );
+          widget.talker.info('Download task initiated with ID: $taskId');
           FileDownloader().updates.listen((update) {
             if (update.task.taskId == taskId) { // Filter updates for the current task
               if (update is TaskProgressUpdate) {
+                widget.talker.info('Download progress update: ${update.progress}');
                 setState(() {
                   _downloadProgress = update.progress;
                   _downloadStatus = 'Downloading: ${(update.progress * 100).toInt()}%';
                 });
               } else if (update is TaskStatusUpdate) {
+                widget.talker.info('Download status update: ${update.status}');
                 if (update.status == TaskStatus.complete) {
                   setState(() {
                     _downloadProgress = 1.0;
@@ -273,6 +279,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             }
           });
         } else {
+          widget.talker.info('Attempting to download using _agent.download...');
           await _agent!.download(
             modelUrl: modelUrl,
             onProgress: (progress, statusMessage, isError) {
