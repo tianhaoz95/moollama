@@ -448,8 +448,12 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           _modelDownloaded = false; // Ensure this is false so the button shows
         });
       } else {
-        // If model exists, initialize it
-        _initializeCactusModel(_selectedAgent!.modelName);
+        // If model exists, set _modelDownloaded to true and _isLoading to false
+        // so the UI can show that the model is downloaded and ready.
+        setState(() {
+          _modelDownloaded = true;
+          _isLoading = false;
+        });
       }
       // After agents are loaded and a default/selected agent is set, load messages
       // Since the UI is dictated by _messagesFuture, set it last to reflect changes in download state.
