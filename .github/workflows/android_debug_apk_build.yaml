@@ -1,10 +1,10 @@
-name: Android APK Build
+name: Android Debug APK Build
 
 on:
   push:
     branches:
       - main
-  pull_request_target: # <-- Use pull_request_target for PRs from forks
+  pull_request_target:
     branches:
       - main
   schedule:
@@ -14,33 +14,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      issues: write # Permissions for the job
-      pull-requests: write # Add pull-requests write permission for safety
-      contents: read # Add read permission for checkout
-      actions: read # Allow downloading artifacts
+      issues: write
+      pull-requests: write
+      contents: read
+      actions: read
     steps:
-      # Step 1: Secure Checkout
-      # Check out the base branch (main), not the PR's head branch.
-      # This prevents untrusted code from running with write permissions.
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
-      # The rest of your steps remain largely the same
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
       - name: Get Flutter packages
         run: flutter pub get
-      - name: Build Android APK
-        run: flutter build apk --release
-
-      - name: Upload Release APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
-
       - name: Build Android Debug APK
         run: flutter build apk --debug
 
@@ -50,9 +37,7 @@ jobs:
           name: app-debug-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
 
-      - name: Comment APK download link on PR
-        # The 'if' condition remains the same, but now it will succeed
-        # because the GITHUB_TOKEN has write permissions with pull_request_target
+      - name: Comment Debug APK download link on PR
         if: github.event_name == 'pull_request_target'
         uses: actions/github-script@v6
         with:
@@ -63,15 +48,13 @@ jobs:
               repo: repo.repo,
               run_id: context.runId,
             });
-            const releaseApkArtifact = artifacts.data.artifacts.find(artifact => artifact.name === 'app-release-apk');
             const debugApkArtifact = artifacts.data.artifacts.find(artifact => artifact.name === 'app-debug-apk');
-            if (releaseApkArtifact && debugApkArtifact) {
-              const releaseDownloadUrl = `https://github.com/${repo.owner}/${repo.repo}/actions/runs/${context.runId}/artifacts/${releaseApkArtifact.id}`;
+            if (debugApkArtifact) {
               const debugDownloadUrl = `https://github.com/${repo.owner}/${repo.repo}/actions/runs/${context.runId}/artifacts/${debugApkArtifact.id}`;
               github.rest.issues.createComment({
                 owner: repo.owner,
                 repo: repo.repo,
                 issue_number: issue.number,
-                body: `📦 Android APK available for download: ${releaseDownloadUrl} (release) ${debugDownloadUrl} (debug)`
+                body: `📦 Android Debug APK available for download: ${debugDownloadUrl}`
               });
             }
