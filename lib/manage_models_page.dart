@@ -9,6 +9,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart'; // Added import
+import 'package:toggle_switch/toggle_switch.dart';
 
 class ManageModelsPage extends StatefulWidget {
   final Talker talker;
@@ -204,37 +205,29 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: RadioListTile<ModelInputType>(
-                          title: const Text('From URL'),
-                          value: ModelInputType.url,
-                          groupValue: _selectedInputType,
-                          onChanged: (ModelInputType? value) {
-                            setState(() {
-                              _selectedInputType = value!;
-                              _pickedFile = null; // Clear picked file when switching to URL
-                              filenameController.clear(); // Clear filename
-                            });
-                          },
-                        ),
-                      ),
-                      Expanded(
-                        child: RadioListTile<ModelInputType>(
-                          title: const Text('Upload File'),
-                          value: ModelInputType.file,
-                          groupValue: _selectedInputType,
-                          onChanged: (ModelInputType? value) {
-                            setState(() {
-                              _selectedInputType = value!;
-                              urlController.clear(); // Clear URL when switching to file
-                              filenameController.clear(); // Clear filename
-                            });
-                          },
-                        ),
-                      ),
-                    ],
+                  ToggleSwitch(
+                    minWidth: 90.0,
+                    cornerRadius: 20.0,
+                    activeBgColors: [[Colors.blue[800]!], [Colors.blue[800]!]],
+                    activeFgColor: Colors.white,
+                    inactiveBgColor: Colors.grey,
+                    inactiveFgColor: Colors.white,
+                    initialLabelIndex: _selectedInputType == ModelInputType.url ? 0 : 1,
+                    totalSwitches: 2,
+                    labels: const ['From URL', 'Upload File'],
+                    radiusStyle: true,
+                    onToggle: (index) {
+                      setState(() {
+                        _selectedInputType = index == 0 ? ModelInputType.url : ModelInputType.file;
+                        if (_selectedInputType == ModelInputType.url) {
+                          _pickedFile = null; // Clear picked file when switching to URL
+                          filenameController.clear(); // Clear filename
+                        } else {
+                          urlController.clear(); // Clear URL when switching to file
+                          filenameController.clear(); // Clear filename
+                        }
+                      });
+                    },
                   ),
                   if (_selectedInputType == ModelInputType.url) ...[
                     TextField(
