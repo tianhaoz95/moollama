@@ -35,11 +35,20 @@ jobs:
       - name: Build Android APK
         run: flutter build apk --release
 
-      - name: Upload APK artifact
+      - name: Upload Release APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Build Android Debug APK
+        run: flutter build apk --debug
+
+      - name: Upload Debug APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
 
       - name: Comment APK download link on PR
         # The 'if' condition remains the same, but now it will succeed
