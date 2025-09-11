@@ -34,6 +34,21 @@ class _SettingsPageState extends State<SettingsPage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
+                icon: const Icon(Icons.storage),
+                label: const Text('Manage Local Models'),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => ManageModelsPage(talker: widget.talker),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
                 icon: const Icon(Icons.bug_report_outlined),
                 label: const Text('View Logs'),
                 onPressed: () {
@@ -79,21 +94,6 @@ class _SettingsPageState extends State<SettingsPage> {
                   _confirmAndDeleteData(context);
                 },
                 child: const Text('Delete All Data'),
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.storage),
-                label: const Text('Manage Local Models'),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => ManageModelsPage(talker: widget.talker),
-                    ),
-                  );
-                },
               ),
             ),
           ],
