@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:restart_app/restart_app.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:moollama/manage_models_page.dart';
+import 'package:flutter/foundation.dart';
 
 class SettingsPage extends StatefulWidget {
   final int? agentId;
@@ -46,28 +47,29 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.bug_report_outlined),
-                label: const Text('View Logs'),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => TalkerScreen(
-                        talker: widget.talker, // Use widget.talker
-                        theme: TalkerScreenTheme(
-                          cardColor: Theme.of(context).cardColor,
-                          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                          textColor:
-                              Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white,
+            if (!kReleaseMode)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.bug_report_outlined),
+                  label: const Text('View Logs'),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => TalkerScreen(
+                          talker: widget.talker, // Use widget.talker
+                          theme: TalkerScreenTheme(
+                            cardColor: Theme.of(context).cardColor,
+                            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                            textColor:
+                                Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white,
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
