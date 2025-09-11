@@ -63,13 +63,15 @@ jobs:
               repo: repo.repo,
               run_id: context.runId,
             });
-            const apkArtifact = artifacts.data.artifacts.find(artifact => artifact.name === 'app-release-apk');
+            const releaseApkArtifact = artifacts.data.artifacts.find(artifact => artifact.name === 'app-release-apk');
+            const debugApkArtifact = artifacts.data.artifacts.find(artifact => artifact.name === 'app-debug-apk');
             if (apkArtifact) {
-              const downloadUrl = `https://github.com/${repo.owner}/${repo.repo}/actions/runs/${context.runId}/artifacts/${apkArtifact.id}`;
+              const releaseDownloadUrl = `https://github.com/${repo.owner}/${repo.repo}/actions/runs/${context.runId}/artifacts/${releaseApkArtifact.id}`;
+              const debugDownloadUrl = `https://github.com/${repo.owner}/${repo.repo}/actions/runs/${context.runId}/artifacts/${debugApkArtifact.id}`;
               github.rest.issues.createComment({
                 owner: repo.owner,
                 repo: repo.repo,
                 issue_number: issue.number,
-                body: `📦 Android APK available for download: ${downloadUrl}`
+                body: `📦 Android APK available for download: ${releaseDownloadUrl} (release) ${debugDownloadUrl} (debug)`
               });
             }
