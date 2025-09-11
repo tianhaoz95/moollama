@@ -29,6 +29,10 @@ import 'package:blur/blur.dart';
 import 'package:moollama/widgets/listening_popup.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:background_downloader/background_downloader.dart';
+import 'package:path_provider/path_provider.dart';
+
+const bool FLAG_USE_BACKGROUND_DOWNLOADER = true;
 
 final talker = TalkerFlutter.init();
 
@@ -230,18 +234,54 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           widget.talker.error('Model URL not found for $modelName');
           throw Exception('Model URL not found for $modelName');
         }
-        await _agent!.download(
-          modelUrl: modelUrl,
-          onProgress: (progress, statusMessage, isError) {
-            setState(() {
-              _downloadProgress = progress;
-              _downloadStatus = statusMessage;
-              if (isError) {
-                _downloadStatus = 'Error: $statusMessage';
+        if (FLAG_USE_BACKGROUND_DOWNLOADER) {
+          final documentsDirectory = await getApplicationDocumentsDirectory();
+          final filePath = p.join(documentsDirectory.path, p.basename(modelUrl));
+          final taskId = await FileDownloader().download(
+            DownloadTask(
+              url: modelUrl,
+              filename: p.basename(modelUrl),
+              directory: documentsDirectory.path,
+              updates: Updates.progress, // Only request progress updates here
+              requiresWiFi: false,
+            ),
+          );
+          FileDownloader().updates.listen((update) {
+            if (update.task.taskId == taskId) { // Filter updates for the current task
+              if (update is TaskProgressUpdate) {
+                setState(() {
+                  _downloadProgress = update.progress;
+                  _downloadStatus = 'Downloading: ${(update.progress * 100).toInt()}%';
+                });
+              } else if (update is TaskStatusUpdate) {
+                if (update.status == TaskStatus.complete) {
+                  setState(() {
+                    _downloadProgress = 1.0;
+                    _downloadStatus = 'Download complete.';
+                    _modelDownloaded = true;
+                  });
+                } else if (update.status == TaskStatus.failed) {
+                  setState(() {
+                    _downloadStatus = 'Error: Download failed.';
+                  });
+                }
               }
-            });
-          },
-        );
+            }
+          });
+        } else {
+          await _agent!.download(
+            modelUrl: modelUrl,
+            onProgress: (progress, statusMessage, isError) {
+              setState(() {
+                _downloadProgress = progress;
+                _downloadStatus = statusMessage;
+                if (isError) {
+                  _downloadStatus = 'Error: $statusMessage';
+                }
+              });
+            },
+          );
+        }
       } else {
         widget.talker.info(
           'Model $modelName already exists locally at $modelFilePath. Skipping download.',
