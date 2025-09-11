@@ -65,7 +65,7 @@ jobs:
             });
             const releaseApkArtifact = artifacts.data.artifacts.find(artifact => artifact.name === 'app-release-apk');
             const debugApkArtifact = artifacts.data.artifacts.find(artifact => artifact.name === 'app-debug-apk');
-            if (apkArtifact) {
+            if (debugApkArtifact && releaseApkAttifact) {
               const releaseDownloadUrl = `https://github.com/${repo.owner}/${repo.repo}/actions/runs/${context.runId}/artifacts/${releaseApkArtifact.id}`;
               const debugDownloadUrl = `https://github.com/${repo.owner}/${repo.repo}/actions/runs/${context.runId}/artifacts/${debugApkArtifact.id}`;
               github.rest.issues.createComment({
