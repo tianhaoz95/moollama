@@ -19,12 +19,15 @@ class ManageModelsPage extends StatefulWidget {
   State<ManageModelsPage> createState() => _ManageModelsPageState();
 }
 
+enum ModelInputType { url, file }
+
 class _ManageModelsPageState extends State<ManageModelsPage> {
   final DatabaseHelper _dbHelper = DatabaseHelper();
   List<Map<String, dynamic>> _models = [];
   final Map<String, double?> _downloadProgress = {};
   final Map<String, String> _downloadStatus = {};
   PlatformFile? _pickedFile;
+  ModelInputType _selectedInputType = ModelInputType.url;
 
   @override
   void initState() {
@@ -187,95 +190,157 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Add New Model'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nicknameController,
-                decoration: const InputDecoration(
-                  labelText: 'Model Nickname',
-                ),
+        return StatefulBuilder( // Use StatefulBuilder to update dialog content
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Add New Model'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nicknameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Model Nickname',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: RadioListTile<ModelInputType>(
+                          title: const Text('From URL'),
+                          value: ModelInputType.url,
+                          groupValue: _selectedInputType,
+                          onChanged: (ModelInputType? value) {
+                            setState(() {
+                              _selectedInputType = value!;
+                              _pickedFile = null; // Clear picked file when switching to URL
+                              filenameController.clear(); // Clear filename
+                            });
+                          },
+                        ),
+                      ),
+                      Expanded(
+                        child: RadioListTile<ModelInputType>(
+                          title: const Text('Upload File'),
+                          value: ModelInputType.file,
+                          groupValue: _selectedInputType,
+                          onChanged: (ModelInputType? value) {
+                            setState(() {
+                              _selectedInputType = value!;
+                              urlController.clear(); // Clear URL when switching to file
+                              filenameController.clear(); // Clear filename
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_selectedInputType == ModelInputType.url) ...[
+                    TextField(
+                      controller: urlController,
+                      decoration: const InputDecoration(
+                        labelText: 'Model URL',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ] else ...[
+                    // Display filename as text, not editable
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: filenameController,
+                        builder: (context, value, child) {
+                          return Text(
+                            value.text.isEmpty
+                                ? 'Filename: (not selected)'
+                                : 'Filename: ${value.text}',
+                            style: const TextStyle(fontSize: 16),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final result = await _pickFile();
+                          if (result != null) {
+                            setState(() { // Update dialog state after file pick
+                              _pickedFile = result; // Store the picked file
+                              filenameController.text = result.name;
+                            });
+                          }
+                        },
+                        child: const Text('Select from Files'),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: urlController,
-                decoration: const InputDecoration(
-                  labelText: 'Model URL',
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Display filename as text, not editable
-              Align(
-                alignment: Alignment.centerLeft,
-                child: ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: filenameController,
-                  builder: (context, value, child) {
-                    return Text(
-                      value.text.isEmpty
-                          ? 'Filename: (auto-generated or selected)'
-                          : 'Filename: ${value.text}',
-                      style: const TextStyle(fontSize: 16),
-                    );
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Dismiss the dialog
                   },
+                  child: const Text('Cancel'),
                 ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
+                TextButton(
                   onPressed: () async {
-                    final result = await _pickFile();
-                    if (result != null) {
-                      _pickedFile = result; // Store the picked file
-                      filenameController.text = result.name;
+                    final String nickname = nicknameController.text;
+                    String? url;
+                    String? filename;
+
+                    if (_selectedInputType == ModelInputType.url) {
+                      url = urlController.text;
+                      filename = filenameController.text.isNotEmpty ? filenameController.text : null;
+                      if (nickname.isEmpty || url!.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please enter both nickname and URL.')),
+                        );
+                        return;
+                      }
+                    } else { // ModelInputType.file
+                      if (_pickedFile == null || _pickedFile!.path == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please select a file.')),
+                        );
+                        return;
+                      }
+                      filename = _pickedFile!.name;
+                      if (nickname.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please enter a nickname.')),
+                        );
+                        return;
+                      }
                     }
-                  },
-                  child: const Text('Select from Files'),
-                ),
-              ),
-            ],
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Dismiss the dialog
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () async {
-                final String nickname = nicknameController.text;
-                final String url = urlController.text;
-                final String filename = filenameController.text;
-                if (nickname.isNotEmpty && url.isNotEmpty) {
-                  if (_pickedFile != null && _pickedFile!.path != null) {
-                    final appDocDir = await getApplicationDocumentsDirectory();
-                    final newFilePath = p.join(appDocDir.path, _pickedFile!.name);
-                    final newFile = File(newFilePath);
-                    await File(_pickedFile!.path!).copy(newFile.path);
+
+                    if (_pickedFile != null && _pickedFile!.path != null) {
+                      final appDocDir = await getApplicationDocumentsDirectory();
+                      final newFilePath = p.join(appDocDir.path, _pickedFile!.name);
+                      final newFile = File(newFilePath);
+                      await File(_pickedFile!.path!).copy(newFile.path);
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('File ${_pickedFile!.name} copied successfully!')),
+                      );
+                    }
+
+                    await _dbHelper.insertModel({'name': nickname, 'url': url, 'filename': filename});
+                    _refreshModels();
                     if (!context.mounted) return;
+                    Navigator.of(context).pop(); // Dismiss the dialog
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('File ${_pickedFile!.name} copied successfully!')),
+                      const SnackBar(content: Text('Model added successfully!')),
                     );
-                  }
-                  await _dbHelper.insertModel({'name': nickname, 'url': url, 'filename': filename.isNotEmpty ? filename : null});
-                  _refreshModels();
-                  if (!context.mounted) return;
-                  Navigator.of(context).pop(); // Dismiss the dialog
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Model added successfully!')),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please enter both nickname and URL.')),
-                  );
-                }
-              },
-              child: const Text('Add'),
-            ),
-          ],
+                  },
+                  child: const Text('Add'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
