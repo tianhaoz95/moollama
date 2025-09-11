@@ -237,6 +237,10 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         if (FLAG_USE_BACKGROUND_DOWNLOADER) {
           final documentsDirectory = await getApplicationDocumentsDirectory();
           final filePath = p.join(documentsDirectory.path, p.basename(modelUrl));
+          setState(() {
+            _downloadProgress = 0.0; // Initialize progress to 0.0
+            _downloadStatus = 'Downloading model...';
+          });
           final taskId = await FileDownloader().download(
             DownloadTask(
               url: modelUrl,
@@ -1072,7 +1076,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                                         ),
                                         const SizedBox(height: 8),
                                         Text(
-                                          '${(_initializationProgress! * 100).toInt()}% Initializing...',
+                                          _downloadStatus,
                                           style: Theme.of(
                                             context,
                                           ).textTheme.bodyMedium,
@@ -1092,7 +1096,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                                         ),
                                         const SizedBox(height: 8),
                                         Text(
-                                          '${(_downloadProgress! * 100).toInt()}% Downloading...',
+                                          _downloadStatus,
                                           style: Theme.of(
                                             context,
                                           ).textTheme.bodyMedium,
