@@ -1086,7 +1086,6 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                         _selectedAgent?.name ?? 'Secret Agent',
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
-                      const Spacer(),
                       IconButton(
                         icon: const Icon(Icons.refresh),
                         onPressed: _resetChat,
