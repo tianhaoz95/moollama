@@ -298,6 +298,10 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                     for (final file in files) {
                       if (p.extension(file.path) == '.gguf') {
                         widget.talker.info('Found gguf file: ${file.path}');
+                      } else {
+                        widget.talker.info(
+                          'Found non-model file: ${file.path}',
+                        );
                       }
                     }
                     final tempFile = File(tempFilePath);
