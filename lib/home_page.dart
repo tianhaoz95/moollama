@@ -291,8 +291,10 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                 {
                   try {
                     final dir = Directory(documentsDirectory.path);
-                    widget.talker.info('Scan model files in ${dir.path}...');
                     final files = await dir.list().toList();
+                    widget.talker.info(
+                      'Found ${files.length} files in ${dir.path}...',
+                    );
                     for (final file in files) {
                       if (p.extension(file.path) == '.gguf') {
                         widget.talker.info('Found gguf file: ${file.path}');
