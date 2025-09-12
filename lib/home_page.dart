@@ -242,6 +242,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         if (FLAG_USE_BACKGROUND_DOWNLOADER) {
           final documentsDirectory = await getApplicationDocumentsDirectory();
           final filePath = p.join(documentsDirectory.path, p.basename(modelUrl));
+          final tempFilePath = p.join(documentsDirectory.path, p.basename(modelUrl) + '.temp');
           setState(() {
             _downloadProgress = 0.0; // Initialize progress to 0.0
             _downloadStatus = 'Downloading model...';
@@ -249,37 +250,40 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           widget.talker.info('Attempting to download using background_downloader...');
           final DownloadTask downloadTask = DownloadTask(
             url: modelUrl,
-            filename: p.basename(modelUrl),
+            filename: tempFilePath,
             directory: documentsDirectory.path,
             updates: Updates.progress, // Only request progress updates here
             requiresWiFi: false,
           );
-          await FileDownloader().enqueue(downloadTask);
-          widget.talker.info('Download task initiated with ID: ${downloadTask.taskId}');
-          _downloadSubscription = FileDownloader().updates.listen((update) {
-            if (update.task.taskId == downloadTask.taskId) { // Filter updates for the current task
-              if (update is TaskProgressUpdate) {
-                widget.talker.info('Download progress update: ${update.progress}');
+          final result = await FileDownloader().download(downloadTask,
+              onProgress: (progress) => {
                 setState(() {
-                  _downloadProgress = update.progress;
-                  _downloadStatus = 'Downloading: ${(update.progress * 100).toInt()}%';
+                  _downloadProgress = progress
+                  _downloadStatus = 'Downloading: ${(progress * 100).toInt()}%';
                 });
-              } else if (update is TaskStatusUpdate) {
-                widget.talker.info('Download status update: ${update.status}');
-                if (update.status == TaskStatus.complete) {
-                  setState(() {
-                    _downloadProgress = 1.0;
-                    _downloadStatus = 'Download complete.';
-                    _modelDownloaded = true;
-                  });
-                } else if (update.status == TaskStatus.failed) {
-                  setState(() {
-                    _downloadStatus = 'Error: Download failed.';
-                  });
-                }
-              }
+              },
+              onStatus: (status) => widget.talker.info('Status: $status')
+          );
+          widget.talker.info('Download task initiated with ID: ${downloadTask.taskId}');
+          switch (result.status) {
+            case TaskStatus.complete: {
+              _downloadProgress = 1.0; // Indicate 100% downloaded
+              _downloadStatus = 'Model found locally.';
+              _modelDownloaded = true;
             }
-          });
+
+            case TaskStatus.canceled: {
+              print('Download was canceled');
+            }
+
+            case TaskStatus.paused: {
+              print('Download was paused');
+            }
+
+            default: {
+              print('Download not successful');
+            }
+          }
         } else {
           widget.talker.info('Attempting to download using _agent.download...');
           await _agent!.download(
