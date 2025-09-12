@@ -343,6 +343,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       }
 
       // After download (or if already exists), start initialization
+      final loadModelFile = File(modelFilePath);
       setState(() {
         _downloadProgress = null; // Clear download progress
         _initializationProgress = 0.0; // Start initialization progress
@@ -350,7 +351,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       });
       final gpuLayerCount = await getGpuLayerCount();
       await _agent!.init(
-        modelFilename: p.basename(modelFilePath),
+        modelFilename: p.basename(loadModelFile),
         contextSize: _contextWindowSize,
         gpuLayers: gpuLayerCount, // Offload all possible layers to GPU
         onProgress: (progress, statusMessage, isError) {
