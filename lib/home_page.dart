@@ -249,7 +249,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           );
           final tempFilePath = p.join(
             documentsDirectory.path,
-            'temp-${p.basename(modelUrl)}',
+            'temp_${p.basename(modelUrl)}',
           );
           setState(() {
             _downloadProgress = 0.0; // Initialize progress to 0.0
