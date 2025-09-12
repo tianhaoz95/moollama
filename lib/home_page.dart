@@ -252,7 +252,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             url: modelUrl,
             filename: tempFilePath,
             directory: documentsDirectory.path,
-            updates: Updates.progress, // Only request progress updates here
+            allowPause: false,
+            updates: Updates.statusAndProgress,
+            retries: 5,
             requiresWiFi: false,
           );
           final result = await FileDownloader().download(downloadTask,
@@ -267,21 +269,51 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           widget.talker.info('Download task initiated with ID: ${downloadTask.taskId}');
           switch (result.status) {
             case TaskStatus.complete: {
-              _downloadProgress = 1.0; // Indicate 100% downloaded
-              _downloadStatus = 'Model found locally.';
-              _modelDownloaded = true;
+              try {
+                final tempFile = File(tempFilePath);
+                final modelFile = await file.rename(filePath);
+                widget.talker.info('File renamed to: ${modelFile.path}');
+              } catch (e) {
+                widget.talker.info('Error renaming file: $e');
+              }
+              setState(() {
+                _downloadProgress = 1.0; // Indicate 100% downloaded
+                _downloadStatus = 'Model found locally.';
+                _modelDownloaded = true;
+              });
             }
 
             case TaskStatus.canceled: {
-              print('Download was canceled');
+              try {
+                final tempFile = File(tempFilePath);
+                await tempFile.delete();
+                widget.talker.info('File successfully deleted.');
+              } catch (e) {
+                widget.talker.info('Error deleting file: $e');
+              }
+              widget.talker.info('Download was canceled');
             }
 
             case TaskStatus.paused: {
-              print('Download was paused');
+              try {
+                final tempFile = File(tempFilePath);
+                await tempFile.delete();
+                widget.talker.info('File successfully deleted.');
+              } catch (e) {
+                widget.talker.info('Error deleting file: $e');
+              }
+              widget.talker.info('Download was paused');
             }
 
             default: {
-              print('Download not successful');
+              try {
+                final tempFile = File(tempFilePath);
+                await tempFile.delete();
+                widget.talker.info('File successfully deleted.');
+              } catch (e) {
+                widget.talker.info('Error deleting file: $e');
+              }
+              widget.talker.info('Download not successful');
             }
           }
         } else {
