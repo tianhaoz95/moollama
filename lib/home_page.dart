@@ -263,6 +263,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             progressBar: true,
           );
           try {
+            widget.talker.info(
+              'Attempting to download model file to ${documentsDirectory.path}',
+            );
             final DownloadTask downloadTask = DownloadTask(
               url: modelUrl,
               filename: p.basename(tempFilePath),
