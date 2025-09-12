@@ -260,7 +260,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           final result = await FileDownloader().download(downloadTask,
               onProgress: (progress) => {
                 setState(() {
-                  _downloadProgress = progress
+                  _downloadProgress = progress;
                   _downloadStatus = 'Downloading: ${(progress * 100).toInt()}%';
                 });
               },
