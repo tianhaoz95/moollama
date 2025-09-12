@@ -29,6 +29,11 @@ import 'package:blur/blur.dart';
 import 'package:moollama/widgets/listening_popup.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:background_downloader/background_downloader.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:async';
+
+const bool FLAG_USE_BACKGROUND_DOWNLOADER = true;
 
 final talker = TalkerFlutter.init();
 
@@ -74,6 +79,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   late ShakeDetector _shakeDetector;
   late FlutterTts _flutterTts;
   bool _isTtsEnabled = false;
+  StreamSubscription<dynamic>? _downloadSubscription;
 
   void _handleAgentLongPress(Agent agent) async {
     if (_agents.length == 1) {
@@ -202,6 +208,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   void dispose() {
     _scrollController.dispose();
     _shakeDetector.stopListening(); // Changed from stop() to stopListening()
+    _downloadSubscription?.cancel(); // Cancel the download subscription
     super.dispose();
   }
 
@@ -221,6 +228,9 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       bool modelExistsLocally = await modelFile.exists();
 
       if (!modelExistsLocally) {
+        widget.talker.info(
+          'Model $modelName not found locally. Initiating download.',
+        );
         setState(() {
           _downloadStatus = 'Downloading model...';
         });
@@ -230,18 +240,143 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           widget.talker.error('Model URL not found for $modelName');
           throw Exception('Model URL not found for $modelName');
         }
-        await _agent!.download(
-          modelUrl: modelUrl,
-          onProgress: (progress, statusMessage, isError) {
-            setState(() {
-              _downloadProgress = progress;
-              _downloadStatus = statusMessage;
-              if (isError) {
-                _downloadStatus = 'Error: $statusMessage';
-              }
-            });
-          },
-        );
+        widget.talker.info('Model URL for $modelName: $modelUrl');
+        if (FLAG_USE_BACKGROUND_DOWNLOADER) {
+          final documentsDirectory = await getApplicationDocumentsDirectory();
+          final filePath = p.join(
+            documentsDirectory.path,
+            p.basename(modelUrl),
+          );
+          final tempFilePath = p.join(
+            documentsDirectory.path,
+            'temp_${p.basename(modelUrl)}',
+          );
+          setState(() {
+            _downloadProgress = 0.0; // Initialize progress to 0.0
+            _downloadStatus = 'Downloading model...';
+          });
+          widget.talker.info(
+            'Attempting to download using background_downloader...',
+          );
+          try {
+            FileDownloader().configureNotification(
+              running: TaskNotification('Downloading', 'file: {filename}'),
+              complete: TaskNotification(
+                'Download finished',
+                'file: {filename}',
+              ),
+              progressBar: true,
+            );
+            widget.talker.info(
+              'Attempting to download model file to ${documentsDirectory.path}',
+            );
+            final DownloadTask downloadTask = DownloadTask(
+              url: modelUrl,
+              filename: p.basename(tempFilePath),
+              allowPause: false,
+              updates: Updates.statusAndProgress,
+              retries: 5,
+              requiresWiFi: false,
+            );
+            widget.talker.info(
+              'Download task initiated with ID: ${downloadTask.taskId}',
+            );
+            final result = await FileDownloader().download(
+              downloadTask,
+              onProgress: (progress) {
+                setState(() {
+                  _downloadProgress = progress;
+                  _downloadStatus = 'Downloading: ${(progress * 100).toInt()}%';
+                });
+              },
+              onStatus: (status) => widget.talker.info('Status: $status'),
+            );
+            widget.talker.info('Finished downloading task initiated: $result');
+            switch (result.status) {
+              case TaskStatus.complete:
+                {
+                  try {
+                    final dir = Directory(documentsDirectory.path);
+                    final files = await dir.list().toList();
+                    widget.talker.info(
+                      'Found ${files.length} files in ${dir.path}...',
+                    );
+                    for (final file in files) {
+                      if (p.extension(file.path) == '.gguf') {
+                        widget.talker.info('Found gguf file: ${file.path}');
+                      } else {
+                        widget.talker.info(
+                          'Found non-model file: ${file.path}',
+                        );
+                      }
+                    }
+                    final tempFile = File(tempFilePath);
+                    final modelFile = await tempFile.rename(filePath);
+                    widget.talker.info('File renamed to: ${modelFile.path}');
+                  } catch (e) {
+                    widget.talker.info('Error renaming file: $e');
+                  }
+                  setState(() {
+                    _downloadProgress = 1.0; // Indicate 100% downloaded
+                    _downloadStatus = 'Model found locally.';
+                    _modelDownloaded = true;
+                  });
+                }
+
+              case TaskStatus.canceled:
+                {
+                  try {
+                    final tempFile = File(tempFilePath);
+                    await tempFile.delete();
+                    widget.talker.info('File successfully deleted.');
+                  } catch (e) {
+                    widget.talker.info('Error deleting file: $e');
+                  }
+                  widget.talker.info('Download was canceled');
+                }
+
+              case TaskStatus.paused:
+                {
+                  try {
+                    final tempFile = File(tempFilePath);
+                    await tempFile.delete();
+                    widget.talker.info('File successfully deleted.');
+                  } catch (e) {
+                    widget.talker.info('Error deleting file: $e');
+                  }
+                  widget.talker.info('Download was paused');
+                }
+
+              default:
+                {
+                  try {
+                    final tempFile = File(tempFilePath);
+                    await tempFile.delete();
+                    widget.talker.info('File successfully deleted.');
+                  } catch (e) {
+                    widget.talker.info('Error deleting file: $e');
+                  }
+                  widget.talker.info('Download not successful');
+                }
+            }
+          } catch (e) {
+            widget.talker.info('Error downloading file: $e');
+          }
+        } else {
+          widget.talker.info('Attempting to download using _agent.download...');
+          await _agent!.download(
+            modelUrl: modelUrl,
+            onProgress: (progress, statusMessage, isError) {
+              setState(() {
+                _downloadProgress = progress;
+                _downloadStatus = statusMessage;
+                if (isError) {
+                  _downloadStatus = 'Error: $statusMessage';
+                }
+              });
+            },
+          );
+        }
       } else {
         widget.talker.info(
           'Model $modelName already exists locally at $modelFilePath. Skipping download.',
@@ -260,6 +395,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         _downloadStatus = 'Initializing model...';
       });
       final gpuLayerCount = await getGpuLayerCount();
+      widget.talker.info('GPU Layer Count: $gpuLayerCount');
+      widget.talker.info('Model file path: ${p.basename(modelFilePath)}');
       await _agent!.init(
         modelFilename: p.basename(modelFilePath),
         contextSize: _contextWindowSize,
@@ -356,15 +493,10 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
 
     final agentsFromDb = await _dbHelper.getAgents();
     if (agentsFromDb.isEmpty) {
-      final defaultAgent = Agent(
-        name: 'Moo',
-        modelName: _selectedModelName,
-      );
+      final defaultAgent = Agent(name: 'Moo', modelName: _selectedModelName);
       final id = await _dbHelper.insertAgent(defaultAgent.toMap());
       setState(() {
-        _agents.add(
-          Agent(id: id, name: 'Moo', modelName: _selectedModelName),
-        );
+        _agents.add(Agent(id: id, name: 'Moo', modelName: _selectedModelName));
         _selectedAgent = _agents.first;
       });
     } else {
@@ -395,8 +527,12 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           _modelDownloaded = false; // Ensure this is false so the button shows
         });
       } else {
-        // If model exists, initialize it
-        _initializeCactusModel(_selectedAgent!.modelName);
+        // If model exists, set _modelDownloaded to true and _isLoading to false
+        // so the UI can show that the model is downloaded and ready.
+        setState(() {
+          _modelDownloaded = true;
+          _isLoading = false;
+        });
       }
       // After agents are loaded and a default/selected agent is set, load messages
       // Since the UI is dictated by _messagesFuture, set it last to reflect changes in download state.
@@ -1032,7 +1168,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                                         ),
                                         const SizedBox(height: 8),
                                         Text(
-                                          '${(_initializationProgress! * 100).toInt()}% Initializing...',
+                                          _downloadStatus,
                                           style: Theme.of(
                                             context,
                                           ).textTheme.bodyMedium,
@@ -1052,7 +1188,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                                         ),
                                         const SizedBox(height: 8),
                                         Text(
-                                          '${(_downloadProgress! * 100).toInt()}% Downloading...',
+                                          _downloadStatus,
                                           style: Theme.of(
                                             context,
                                           ).textTheme.bodyMedium,
