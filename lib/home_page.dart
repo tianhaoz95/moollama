@@ -258,7 +258,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             requiresWiFi: false,
           );
           final result = await FileDownloader().download(downloadTask,
-              onProgress: (progress) => {
+              onProgress: (progress) {
                 setState(() {
                   _downloadProgress = progress;
                   _downloadStatus = 'Downloading: ${(progress * 100).toInt()}%';
@@ -271,7 +271,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             case TaskStatus.complete: {
               try {
                 final tempFile = File(tempFilePath);
-                final modelFile = await file.rename(filePath);
+                final modelFile = await tempFile.rename(filePath);
                 widget.talker.info('File renamed to: ${modelFile.path}');
               } catch (e) {
                 widget.talker.info('Error renaming file: $e');
