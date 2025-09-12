@@ -242,7 +242,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         if (FLAG_USE_BACKGROUND_DOWNLOADER) {
           final documentsDirectory = await getApplicationDocumentsDirectory();
           final filePath = p.join(documentsDirectory.path, p.basename(modelUrl));
-          final tempFilePath = p.join(documentsDirectory.path, p.basename(modelUrl) + '.temp');
+          final tempFilePath = p.join(documentsDirectory.path, 'temp-' + p.basename(modelUrl));
           setState(() {
             _downloadProgress = 0.0; // Initialize progress to 0.0
             _downloadStatus = 'Downloading model...';
