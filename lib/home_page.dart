@@ -1090,6 +1090,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                         icon: const Icon(Icons.refresh),
                         onPressed: _resetChat,
                       ),
+                      Spacer(), // Added this Spacer
                       Builder(
                         builder: (BuildContext innerContext) {
                           return IconButton(
@@ -1100,6 +1101,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                           );
                         },
                       ),
+                      Spacer(), // Added this Spacer
                       ValueListenableBuilder<ThemeMode>(
                         valueListenable: widget.themeNotifier,
                         builder: (context, currentMode, child) {
