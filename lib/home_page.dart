@@ -258,18 +258,21 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           widget.talker.info(
             'Attempting to download using background_downloader...',
           );
-          FileDownloader().configureNotification(
-            running: TaskNotification('Downloading', 'file: {tempFilePath}'),
-            progressBar: true,
-          );
           try {
+            FileDownloader().configureNotification(
+              running: TaskNotification('Downloading', 'file: {filename}'),
+              complete: TaskNotification(
+                'Download finished',
+                'file: {filename}',
+              ),
+              progressBar: true,
+            );
             widget.talker.info(
               'Attempting to download model file to ${documentsDirectory.path}',
             );
             final DownloadTask downloadTask = DownloadTask(
               url: modelUrl,
               filename: p.basename(tempFilePath),
-              directory: documentsDirectory.path,
               allowPause: false,
               updates: Updates.statusAndProgress,
               retries: 5,
