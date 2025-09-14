@@ -80,6 +80,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   late FlutterTts _flutterTts;
   bool _isTtsEnabled = false;
   StreamSubscription<dynamic>? _downloadSubscription;
+  Future<CompletionResult>? _completionFuture;
 
   void _handleAgentLongPress(Agent agent) async {
     if (_agents.length == 1) {
@@ -613,11 +614,12 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
               );
             }).toList(),
           );
-          final response = await _agent!.completionWithTools(
+          _completionFuture = _agent!.completionWithTools(
             messages,
             maxTokens: 2048,
             temperature: _creativity / 100.0,
           );
+          final response = await _completionFuture;
 
           if (_cancellationToken) {
             // If cancelled, update the last message to indicate cancellation
@@ -636,7 +638,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           }
 
           widget.talker.info(
-            'Response result: ${response.result}, tool calls: ${response.toolCalls}',
+            'Response result: ${response!.result}, tool calls: ${response.toolCalls}',
           );
           final ThinkingModelResponse parsedResponse = splitContentByThinkTags(
             response.result ?? '',
@@ -680,6 +682,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         } finally {
           setState(() {
             _isGenerating = false; // Reset generating state
+            _completionFuture = null;
           });
         }
       }
@@ -1319,6 +1322,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                               icon: const Icon(Icons.stop),
                               onPressed: () {
                                 setState(() {
+                                  // The future will be checked in the _sendMessage method
                                   _cancellationToken = true;
                                 });
                               },
