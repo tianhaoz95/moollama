@@ -64,6 +64,7 @@ dependencies:
   toggle_switch: ^2.1.0
   background_downloader: ^9.0.0
 
+  cancellation_token: ^2.0.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
