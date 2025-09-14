@@ -32,6 +32,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:background_downloader/background_downloader.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:async';
+import 'package:cancellation_token/cancellation_token.dart';
 
 const bool FLAG_USE_BACKGROUND_DOWNLOADER = true;
 
@@ -66,7 +67,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   double? _downloadProgress;
   bool _isGenerating = false; // New: To track if AI is generating
   bool _modelDownloaded = false;
-  bool _cancellationToken = false; // New: To signal cancellation
+  CancellationToken? _cancellationToken;
   double? _initializationProgress;
   String _downloadStatus = 'Initializing...';
 
@@ -80,6 +81,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   late FlutterTts _flutterTts;
   bool _isTtsEnabled = false;
   StreamSubscription<dynamic>? _downloadSubscription;
+  Future<CompletionResult>? _completionFuture;
 
   void _handleAgentLongPress(Agent agent) async {
     if (_agents.length == 1) {
@@ -594,7 +596,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         _messages.add(Message(finalText: '', isUser: false, isLoading: true));
         _textController.clear();
         _isGenerating = true; // Set generating state
-        _cancellationToken = false; // Reset cancellation token
+        _cancellationToken = CancellationToken(); // Create a new token
       });
       _scrollToBottom();
 
@@ -613,30 +615,17 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
               );
             }).toList(),
           );
-          final response = await _agent!.completionWithTools(
+          _completionFuture = _agent!.completionWithTools(
             messages,
             maxTokens: 2048,
             temperature: _creativity / 100.0,
           );
-
-          if (_cancellationToken) {
-            // If cancelled, update the last message to indicate cancellation
-            setState(() {
-              _messages.removeLast();
-              _messages.add(
-                Message(
-                  finalText: 'Generation stopped.',
-                  isUser: false,
-                  isLoading: false,
-                ),
-              );
-            });
-            _scrollToBottom();
-            return; // Exit early if cancelled
-          }
+          final response = await _completionFuture!.asCancellable(
+            _cancellationToken,
+          );
 
           widget.talker.info(
-            'Response result: ${response.result}, tool calls: ${response.toolCalls}',
+            'Response result: ${response!.result}, tool calls: ${response.toolCalls}',
           );
           final ThinkingModelResponse parsedResponse = splitContentByThinkTags(
             response.result ?? '',
@@ -677,9 +666,29 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           if (_isTtsEnabled && finalText.isNotEmpty) {
             _flutterTts.speak(finalText);
           }
+        } on CancelledException {
+          widget.talker.info('Completion was cancelled.');
+          // The cancellation is already handled by the check above,
+          // but we catch the exception to prevent it from propagating
+          // as an unhandled error.
+          // If cancelled, update the last message to indicate cancellation
+          setState(() {
+            _messages.removeLast();
+            _messages.add(
+              Message(
+                finalText: 'Generation stopped.',
+                isUser: false,
+                isLoading: false,
+              ),
+            );
+          });
+          _scrollToBottom();
+          return; // Exit early if cancelled
         } finally {
           setState(() {
             _isGenerating = false; // Reset generating state
+            _cancellationToken = null;
+            _completionFuture = null;
           });
         }
       }
@@ -1318,9 +1327,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                           ? IconButton(
                               icon: const Icon(Icons.stop),
                               onPressed: () {
-                                setState(() {
-                                  _cancellationToken = true;
-                                });
+                                _cancellationToken?.cancel();
                               },
                             )
                           : IconButton(
