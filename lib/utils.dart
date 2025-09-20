@@ -5,7 +5,8 @@ import 'package:feedback/feedback.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:talker/talker.dart';
 import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<File> saveFeedback(UserFeedback feedback, Talker talker) async {
   final directory = await getTemporaryDirectory();
@@ -136,4 +137,13 @@ Future<bool> isEmulator() async {
 Future<int> getGpuLayerCount() async {
   final emulator = await isEmulator();
   return emulator ? 0 : 99;
+}
+
+bool isReleaseMode() {
+  // Environment variable takes precedence.
+  if (dotenv.env['MOOLLAMA_APP_MODE'] != null) {
+    return dotenv.env['MOOLLAMA_APP_MODE'] == 'release';
+  }
+  // Otherwise, fall back to the compile-time constant.
+  return kReleaseMode;
 }

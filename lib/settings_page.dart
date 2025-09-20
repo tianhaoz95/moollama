@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:moollama/database_helper.dart';
+import 'package:moollama/utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:restart_app/restart_app.dart';
 import 'package:talker_flutter/talker_flutter.dart';
@@ -40,14 +41,15 @@ class _SettingsPageState extends State<SettingsPage> {
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => ManageModelsPage(talker: widget.talker),
+                      builder: (context) =>
+                          ManageModelsPage(talker: widget.talker),
                     ),
                   );
                 },
               ),
             ),
             const SizedBox(height: 16),
-            if (!kReleaseMode)
+            if (!isReleaseMode())
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -60,9 +62,12 @@ class _SettingsPageState extends State<SettingsPage> {
                           talker: widget.talker, // Use widget.talker
                           theme: TalkerScreenTheme(
                             cardColor: Theme.of(context).cardColor,
-                            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).scaffoldBackgroundColor,
                             textColor:
-                                Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white,
+                                Theme.of(context).textTheme.bodyLarge?.color ??
+                                Colors.white,
                           ),
                         ),
                       ),
@@ -110,7 +115,9 @@ class _SettingsPageState extends State<SettingsPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Confirm Deletion'),
-          content: const Text('Are you sure you want to delete all preferences? This action cannot be undone.'),
+          content: const Text(
+            'Are you sure you want to delete all preferences? This action cannot be undone.',
+          ),
           actions: <Widget>[
             TextButton(
               onPressed: () {
@@ -143,7 +150,9 @@ class _SettingsPageState extends State<SettingsPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Confirm Deletion'),
-          content: const Text('Are you sure you want to delete all data? This action cannot be undone.'),
+          content: const Text(
+            'Are you sure you want to delete all data? This action cannot be undone.',
+          ),
           actions: <Widget>[
             TextButton(
               onPressed: () {
@@ -169,5 +178,4 @@ class _SettingsPageState extends State<SettingsPage> {
       },
     );
   }
-
-  }
+}

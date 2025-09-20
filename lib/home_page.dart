@@ -1313,7 +1313,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                       prefixIcon: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (!kReleaseMode)
+                          if (!isReleaseMode())
                             IconButton(
                               icon: const Icon(Icons.attach_file),
                               onPressed: () {
