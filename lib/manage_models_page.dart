@@ -451,21 +451,16 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Manage Local Models')),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _showAddModelDialog(context);
+        },
+        child: const Icon(Icons.add),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.add),
-                label: const Text('Add New Model'),
-                onPressed: () {
-                  _showAddModelDialog(context);
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
             Expanded(
               child: ListView.builder(
                 itemCount: _models.length,
