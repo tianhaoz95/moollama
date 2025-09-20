@@ -509,12 +509,14 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
                                   color: Colors.green,
                                 )
                               else if (_downloadProgress[model['name']] != null)
-                                SizedBox(
-                                  width: 80,
-                                  child: LinearProgressIndicator(
-                                    value: _downloadProgress[model['name']],
-                                    backgroundColor: Colors.grey[300],
-                                    color: Colors.blue,
+                                Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      value: _downloadProgress[model['name']],
+                                    ),
                                   ),
                                 )
                               else if (_downloadStatus[model['name']] != null)
