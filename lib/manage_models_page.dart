@@ -136,8 +136,7 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
   Future<PlatformFile?> _pickFile() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['gguf'],
+        type: FileType.any,
       );
 
       if (result != null) {
@@ -499,13 +498,17 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
                               ),
                               const Spacer(),
                               if (model['isDownloaded'])
-                                const Icon(
-                                  Icons.check_circle,
-                                  color: Colors.green,
+                                const Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Icon(
+                                    Icons.check_circle,
+                                    color: Colors.green,
+                                    size: 24.0,
+                                  ),
                                 )
                               else if (_downloadProgress[model['name']] != null)
                                 Padding(
-                                  padding: const EdgeInsets.all(12.0),
+                                  padding: const EdgeInsets.all(8.0),
                                   child: SizedBox(
                                     width: 24,
                                     height: 24,
@@ -516,9 +519,7 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
                                 )
                               else if (_downloadStatus[model['name']] != null)
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8.0,
-                                  ),
+                                  padding: const EdgeInsets.all(8.0),
                                   child: Text(_downloadStatus[model['name']]!),
                                 ),
                               if (!model['isDownloaded'] &&
