@@ -3,6 +3,7 @@ import 'package:moollama/database_helper.dart';
 import 'package:moollama/widgets/tool_selector.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:moollama/utils.dart' as utils;
 
 class AgentSettingsDrawerContent extends StatefulWidget {
   const AgentSettingsDrawerContent({
@@ -235,17 +236,19 @@ class _AgentSettingsDrawerContentState
                       ],
                     ),
                     const SizedBox(height: 24),
-                    ToolSelector(
-                      availableTools: _availableTools,
-                      selectedTools: _selectedTools,
-                      onToolsChanged: (tools) {
-                        setState(() {
-                          _selectedTools = tools;
-                        });
-                        _saveSelectedTools(tools);
-                      },
-                    ),
-                    const SizedBox(height: 24), // Add spacing
+                    if (!utils.isReleaseMode()) ...[
+                      ToolSelector(
+                        availableTools: _availableTools,
+                        selectedTools: _selectedTools,
+                        onToolsChanged: (tools) {
+                          setState(() {
+                            _selectedTools = tools;
+                          });
+                          _saveSelectedTools(tools);
+                        },
+                      ),
+                      const SizedBox(height: 24), // Add spacing
+                    ],
                     SwitchListTile(
                       title: const Text('Enable TTS'),
                       value: _isTtsEnabled,
