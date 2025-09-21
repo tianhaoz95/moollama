@@ -219,8 +219,10 @@ class _AgentSettingsDrawerContentState
                       ],
                     ),
                     const SizedBox(height: 24), // Add spacing
-                    SystemPromptInput(controller: _systemPromptController),
-                    const SizedBox(height: 24),
+                    if (!utils.isReleaseMode()) ...[
+                      SystemPromptInput(controller: _systemPromptController),
+                      const SizedBox(height: 24),
+                    ],
                     if (!utils.isReleaseMode()) ...[
                       ToolSelector(
                         availableTools: _availableTools,
@@ -263,7 +265,9 @@ class _AgentSettingsDrawerContentState
                     _creativityValue,
                     _contextWindowSizes[_contextWindowSliderValue.round()],
                     _selectedTools,
-                    _systemPromptController.text, // Pass system prompt
+                    utils.isReleaseMode()
+                        ? ''
+                        : _systemPromptController.text, // Pass system prompt
                     _isTtsEnabled, // Pass TTS setting
                   );
                   Navigator.of(context).pop(); // Close the drawer
