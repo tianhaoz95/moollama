@@ -967,25 +967,27 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: () {
-                      _showAddAgentDialog(context);
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.settings),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => SettingsPage(
-                            agentId: _selectedAgent?.id,
-                            talker: widget.talker,
-                          ), // Pass talker
-                        ),
-                      );
-                    },
-                  ),
+                  if (!isReleaseMode())
+                    IconButton(
+                      icon: const Icon(Icons.add),
+                      onPressed: () {
+                        _showAddAgentDialog(context);
+                      },
+                    ),
+                  if (!isReleaseMode())
+                    IconButton(
+                      icon: const Icon(Icons.settings),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => SettingsPage(
+                              agentId: _selectedAgent?.id,
+                              talker: widget.talker,
+                            ), // Pass talker
+                          ),
+                        );
+                      },
+                    ),
                 ],
               ),
             ),
@@ -1241,7 +1243,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                                                 MainAxisAlignment.center,
                                             children: [
                                               Text(
-                                                'No model found. Please download one to start chatting.',
+                                                'Model not downloaded',
                                                 style: Theme.of(
                                                   context,
                                                 ).textTheme.titleLarge,
