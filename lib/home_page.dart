@@ -176,32 +176,34 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
 
     _shakeDetector = ShakeDetector.autoStart(
       onPhoneShake: () async {
-        // Show feedback UI
-        BetterFeedback.of(context).show((feedback) async {
-          final file = await saveFeedback(feedback, widget.talker);
+        if (!isReleaseMode()) {
+          // Show feedback UI
+          BetterFeedback.of(context).show((feedback) async {
+            final file = await saveFeedback(feedback, widget.talker);
 
-          // In a real app, you would send this feedback to a backend service.
-          try {
-            final result = await Share.shareXFiles([
-              XFile(file.path),
-            ], text: feedback.text);
-            if (result.status == ShareResultStatus.unavailable) {
-              widget.talker.warning('Sharing is unavailable on this device.');
+            // In a real app, you would send this feedback to a backend service.
+            try {
+              final result = await Share.shareXFiles([
+                XFile(file.path),
+              ], text: feedback.text);
+              if (result.status == ShareResultStatus.unavailable) {
+                widget.talker.warning('Sharing is unavailable on this device.');
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Sharing is not available on this device.'),
+                  ),
+                );
+              }
+            } catch (e, s) {
+              widget.talker.error('Error sharing feedback', e, s);
               if (!mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Sharing is not available on this device.'),
-                ),
+                const SnackBar(content: Text('Could not share feedback.')),
               );
             }
-          } catch (e, s) {
-            widget.talker.error('Error sharing feedback', e, s);
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Could not share feedback.')),
-            );
-          }
-        });
+          });
+        }
       },
     );
   }
