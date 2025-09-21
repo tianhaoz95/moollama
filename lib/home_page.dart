@@ -495,10 +495,15 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
 
     final agentsFromDb = await _dbHelper.getAgents();
     if (agentsFromDb.isEmpty) {
-      final defaultAgent = Agent(name: 'Moo', modelName: _selectedModelName);
+      final defaultAgent = Agent(
+        name: 'Moollama',
+        modelName: _selectedModelName,
+      );
       final id = await _dbHelper.insertAgent(defaultAgent.toMap());
       setState(() {
-        _agents.add(Agent(id: id, name: 'Moo', modelName: _selectedModelName));
+        _agents.add(
+          Agent(id: id, name: 'Moollama', modelName: _selectedModelName),
+        );
         _selectedAgent = _agents.first;
       });
     } else {
