@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:moollama/database_helper.dart';
+import 'package:moollama/widgets/system_prompt_input.dart';
+import 'package:moollama/widgets/tool_selector.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:moollama/utils.dart' as utils;
 
 class AgentSettingsDrawerContent extends StatefulWidget {
   const AgentSettingsDrawerContent({
@@ -17,7 +20,8 @@ class AgentSettingsDrawerContent extends StatefulWidget {
   final String initialModelName;
   final double initialCreativity;
   final int initialContextWindowSize;
-  final Function(String, double, int, List<String>, String, bool) onApply; // Updated signature
+  final Function(String, double, int, List<String>, String, bool)
+  onApply; // Updated signature
   final String? initialSystemPrompt;
   final bool initialIsTtsEnabled; // New field
 
@@ -47,7 +51,9 @@ class _AgentSettingsDrawerContentState
     _contextWindowSliderValue = _contextWindowSizes
         .indexOf(widget.initialContextWindowSize)
         .toDouble();
-    _systemPromptController = TextEditingController(text: widget.initialSystemPrompt); // Initialize the controller
+    _systemPromptController = TextEditingController(
+      text: widget.initialSystemPrompt,
+    ); // Initialize the controller
     _isTtsEnabled = widget.initialIsTtsEnabled; // Initialize _isTtsEnabled
     _loadAvailableModels();
     _loadAvailableTools(); // Load available tools dynamically
@@ -79,11 +85,7 @@ class _AgentSettingsDrawerContentState
     // For this example, we'll use the hardcoded list from the problem description.
     // In a real app, this would involve reading from a tool registry or similar.
     setState(() {
-      _availableTools = [
-        'fetch_webpage',
-        'send_email',
-        'fetch_current_time',
-      ];
+      _availableTools = ['fetch_webpage', 'send_email', 'fetch_current_time'];
     });
   }
 
@@ -129,7 +131,9 @@ class _AgentSettingsDrawerContentState
                       children: [
                         Expanded(
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12.0,
+                            ),
                             decoration: BoxDecoration(
                               border: Border.all(color: Colors.grey),
                               borderRadius: BorderRadius.circular(8.0),
@@ -142,7 +146,9 @@ class _AgentSettingsDrawerContentState
                                 });
                               },
                               items: _availableModels
-                                  .map<DropdownMenuItem<String>>((String value) {
+                                  .map<DropdownMenuItem<String>>((
+                                    String value,
+                                  ) {
                                     return DropdownMenuItem<String>(
                                       value: value,
                                       child: Text(value),
@@ -193,7 +199,8 @@ class _AgentSettingsDrawerContentState
                               child: Slider(
                                 value: _contextWindowSliderValue,
                                 min: 0,
-                                max: (_contextWindowSizes.length - 1).toDouble(),
+                                max: (_contextWindowSizes.length - 1)
+                                    .toDouble(),
                                 divisions: _contextWindowSizes.length - 1,
                                 label:
                                     '${(_contextWindowSizes[_contextWindowSliderValue.round()] / 1024).round()}k',
@@ -212,71 +219,25 @@ class _AgentSettingsDrawerContentState
                       ],
                     ),
                     const SizedBox(height: 24), // Add spacing
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        TextField(
-                          controller: _systemPromptController,
-                          decoration: InputDecoration(
-                            hintText: 'Enter system prompt',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.0), // Increased radius
-                            ),
-                          ),
-                          maxLines: 3,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Tools'),
-                        MultiSelectDialogField(
-                          items: _availableTools
-                              .map((tool) => MultiSelectItem<String>(tool, tool))
-                              .toList(),
-                          title: const Text("Select Tools"),
-                          selectedColor: Colors.blue,
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.1),
-                            borderRadius: BorderRadius.all(Radius.circular(8)),
-                            border: Border.all(
-                              color: Colors.blue,
-                              width: 1.8,
-                            ),
-                          ),
-                          buttonIcon: const Icon(
-                            Icons.build,
-                            color: Colors.blue,
-                          ),
-                          buttonText: const Text(
-                            "Select Tools",
-                            style: TextStyle(
-                              color: Colors.blue,
-                              fontSize: 16,
-                            ),
-                          ),
-                          onConfirm: (values) {
-                            setState(() {
-                              _selectedTools = values.cast<String>();
-                            });
-                            _saveSelectedTools(values.cast<String>()); // Save selected tools
-                          },
-                          chipDisplay: MultiSelectChipDisplay(
-                            onTap: (item) {
-                              setState(() {
-                                _selectedTools.remove(item);
-                              });
-                              _saveSelectedTools(_selectedTools);
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24), // Add spacing
+                    if (!utils.isReleaseMode()) ...[
+                      SystemPromptInput(controller: _systemPromptController),
+                      const SizedBox(height: 24),
+                    ],
+                    if (!utils.isReleaseMode()) ...[
+                      ToolSelector(
+                        availableTools: _availableTools,
+                        selectedTools: _selectedTools,
+                        onToolsChanged: (tools) {
+                          setState(() {
+                            _selectedTools = tools;
+                          });
+                          _saveSelectedTools(tools);
+                        },
+                      ),
+                      const SizedBox(height: 24), // Add spacing
+                    ],
                     SwitchListTile(
-                      title: const Text('enable TTS'),
+                      title: const Text('Enable TTS'),
                       value: _isTtsEnabled,
                       onChanged: (bool value) {
                         setState(() {
@@ -304,7 +265,9 @@ class _AgentSettingsDrawerContentState
                     _creativityValue,
                     _contextWindowSizes[_contextWindowSliderValue.round()],
                     _selectedTools,
-                    _systemPromptController.text, // Pass system prompt
+                    utils.isReleaseMode()
+                        ? ''
+                        : _systemPromptController.text, // Pass system prompt
                     _isTtsEnabled, // Pass TTS setting
                   );
                   Navigator.of(context).pop(); // Close the drawer
@@ -314,7 +277,6 @@ class _AgentSettingsDrawerContentState
               ),
             ),
           ),
-          
         ],
       ),
     );

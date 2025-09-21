@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:moollama/database_helper.dart';
 import 'package:moollama/home_page.dart'; // Import the new home page
 import 'package:feedback/feedback.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:talker_flutter/talker_flutter.dart'; // Import talker
 
@@ -12,6 +13,7 @@ final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   await DatabaseHelper().init();
 
   final prefs = await SharedPreferences.getInstance();
@@ -23,11 +25,7 @@ void main() async {
   } else {
     themeNotifier.value = ThemeMode.system;
   }
-  runApp(
-    BetterFeedback(
-      child: const MyApp(),
-    ),
-  );
+  runApp(BetterFeedback(child: const MyApp()));
 
   themeNotifier.addListener(() async {
     final prefs = await SharedPreferences.getInstance();
@@ -47,14 +45,17 @@ class MyApp extends StatelessWidget {
       valueListenable: themeNotifier,
       builder: (context, currentMode, child) {
         return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            theme: ThemeData.light(),
-            darkTheme: ThemeData.dark().copyWith(
-              scaffoldBackgroundColor: const Color(0xFF232629),
-            ),
-            themeMode: currentMode,
-            home: SecretAgentHome(themeNotifier: themeNotifier, talker: talker), // Pass themeNotifier and talker
-          );
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData.light(),
+          darkTheme: ThemeData.dark().copyWith(
+            scaffoldBackgroundColor: const Color(0xFF232629),
+          ),
+          themeMode: currentMode,
+          home: SecretAgentHome(
+            themeNotifier: themeNotifier,
+            talker: talker,
+          ), // Pass themeNotifier and talker
+        );
       },
     );
   }

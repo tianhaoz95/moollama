@@ -495,10 +495,15 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
 
     final agentsFromDb = await _dbHelper.getAgents();
     if (agentsFromDb.isEmpty) {
-      final defaultAgent = Agent(name: 'Moo', modelName: _selectedModelName);
+      final defaultAgent = Agent(
+        name: 'Moollama',
+        modelName: _selectedModelName,
+      );
       final id = await _dbHelper.insertAgent(defaultAgent.toMap());
       setState(() {
-        _agents.add(Agent(id: id, name: 'Moo', modelName: _selectedModelName));
+        _agents.add(
+          Agent(id: id, name: 'Moollama', modelName: _selectedModelName),
+        );
         _selectedAgent = _agents.first;
       });
     } else {
@@ -962,25 +967,27 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: () {
-                      _showAddAgentDialog(context);
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.settings),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => SettingsPage(
-                            agentId: _selectedAgent?.id,
-                            talker: widget.talker,
-                          ), // Pass talker
-                        ),
-                      );
-                    },
-                  ),
+                  if (!isReleaseMode())
+                    IconButton(
+                      icon: const Icon(Icons.add),
+                      onPressed: () {
+                        _showAddAgentDialog(context);
+                      },
+                    ),
+                  if (!isReleaseMode())
+                    IconButton(
+                      icon: const Icon(Icons.settings),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => SettingsPage(
+                              agentId: _selectedAgent?.id,
+                              talker: widget.talker,
+                            ), // Pass talker
+                          ),
+                        );
+                      },
+                    ),
                 ],
               ),
             ),
@@ -1236,7 +1243,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                                                 MainAxisAlignment.center,
                                             children: [
                                               Text(
-                                                'No model found. Please download one to start chatting.',
+                                                'Model not downloaded',
                                                 style: Theme.of(
                                                   context,
                                                 ).textTheme.titleLarge,
@@ -1313,7 +1320,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                       prefixIcon: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (!kReleaseMode)
+                          if (!isReleaseMode())
                             IconButton(
                               icon: const Icon(Icons.attach_file),
                               onPressed: () {

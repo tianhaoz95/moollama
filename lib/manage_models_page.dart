@@ -122,10 +122,7 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
       final modelFilePath = await _getModelFilePath(modelName, filename);
       final modelFile = File(modelFilePath);
       final bool isDownloaded = await modelFile.exists();
-      modelsWithStatus.add({
-        ...model,
-        'isDownloaded': isDownloaded,
-      });
+      modelsWithStatus.add({...model, 'isDownloaded': isDownloaded});
     }
     setState(() {
       _models = modelsWithStatus;
@@ -139,8 +136,7 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
   Future<PlatformFile?> _pickFile() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['gguf'],
+        type: FileType.any,
       );
 
       if (result != null) {
@@ -164,9 +160,9 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
     } catch (e) {
       widget.talker.error('Error picking file: $e', e);
       if (!mounted) return null;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking file: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error picking file: $e')));
       return null;
     }
   }
@@ -191,7 +187,8 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return StatefulBuilder( // Use StatefulBuilder to update dialog content
+        return StatefulBuilder(
+          // Use StatefulBuilder to update dialog content
           builder: (context, setState) {
             return AlertDialog(
               title: const Text('Add New Model'),
@@ -208,22 +205,31 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
                   ToggleSwitch(
                     minWidth: 90.0,
                     cornerRadius: 20.0,
-                    activeBgColors: [[Colors.blue[800]!], [Colors.blue[800]!]],
+                    activeBgColors: [
+                      [Colors.blue[800]!],
+                      [Colors.blue[800]!],
+                    ],
                     activeFgColor: Colors.white,
                     inactiveBgColor: Colors.grey,
                     inactiveFgColor: Colors.white,
-                    initialLabelIndex: _selectedInputType == ModelInputType.url ? 0 : 1,
+                    initialLabelIndex: _selectedInputType == ModelInputType.url
+                        ? 0
+                        : 1,
                     totalSwitches: 2,
                     labels: const ['From URL', 'Upload File'],
                     radiusStyle: true,
                     onToggle: (index) {
                       setState(() {
-                        _selectedInputType = index == 0 ? ModelInputType.url : ModelInputType.file;
+                        _selectedInputType = index == 0
+                            ? ModelInputType.url
+                            : ModelInputType.file;
                         if (_selectedInputType == ModelInputType.url) {
-                          _pickedFile = null; // Clear picked file when switching to URL
+                          _pickedFile =
+                              null; // Clear picked file when switching to URL
                           filenameController.clear(); // Clear filename
                         } else {
-                          urlController.clear(); // Clear URL when switching to file
+                          urlController
+                              .clear(); // Clear URL when switching to file
                           filenameController.clear(); // Clear filename
                         }
                       });
@@ -232,9 +238,7 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
                   if (_selectedInputType == ModelInputType.url) ...[
                     TextField(
                       controller: urlController,
-                      decoration: const InputDecoration(
-                        labelText: 'Model URL',
-                      ),
+                      decoration: const InputDecoration(labelText: 'Model URL'),
                     ),
                     const SizedBox(height: 16),
                   ] else ...[
@@ -260,7 +264,8 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
                         onPressed: () async {
                           final result = await _pickFile();
                           if (result != null) {
-                            setState(() { // Update dialog state after file pick
+                            setState(() {
+                              // Update dialog state after file pick
                               _pickedFile = result; // Store the picked file
                               filenameController.text = result.name;
                             });
@@ -287,46 +292,71 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
 
                     if (_selectedInputType == ModelInputType.url) {
                       url = urlController.text;
-                      filename = filenameController.text.isNotEmpty ? filenameController.text : null;
+                      filename = filenameController.text.isNotEmpty
+                          ? filenameController.text
+                          : null;
                       if (nickname.isEmpty || url!.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Please enter both nickname and URL.')),
+                          const SnackBar(
+                            content: Text(
+                              'Please enter both nickname and URL.',
+                            ),
+                          ),
                         );
                         return;
                       }
-                    } else { // ModelInputType.file
+                    } else {
+                      // ModelInputType.file
                       if (_pickedFile == null || _pickedFile!.path == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Please select a file.')),
+                          const SnackBar(
+                            content: Text('Please select a file.'),
+                          ),
                         );
                         return;
                       }
                       filename = _pickedFile!.name;
                       if (nickname.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Please enter a nickname.')),
+                          const SnackBar(
+                            content: Text('Please enter a nickname.'),
+                          ),
                         );
                         return;
                       }
                     }
 
                     if (_pickedFile != null && _pickedFile!.path != null) {
-                      final appDocDir = await getApplicationDocumentsDirectory();
-                      final newFilePath = p.join(appDocDir.path, _pickedFile!.name);
+                      final appDocDir =
+                          await getApplicationDocumentsDirectory();
+                      final newFilePath = p.join(
+                        appDocDir.path,
+                        _pickedFile!.name,
+                      );
                       final newFile = File(newFilePath);
                       await File(_pickedFile!.path!).copy(newFile.path);
                       if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('File ${_pickedFile!.name} copied successfully!')),
+                        SnackBar(
+                          content: Text(
+                            'File ${_pickedFile!.name} copied successfully!',
+                          ),
+                        ),
                       );
                     }
 
-                    await _dbHelper.insertModel({'name': nickname, 'url': url, 'filename': filename});
+                    await _dbHelper.insertModel({
+                      'name': nickname,
+                      'url': url,
+                      'filename': filename,
+                    });
                     _refreshModels();
                     if (!context.mounted) return;
                     Navigator.of(context).pop(); // Dismiss the dialog
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Model added successfully!')),
+                      const SnackBar(
+                        content: Text('Model added successfully!'),
+                      ),
                     );
                   },
                   child: const Text('Add'),
@@ -340,10 +370,12 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
   }
 
   void _showEditModelDialog(BuildContext context, Map<String, dynamic> model) {
-    final TextEditingController nicknameController =
-        TextEditingController(text: model['name']);
-    final TextEditingController urlController =
-        TextEditingController(text: model['url']);
+    final TextEditingController nicknameController = TextEditingController(
+      text: model['name'],
+    );
+    final TextEditingController urlController = TextEditingController(
+      text: model['url'],
+    );
 
     showDialog(
       context: context,
@@ -355,16 +387,12 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
             children: [
               TextField(
                 controller: nicknameController,
-                decoration: const InputDecoration(
-                  labelText: 'Model Nickname',
-                ),
+                decoration: const InputDecoration(labelText: 'Model Nickname'),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: urlController,
-                decoration: const InputDecoration(
-                  labelText: 'Model URL',
-                ),
+                decoration: const InputDecoration(labelText: 'Model URL'),
               ),
             ],
           ),
@@ -389,12 +417,15 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
                   if (!context.mounted) return;
                   Navigator.of(context).pop(); // Dismiss the dialog
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Model updated successfully!')),
+                    const SnackBar(
+                      content: Text('Model updated successfully!'),
+                    ),
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                        content: Text('Please enter both nickname and URL.')),
+                      content: Text('Please enter both nickname and URL.'),
+                    ),
                   );
                 }
               },
@@ -418,24 +449,17 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Manage Local Models'),
+      appBar: AppBar(title: const Text('Manage Local Models')),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _showAddModelDialog(context);
+        },
+        child: const Icon(Icons.add),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.add),
-                label: const Text('Add New Model'),
-                onPressed: () {
-                  _showAddModelDialog(context);
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
             Expanded(
               child: ListView.builder(
                 itemCount: _models.length,
@@ -443,78 +467,106 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
                   final model = _models[index];
                   return Card(
                     margin: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: ListTile(
-                      title: Text(model['name']),
-                      subtitle: Row(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.link),
-                            onPressed: () async {
-                              final url = Uri.parse(model['url']);
-                              if (await canLaunchUrl(url)) {
-                                await launchUrl(url);
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Could not launch ${model['url']}')),
-                                );
-                              }
-                            },
+                          Text(
+                            model['name'],
+                            style: Theme.of(context).textTheme.titleLarge,
                           ),
-                        ],
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (model['isDownloaded'])
-                            const Icon(Icons.check_circle, color: Colors.green)
-                          else if (_downloadProgress[model['name']] != null)
-                            SizedBox(
-                              width: 80,
-                              child: LinearProgressIndicator(
-                                value: _downloadProgress[model['name']],
-                                backgroundColor: Colors.grey[300],
-                                color: Colors.blue,
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.link),
+                                onPressed: () async {
+                                  final url = Uri.parse(model['url']);
+                                  if (await canLaunchUrl(url)) {
+                                    await launchUrl(url);
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Could not launch ${model['url']}',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
                               ),
-                            ),
-                          if (_downloadStatus[model['name']] != null &&
-                              _downloadProgress[model['name']] == null)
-                            Text(_downloadStatus[model['name']]!),
-                          if (!model['isDownloaded'] &&
-                              _downloadProgress[model['name']] == null)
-                            IconButton(
-                              icon: const Icon(Icons.download),
-                              onPressed: () => _downloadModel(model),
-                            ),
-                          IconButton(
-                            icon: const Icon(Icons.ios_share),
-                            onPressed: () async {
-                              final directory = await getApplicationDocumentsDirectory();
-                              String filename = model['filename'];
-                              if (filename == null && model['url'] != null) {
-                                filename = p.basename(model['url']);
-                              }
-                              final filePath = '${directory.path}/$filename';
-                              final file = XFile(filePath);
-                              try {
-                                await Share.shareXFiles([file], text: 'Sharing model file');
-                              } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Error sharing file: $e')),
-                                );
-                              }
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.edit),
-                            onPressed: () {
-                              _showEditModelDialog(context, model);
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete),
-                            onPressed: () {
-                              _deleteModel(model['id']);
-                            },
+                              const Spacer(),
+                              if (model['isDownloaded'])
+                                const Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Icon(
+                                    Icons.check_circle,
+                                    color: Colors.green,
+                                    size: 24.0,
+                                  ),
+                                )
+                              else if (_downloadProgress[model['name']] != null)
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      value: _downloadProgress[model['name']],
+                                    ),
+                                  ),
+                                )
+                              else if (_downloadStatus[model['name']] != null)
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(_downloadStatus[model['name']]!),
+                                ),
+                              if (!model['isDownloaded'] &&
+                                  _downloadProgress[model['name']] == null)
+                                IconButton(
+                                  icon: const Icon(Icons.download),
+                                  onPressed: () => _downloadModel(model),
+                                ),
+                              IconButton(
+                                icon: const Icon(Icons.ios_share),
+                                onPressed: () async {
+                                  final directory =
+                                      await getApplicationDocumentsDirectory();
+                                  String filename = model['filename'];
+                                  if (filename == null &&
+                                      model['url'] != null) {
+                                    filename = p.basename(model['url']);
+                                  }
+                                  final filePath =
+                                      '${directory.path}/$filename';
+                                  final file = XFile(filePath);
+                                  try {
+                                    await Share.shareXFiles([
+                                      file,
+                                    ], text: 'Sharing model file');
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Error sharing file: $e'),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.edit),
+                                onPressed: () {
+                                  _showEditModelDialog(context, model);
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete),
+                                onPressed: () {
+                                  _deleteModel(model['id']);
+                                },
+                              ),
+                            ],
                           ),
                         ],
                       ),
