@@ -49,6 +49,7 @@ dependencies {
     androidTestUtil("androidx.test:orchestrator:1.5.1")
     androidTestImplementation("androidx.test:runner:1.5.1")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    implementation("com.google.android.material:material:1.13.0")
 }
 
 flutter {
