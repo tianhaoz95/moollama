@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:moollama/database_helper.dart';
+import 'package:moollama/widgets/system_prompt_input.dart';
 import 'package:moollama/widgets/tool_selector.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -218,23 +219,7 @@ class _AgentSettingsDrawerContentState
                       ],
                     ),
                     const SizedBox(height: 24), // Add spacing
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        TextField(
-                          controller: _systemPromptController,
-                          decoration: InputDecoration(
-                            hintText: 'Enter system prompt',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                12.0,
-                              ), // Increased radius
-                            ),
-                          ),
-                          maxLines: 3,
-                        ),
-                      ],
-                    ),
+                    SystemPromptInput(controller: _systemPromptController),
                     const SizedBox(height: 24),
                     if (!utils.isReleaseMode()) ...[
                       ToolSelector(
