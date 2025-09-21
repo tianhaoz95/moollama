@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:moollama/database_helper.dart';
+import 'package:moollama/widgets/tool_selector.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -234,49 +235,15 @@ class _AgentSettingsDrawerContentState
                       ],
                     ),
                     const SizedBox(height: 24),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Tools'),
-                        MultiSelectDialogField(
-                          items: _availableTools
-                              .map(
-                                (tool) => MultiSelectItem<String>(tool, tool),
-                              )
-                              .toList(),
-                          title: const Text("Select Tools"),
-                          selectedColor: Colors.blue,
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.1),
-                            borderRadius: BorderRadius.all(Radius.circular(8)),
-                            border: Border.all(color: Colors.blue, width: 1.8),
-                          ),
-                          buttonIcon: const Icon(
-                            Icons.build,
-                            color: Colors.blue,
-                          ),
-                          buttonText: const Text(
-                            "Select Tools",
-                            style: TextStyle(color: Colors.blue, fontSize: 16),
-                          ),
-                          onConfirm: (values) {
-                            setState(() {
-                              _selectedTools = values.cast<String>();
-                            });
-                            _saveSelectedTools(
-                              values.cast<String>(),
-                            ); // Save selected tools
-                          },
-                          chipDisplay: MultiSelectChipDisplay(
-                            onTap: (item) {
-                              setState(() {
-                                _selectedTools.remove(item);
-                              });
-                              _saveSelectedTools(_selectedTools);
-                            },
-                          ),
-                        ),
-                      ],
+                    ToolSelector(
+                      availableTools: _availableTools,
+                      selectedTools: _selectedTools,
+                      onToolsChanged: (tools) {
+                        setState(() {
+                          _selectedTools = tools;
+                        });
+                        _saveSelectedTools(tools);
+                      },
                     ),
                     const SizedBox(height: 24), // Add spacing
                     SwitchListTile(
