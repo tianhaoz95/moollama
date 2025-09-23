@@ -1107,7 +1107,10 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                       const Spacer(),
                       IconButton(
                         icon: const Icon(Icons.refresh),
-                        onPressed: _resetChat,
+                        onPressed:
+                            _isLoading || _initializationProgress != null
+                                ? null
+                                : _resetChat,
                       ),
                       Builder(
                         builder: (BuildContext innerContext) {
