@@ -1113,9 +1113,11 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                         builder: (BuildContext innerContext) {
                           return IconButton(
                             icon: const Icon(Icons.smart_toy_outlined),
-                            onPressed: () {
-                              _showCactusModelInfo(innerContext);
-                            },
+                            onPressed: _isLoading
+                                ? null
+                                : () {
+                                    _showCactusModelInfo(innerContext);
+                                  },
                           );
                         },
                       ),
@@ -1341,7 +1343,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                             )
                           : IconButton(
                               icon: const Icon(Icons.send),
-                              onPressed: _sendMessage,
+                              onPressed: _isLoading ? null : _sendMessage,
                             ),
                     ),
                     style: TextStyle(
