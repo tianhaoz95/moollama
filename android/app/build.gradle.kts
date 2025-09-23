@@ -43,10 +43,11 @@ android {
 
     signingConfigs {
         create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as String
-            keyPassword = keystoreProperties["keyPassword"] as String
-            storeFile = keystoreProperties["storeFile"]?.let { file(it) }
-            storePassword = keystoreProperties["storePassword"] as String
+            // Use environment variables for signing
+            keyAlias = System.getenv("KEY_ALIAS")
+            keyPassword = System.getenv("KEY_PASSWORD")
+            storeFile = file(System.getenv("KEYSTORE_PATH"))
+            storePassword = System.getenv("KEYSTORE_PASSWORD")
         }
     }
 
