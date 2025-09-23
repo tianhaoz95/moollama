@@ -66,10 +66,10 @@ class _ManageModelsPageState extends State<ManageModelsPage> {
     });
 
     try {
-      final agent = CactusAgent();
-      await agent.download(
-        modelUrl: modelUrl,
-        onProgress: (progress, statusMessage, isError) {
+      final agent = CactusLM();
+      await agent.downloadModel(
+        model: model['name'],
+        downloadProcessCallback: (progress, statusMessage, isError) {
           setState(() {
             _downloadProgress[modelName] = progress;
             _downloadStatus[modelName] = statusMessage;

@@ -63,7 +63,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   double _creativity = 70.0;
   int _contextWindowSize = 8192;
   bool _isLoading = true;
-  CactusAgent? _agent;
+  CactusLM? _agent;
   double? _downloadProgress;
   bool _isGenerating = false; // New: To track if AI is generating
   bool _modelDownloaded = false;
@@ -81,7 +81,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   late FlutterTts _flutterTts;
   bool _isTtsEnabled = false;
   StreamSubscription<dynamic>? _downloadSubscription;
-  Future<CompletionResult>? _completionFuture;
+  Future<CactusCompletionResult>? _completionFuture;
 
   void _handleAgentLongPress(Agent agent) async {
     if (_agents.length == 1) {
@@ -224,7 +224,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         _initializationProgress = null; // Reset initialization progress
         _downloadStatus = 'Checking model availability...'; // Updated status
       });
-      _agent = CactusAgent();
+      _agent = CactusLM();
 
       final modelFilePath = await _dbHelper.getModelFilePath(modelName);
       final modelFile = File(modelFilePath);
@@ -367,10 +367,10 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             widget.talker.info('Error downloading file: $e');
           }
         } else {
-          widget.talker.info('Attempting to download using _agent.download...');
-          await _agent!.download(
-            modelUrl: modelUrl,
-            onProgress: (progress, statusMessage, isError) {
+          widget.talker.info('Attempting to download using _agent.downloadModel...');
+          await _agent!.downloadModel(
+            model: modelName,
+            downloadProcessCallback: (progress, statusMessage, isError) {
               setState(() {
                 _downloadProgress = progress;
                 _downloadStatus = statusMessage;
@@ -401,24 +401,15 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       final gpuLayerCount = await getGpuLayerCount();
       widget.talker.info('GPU Layer Count: $gpuLayerCount');
       widget.talker.info('Model file path: ${p.basename(modelFilePath)}');
-      await _agent!.init(
-        modelFilename: p.basename(modelFilePath),
-        contextSize: _contextWindowSize,
-        gpuLayers: gpuLayerCount, // Offload all possible layers to GPU
-        onProgress: (progress, statusMessage, isError) {
-          setState(() {
-            _initializationProgress =
-                progress; // Update initialization progress
-            _downloadStatus = statusMessage;
-            if (isError) {
-              _downloadStatus = 'Error: $statusMessage';
-            }
-          });
-        },
+      await _agent!.initializeModel(
+        params: CactusInitParams(
+          model: modelName,
+          contextSize: _contextWindowSize,
+        ),
       );
       final prefs = await SharedPreferences.getInstance();
       final selectedTools = prefs.getStringList('selectedTools') ?? [];
-      addAgentTools(_agent!, selectedTools, allAgentTools);
+      
       setState(() {
         _isLoading = false;
         _downloadProgress = null; // Ensure download progress is null
@@ -622,20 +613,27 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
               );
             }).toList(),
           );
-          _completionFuture = _agent!.completionWithTools(
-            messages,
-            maxTokens: 2048,
-            temperature: _creativity / 100.0,
+          final prefs = await SharedPreferences.getInstance();
+          final selectedToolNames = prefs.getStringList('selectedTools') ?? [];
+          final selectedCactusTools = getCactusTools(selectedToolNames, allAgentTools);
+
+          _completionFuture = _agent!.generateCompletion(
+            messages: messages,
+            params: CactusCompletionParams(
+              maxTokens: 2048,
+              temperature: _creativity / 100.0,
+              tools: selectedCactusTools,
+            ),
           );
           final response = await _completionFuture!.asCancellable(
             _cancellationToken,
           );
 
           widget.talker.info(
-            'Response result: ${response!.result}, tool calls: ${response.toolCalls}',
+            'Response result: ${response!.response}, tool calls: ${response.toolCalls}',
           );
           final ThinkingModelResponse parsedResponse = splitContentByThinkTags(
-            response.result ?? '',
+            response.response ?? '',
           );
 
           final String? thinkingText =
@@ -643,7 +641,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
               ? parsedResponse.thinkingSessions.join('\n')
               : null;
 
-          final List<String> toolCalls = response.toolCalls ?? [];
+          final List<String> toolCalls = response.toolCalls?.map((e) => e.name).toList() ?? [];
 
           final String finalText = extractResponseFromJson(
             parsedResponse.finalOutput,
@@ -652,7 +650,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           // Store the combined message in the database
           _dbHelper.insertMessage(
             _selectedAgent!.id!,
-            response.result ?? '',
+            response.response ?? '',
             false, // isUser: false
           );
 
@@ -660,7 +658,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             _messages.removeLast();
             _messages.add(
               Message(
-                rawText: response.result ?? '',
+                rawText: response.response ?? '',
                 thinkingText: thinkingText,
                 toolCalls: toolCalls,
                 finalText: finalText,
