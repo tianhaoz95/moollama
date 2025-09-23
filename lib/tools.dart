@@ -38,7 +38,7 @@ final fetchWebpageTool = AgentTool(
         'Fetches the content of a webpage from a given URL. Use this tool to get information from the internet.',
     parameters: ToolParametersSchema(
       properties: {
-        'url': CactusToolParameter(
+        'url': ToolParameter(
           type: 'string',
           description: 'The URL of the webpage to fetch.',
           required: true,
@@ -77,17 +77,17 @@ final sendEmailAgentTool = AgentTool(
     description: 'Sends an email to the specified recipients.',
     parameters: ToolParametersSchema(
       properties: {
-        'recipients': CactusToolParameter(
+        'recipients': ToolParameter(
           type: 'array',
           description: 'A list of email addresses to send the email to.',
           required: true,
         ),
-        'subject': CactusToolParameter(
+        'subject': ToolParameter(
           type: 'string',
           description: 'The subject of the email.',
           required: false,
         ),
-        'body': CactusToolParameter(
+        'body': ToolParameter(
           type: 'string',
           description: 'The body of the email.',
           required: false,
