@@ -28,8 +28,31 @@ jobs:
           channel: 'stable'
       - name: Get Flutter packages
         run: flutter pub get
+
+      - name: Decode and save signing key
+        run: |
+          echo "${{ secrets.ANDROID_SIGN_KEY }}" | base64 --decode > android/app/upload-keystore.jks
+        env:
+          ANDROID_SIGN_KEY: ${{ secrets.ANDROID_SIGN_KEY }}
+
+      - name: Set up signing environment variables
+        run: |
+          echo "KEYSTORE_PATH=$(pwd)/android/app/upload-keystore.jks" >> $GITHUB_ENV
+          echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
+          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
       - name: Build Android Release APK
-        run: flutter build apk --release
+        run: flutter build apk --release --flavor production --target-platform android-arm64 --split-per-abi --no-tree-shake-icons --obfuscate --split-debug-info=build/app/outputs/symbols --dart-define=FLAVOR=production
+        env:
+          KEYSTORE_PATH: ${{ env.KEYSTORE_PATH }}
+          KEYSTORE_PASSWORD: ${{ env.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ env.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ env.KEY_PASSWORD }}
 
       - name: Upload Release APK artifact
         uses: actions/upload-artifact@v4
