@@ -1,4 +1,4 @@
-name: Android Debug APK Build
+name: Android Release APK Build
 
 on:
   push:
@@ -28,16 +28,44 @@ jobs:
           channel: 'stable'
       - name: Get Flutter packages
         run: flutter pub get
-      - name: Build Android Debug APK
-        run: flutter build apk --debug
 
-      - name: Upload Debug APK artifact
+      - name: Decode and save signing key
+        run: |
+          echo "${{ secrets.ANDROID_SIGN_KEY }}" | base64 --decode > android/app/upload-keystore.jks
+        env:
+          ANDROID_SIGN_KEY: ${{ secrets.ANDROID_SIGN_KEY }}
+
+      - name: Set up debug build flavor
+        run: |
+          rm -f .env
+          echo "MOOLLAMA_APP_MODE=debug" > .env
+
+      - name: Set up signing environment variables
+        run: |
+          echo "KEYSTORE_PATH=$(pwd)/android/app/upload-keystore.jks" >> $GITHUB_ENV
+          echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
+          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Build Android Release APK
+        run: flutter build apk --release --flavor production --target-platform android-arm64 --split-per-abi --no-tree-shake-icons --obfuscate --split-debug-info=build/app/outputs/symbols --dart-define=FLAVOR=production
+        env:
+          KEYSTORE_PATH: ${{ env.KEYSTORE_PATH }}
+          KEYSTORE_PASSWORD: ${{ env.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ env.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ env.KEY_PASSWORD }}
+
+      - name: Upload Release APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: app-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
 
-      - name: Comment Debug APK download link on PR
+      - name: Comment Release APK download link on PR
         if: github.event_name == 'pull_request_target'
         uses: actions/github-script@v6
         with:
@@ -48,13 +76,13 @@ jobs:
               repo: repo.repo,
               run_id: context.runId,
             });
-            const debugApkArtifact = artifacts.data.artifacts.find(artifact => artifact.name === 'app-debug-apk');
-            if (debugApkArtifact) {
-              const debugDownloadUrl = `https://github.com/${repo.owner}/${repo.repo}/actions/runs/${context.runId}/artifacts/${debugApkArtifact.id}`;
+            const releaseApkArtifact = artifacts.data.artifacts.find(artifact => artifact.name === 'app-release-apk');
+            if (releaseApkArtifact) {
+              const releaseDownloadUrl = `https://github.com/${repo.owner}/${repo.repo}/actions/runs/${context.runId}/artifacts/${releaseApkArtifact.id}`;
               github.rest.issues.createComment({
                 owner: repo.owner,
                 repo: repo.repo,
                 issue_number: issue.number,
-                body: `📦 Android Debug APK available for download: ${debugDownloadUrl}`
+                body: `📦 Android Debug APK available for download: ${releaseDownloadUrl}`
               });
             }
