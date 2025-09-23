@@ -413,7 +413,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       setState(() {
         _isLoading = false;
         _downloadProgress = null; // Ensure download progress is null
-        _initializationProgress = 1.0; // Set to 1.0 after successful init
+        _initializationProgress = null;
         _downloadStatus = 'Model initialized';
         _modelDownloaded = true;
       });
