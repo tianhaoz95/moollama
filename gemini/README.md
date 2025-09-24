@@ -20,6 +20,13 @@ For `.gemini/settings.json`:
       "headers": {
         "Authorization": "Bearer $GITHUB_PAT"
       }
+    },
+    "mobile-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@mobilenext/mobile-mcp@latest"
+      ]
     }
   }
 }
