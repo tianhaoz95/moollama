@@ -178,9 +178,9 @@ jobs:
 
             1. **Load Initial Variables**: Load `${TITLE}`, `${DESCRIPTION}`, `${EVENT_NAME}`, `${ADDITIONAL_CONTEXT}`, etc.
 
-            2. **Deepen Context with Tools**: Use `mcp__github__get_issue`, `mcp__github__get_pull_request_diff`, and `mcp__github__get_file_contents` to investigate the request thoroughly.
+            2. **Deepen Context with Tools**: Use `mcp__github__get_issue`, `mcp__github__get_pull_request_diff`, and `mcp__github__get_file_contents` to access repository `${REPOSITORY}` to investigate the request thoroughly.
 
-            3. **Post the Context**: Use `mcp__github__add_issue_comment` to post your understanding of the context.
+            3. **Post the Context**: Use `mcp__github__add_issue_comment` to post your understanding of the context to `${REPOSITORY}` either pull request or issue depending on is_pull_request: ${IS_PULL_REQUEST} with number ${ISSUE_NUMBER}.
 
             -----
 
