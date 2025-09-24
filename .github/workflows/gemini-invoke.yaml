@@ -85,15 +85,11 @@ jobs:
                   "args": ["-y", "@mobilenext/mobile-mcp@latest"]
                 },
                 "github": {
-                  "command": "docker",
-                  "args": [
-                    "run",
-                    "-i",
-                    "--rm",
-                    "-e",
-                    "GITHUB_PERSONAL_ACCESS_TOKEN",
-                    "ghcr.io/github/github-mcp-server"
-                  ],
+                  "httpUrl": "https://api.githubcopilot.com/mcp/",
+                  "trust": true,
+                  "headers": {
+                    "Authorization": "Bearer ${GITHUB_TOKEN}"
+                  },
                   "includeTools": [
                     "add_issue_comment",
                     "get_issue",
@@ -117,9 +113,6 @@ jobs:
                     "push_files",
                     "search_code"
                   ],
-                  "env": {
-                    "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
-                  }
                 }
               },
               "tools": {
