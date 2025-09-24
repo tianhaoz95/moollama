@@ -47,7 +47,14 @@ class CactusAgentAdapter implements Agent {
     }
 
     // Parse history into ChatMessage objects
-    final historyLines = request.history.split('\n');
+        // Convert history to ChatMessage objects
+    for (final message in request.history) {
+      if (message.isUser) {
+        messages.add(ChatMessage(role: 'user', content: message.finalText));
+      } else {
+        messages.add(ChatMessage(role: 'assistant', content: message.finalText));
+      }
+    }
     for (final line in historyLines) {
       if (line.startsWith('User: ')) {
         messages.add(ChatMessage(role: 'user', content: line.substring(6)));
