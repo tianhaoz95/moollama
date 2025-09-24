@@ -596,17 +596,24 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
               .map((msg) => '${msg.isUser ? 'User' : 'Assistant'}: ${msg.finalText}')
               .join('\n');
 
+          final prefs = await SharedPreferences.getInstance();
+          final selectedTools = prefs.getStringList('selectedTools') ?? [];
+
           String fullResponse = '';
           List<String> toolCalls = [];
           String? thinkingText;
 
           await for (final response in _agent!.generate(
-            prompt: prompt,
-            systemPrompt: systemPrompt,
-            history: history,
-            useTools: true, // Assuming tools are always used if available
+            moollama_agent.AgentRequest(
+              prompt: prompt,
+              systemPrompt: systemPrompt,
+              history: history,
+              useTools: true,
+              temperature: _creativity / 100.0,
+              tools: selectedTools,
+            ),
           ).asCancellable(_cancellationToken)) {
-            if (response.status == moollama_agent.LLMResponseStatus.success) {
+            if (response.status == moollama_agent.AgentResponseStatus.success) {
               fullResponse += response.response ?? '';
               // Update the last message with streaming content
               setState(() {
@@ -618,7 +625,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                 );
               });
               _scrollToBottom();
-            } else if (response.status == moollama_agent.LLMResponseStatus.error) {
+            } else if (response.status == moollama_agent.AgentResponseStatus.error) {
               widget.talker.error('LLM Error: ${response.errorMessage}');
               setState(() {
                 _messages.removeLast();

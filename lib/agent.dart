@@ -1,33 +1,43 @@
 import 'package:flutter/foundation.dart';
 
-enum LLMResponseStatus {
+enum AgentResponseStatus {
   success,
   error,
-  modelNotFound,
-  permissionDenied,
-  unknown,
+  toolCode,
+  toolOutput,
 }
 
-class LLMResponse {
+class AgentResponse {
   final String? response;
-  final LLMResponseStatus status;
+  final AgentResponseStatus status;
   final String? errorMessage;
 
-  LLMResponse({this.response, required this.status, this.errorMessage});
+  AgentResponse({this.response, required this.status, this.errorMessage});
+}
+
+class AgentRequest {
+  final String prompt;
+  final String systemPrompt;
+  final String history;
+  final bool useTools;
+  final double temperature;
+  final List<String> tools;
+
+  AgentRequest({
+    required this.prompt,
+    required this.systemPrompt,
+    required this.history,
+    this.useTools = false,
+    this.temperature = 0.7,
+    this.tools = const [],
+  });
 }
 
 abstract class Agent {
   Future<void> initialize({
     required String modelPath,
     int? contextLength,
-    double? temperature,
-    List<String>? tools,
   });
 
-  Stream<LLMResponse> generate({
-    required String prompt,
-    required String systemPrompt,
-    required String history,
-    bool useTools,
-  });
+  Stream<AgentResponse> generate(AgentRequest request);
 }

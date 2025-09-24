@@ -12,8 +12,6 @@ class CactusAgentAdapter implements Agent {
   Future<void> initialize({
     required String modelPath,
     int? contextLength,
-    double? temperature,
-    List<String>? tools,
   }) async {
     _cactusAgent = CactusAgent();
     final gpuLayerCount = await getGpuLayerCount();
@@ -34,27 +32,22 @@ class CactusAgentAdapter implements Agent {
   }
 
   @override
-  Stream<LLMResponse> generate({
-    required String prompt,
-    required String systemPrompt,
-    required String history,
-    bool useTools = false,
-  }) async* {
+  Stream<AgentResponse> generate(AgentRequest request) async* {
     if (_cactusAgent == null) {
-      yield LLMResponse(
-        status: LLMResponseStatus.error,
+      yield AgentResponse(
+        status: AgentResponseStatus.error,
         errorMessage: 'Cactus agent not initialized.',
       );
       return;
     }
 
     final List<ChatMessage> messages = [];
-    if (systemPrompt.isNotEmpty) {
-      messages.add(ChatMessage(role: 'system', content: systemPrompt));
+    if (request.systemPrompt.isNotEmpty) {
+      messages.add(ChatMessage(role: 'system', content: request.systemPrompt));
     }
 
     // Parse history into ChatMessage objects
-    final historyLines = history.split('\n');
+    final historyLines = request.history.split('\n');
     for (final line in historyLines) {
       if (line.startsWith('User: ')) {
         messages.add(ChatMessage(role: 'user', content: line.substring(6)));
@@ -63,34 +56,35 @@ class CactusAgentAdapter implements Agent {
       }
     }
 
-    messages.add(ChatMessage(role: 'user', content: prompt));
+    messages.add(ChatMessage(role: 'user', content: request.prompt));
 
     try {
       final completionResult = await _cactusAgent!.completionWithTools(
         messages,
         maxTokens: 2048, // This should probably be configurable
-        temperature: 0.7, // This should probably be configurable
+        temperature: request.temperature,
       );
 
       if (completionResult != null) {
-        yield LLMResponse(
+        yield AgentResponse(
           response: completionResult.result,
-          status: LLMResponseStatus.success,
+          status: AgentResponseStatus.success,
         );
       } else {
-        yield LLMResponse(
-          status: LLMResponseStatus.error,
+        yield AgentResponse(
+          status: AgentResponseStatus.error,
           errorMessage: 'Empty completion result from Cactus.',
         );
       }
     } catch (e) {
-      yield LLMResponse(
-        status: LLMResponseStatus.error,
+      yield AgentResponse(
+        status: AgentResponseStatus.error,
         errorMessage: e.toString(),
       );
     }
   }
 
+  @override
   void unload() {
     _cactusAgent?.unload();
   }
