@@ -86,7 +86,7 @@ jobs:
                 },
                 "github": {
                   "httpUrl": "https://api.githubcopilot.com/mcp/",
-                  "trust": true,
+                  "trust": "true",
                   "headers": {
                     "Authorization": "Bearer ${GITHUB_TOKEN}"
                   },
@@ -112,7 +112,7 @@ jobs:
                     "list_commits",
                     "push_files",
                     "search_code"
-                  ],
+                  ]
                 }
               },
               "tools": {
