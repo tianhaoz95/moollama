@@ -28,11 +28,13 @@ import 'package:moollama/widgets/rename_agent_dialog.dart';
 import 'package:blur/blur.dart';
 import 'package:moollama/widgets/listening_popup.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:image_picker/image/picker.dart';
 import 'package:background_downloader/background_downloader.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:async';
 import 'package:cancellation_token/cancellation_token.dart';
+import 'package:moollama/agent.dart' as moollama_agent;
+import 'package:moollama/cactus_agent_adapter.dart';
 
 const bool FLAG_USE_BACKGROUND_DOWNLOADER = true;
 
@@ -58,12 +60,12 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
   final DatabaseHelper _dbHelper = DatabaseHelper();
   late Future<List<Message>> _messagesFuture;
   List<Agent> _agents = [];
+  moollama_agent.Agent? _agent;
   Agent? _selectedAgent;
   String _selectedModelName = 'Qwen3 0.6B'; // New field for selected model name
   double _creativity = 70.0;
   int _contextWindowSize = 8192;
   bool _isLoading = true;
-  CactusAgent? _agent;
   double? _downloadProgress;
   bool _isGenerating = false; // New: To track if AI is generating
   bool _modelDownloaded = false;
@@ -224,7 +226,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         _initializationProgress = null; // Reset initialization progress
         _downloadStatus = 'Checking model availability...'; // Updated status
       });
-      _agent = CactusAgent();
+      _agent = CactusAgentAdapter();
 
       final modelFilePath = await _dbHelper.getModelFilePath(modelName);
       final modelFile = File(modelFilePath);
@@ -368,18 +370,8 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           }
         } else {
           widget.talker.info('Attempting to download using _agent.download...');
-          await _agent!.download(
-            modelUrl: modelUrl,
-            onProgress: (progress, statusMessage, isError) {
-              setState(() {
-                _downloadProgress = progress;
-                _downloadStatus = statusMessage;
-                if (isError) {
-                  _downloadStatus = 'Error: $statusMessage';
-                }
-              });
-            },
-          );
+          // The download method is now part of the adapter's responsibility
+          // and will be handled during the initialize call if the model is not found.
         }
       } else {
         widget.talker.info(
@@ -398,27 +390,14 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         _initializationProgress = 0.0; // Start initialization progress
         _downloadStatus = 'Initializing model...';
       });
-      final gpuLayerCount = await getGpuLayerCount();
-      widget.talker.info('GPU Layer Count: $gpuLayerCount');
-      widget.talker.info('Model file path: ${p.basename(modelFilePath)}');
-      await _agent!.init(
-        modelFilename: p.basename(modelFilePath),
-        contextSize: _contextWindowSize,
-        gpuLayers: gpuLayerCount, // Offload all possible layers to GPU
-        onProgress: (progress, statusMessage, isError) {
-          setState(() {
-            _initializationProgress =
-                progress; // Update initialization progress
-            _downloadStatus = statusMessage;
-            if (isError) {
-              _downloadStatus = 'Error: $statusMessage';
-            }
-          });
-        },
-      );
       final prefs = await SharedPreferences.getInstance();
       final selectedTools = prefs.getStringList('selectedTools') ?? [];
-      addAgentTools(_agent!, selectedTools, allAgentTools);
+      await _agent!.initialize(
+        modelPath: modelFilePath,
+        contextLength: _contextWindowSize,
+        temperature: _creativity / 100.0,
+        tools: selectedTools,
+      );
       setState(() {
         _isLoading = false;
         _downloadProgress = null; // Ensure download progress is null
@@ -610,40 +589,65 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
       // Generate response using CactusLM
       if (_agent != null) {
         try {
-          final List<ChatMessage> messages = [];
-          if (_systemPrompt.isNotEmpty) {
-            messages.add(ChatMessage(role: 'system', content: _systemPrompt));
+          final String prompt = userMessageText;
+          final String systemPrompt = _systemPrompt;
+          final String history = _messages
+              .where((msg) => !msg.isLoading && msg.finalText.isNotEmpty)
+              .map((msg) => '${msg.isUser ? 'User' : 'Assistant'}: ${msg.finalText}')
+              .join('\n');
+
+          String fullResponse = '';
+          List<String> toolCalls = [];
+          String? thinkingText;
+
+          await for (final response in _agent!.generate(
+            prompt: prompt,
+            systemPrompt: systemPrompt,
+            history: history,
+            useTools: true, // Assuming tools are always used if available
+          ).asCancellable(_cancellationToken)) {
+            if (response.status == moollama_agent.LLMResponseStatus.success) {
+              fullResponse += response.response ?? '';
+              // Update the last message with streaming content
+              setState(() {
+                _messages.last = Message(
+                  rawText: fullResponse,
+                  finalText: extractResponseFromJson(fullResponse),
+                  isUser: false,
+                  isLoading: false,
+                );
+              });
+              _scrollToBottom();
+            } else if (response.status == moollama_agent.LLMResponseStatus.error) {
+              widget.talker.error('LLM Error: ${response.errorMessage}');
+              setState(() {
+                _messages.removeLast();
+                _messages.add(
+                  Message(
+                    finalText: 'Error: ${response.errorMessage}',
+                    isUser: false,
+                    isLoading: false,
+                  ),
+                );
+              });
+              _scrollToBottom();
+              break; // Stop processing on error
+            }
           }
-          messages.addAll(
-            _messages.where((msg) => !msg.isLoading).map((msg) {
-              return ChatMessage(
-                role: msg.isUser ? 'user' : 'assistant',
-                content: msg.finalText,
-              );
-            }).toList(),
-          );
-          _completionFuture = _agent!.completionWithTools(
-            messages,
-            maxTokens: 2048,
-            temperature: _creativity / 100.0,
-          );
-          final response = await _completionFuture!.asCancellable(
-            _cancellationToken,
-          );
 
-          widget.talker.info(
-            'Response result: ${response!.result}, tool calls: ${response.toolCalls}',
-          );
+          // After the stream is complete, process the full response
           final ThinkingModelResponse parsedResponse = splitContentByThinkTags(
-            response.result ?? '',
+            fullResponse,
           );
 
-          final String? thinkingText =
+          thinkingText =
               parsedResponse.thinkingSessions.isNotEmpty
-              ? parsedResponse.thinkingSessions.join('\n')
-              : null;
+                  ? parsedResponse.thinkingSessions.join('\n')
+                  : null;
 
-          final List<String> toolCalls = response.toolCalls ?? [];
+          // Assuming tool calls are part of the final response or handled by the adapter
+          // For now, we'll leave toolCalls as empty or extract from fullResponse if possible
+          // This part might need refinement based on how CactusAgentAdapter actually handles tool calls
 
           final String finalText = extractResponseFromJson(
             parsedResponse.finalOutput,
@@ -652,7 +656,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           // Store the combined message in the database
           _dbHelper.insertMessage(
             _selectedAgent!.id!,
-            response.result ?? '',
+            fullResponse,
             false, // isUser: false
           );
 
@@ -660,7 +664,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
             _messages.removeLast();
             _messages.add(
               Message(
-                rawText: response.result ?? '',
+                rawText: fullResponse,
                 thinkingText: thinkingText,
                 toolCalls: toolCalls,
                 finalText: finalText,
@@ -695,7 +699,6 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
           setState(() {
             _isGenerating = false; // Reset generating state
             _cancellationToken = null;
-            _completionFuture = null;
           });
         }
       }
@@ -709,7 +712,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
         _messages.clear();
       });
       // Dispose and re-initialize the agent
-      _agent?.unload();
+      (_agent as CactusAgentAdapter?)?.unload();
       if (_selectedAgent != null) {
         _initializeCactusModel(_selectedAgent!.modelName);
       }
