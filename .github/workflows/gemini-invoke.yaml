@@ -103,6 +103,8 @@ jobs:
                     "create_pull_request",
                     "get_pull_request",
                     "get_pull_request_comments",
+                    "get_pull_request_review_comments",
+                    "get_pull_request_reviews",
                     "get_pull_request_diff",
                     "get_pull_request_files",
                     "list_pull_requests",
