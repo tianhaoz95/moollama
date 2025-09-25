@@ -4,10 +4,7 @@ import 'package:siri_wave/siri_wave.dart';
 class ListeningPopup extends StatelessWidget {
   final String lastWords;
 
-  const ListeningPopup({
-    super.key,
-    required this.lastWords,
-  });
+  const ListeningPopup({super.key, required this.lastWords});
 
   @override
   Widget build(BuildContext context) {

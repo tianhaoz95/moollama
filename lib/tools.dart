@@ -119,4 +119,3 @@ final List<AgentTool> allAgentTools = [
   sendEmailAgentTool,
   fetchCurrentTimeTool,
 ];
-

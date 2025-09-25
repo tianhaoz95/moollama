@@ -9,9 +9,7 @@ class DeleteAgentDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Delete Agent'),
-      content: Text(
-        'Are you sure you want to delete agent "$agentName"?',
-      ),
+      content: Text('Are you sure you want to delete agent "$agentName"?'),
       actions: <Widget>[
         TextButton(
           child: const Text('Cancel'),

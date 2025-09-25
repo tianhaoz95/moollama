@@ -7,7 +7,10 @@ void main() {
       const content =
           '<think>This is the first thought.</think>Some text.<think>Second thought.</think>Final output.';
       final result = splitContentByThinkTags(content);
-      expect(result.thinkingSessions, ['This is the first thought.', 'Second thought.']);
+      expect(result.thinkingSessions, [
+        'This is the first thought.',
+        'Second thought.',
+      ]);
       expect(result.finalOutput, 'Some text.Final output.');
     });
 
@@ -52,6 +55,4 @@ void main() {
       expect(result.finalOutput, '');
     });
   });
-
-  
 }
