@@ -1309,7 +1309,7 @@ class _SecretAgentHomeState extends State<SecretAgentHome> {
                       keyboardType:
                           TextInputType.multiline, // Enable multiline keyboard
                       decoration: InputDecoration(
-                        hintText: 'Ask Secret Agent',
+                        hintText: 'Ask Agent',
                         hintStyle: TextStyle(
                           color: Theme.of(context).hintColor,
                         ),

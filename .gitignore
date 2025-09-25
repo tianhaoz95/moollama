@@ -50,3 +50,8 @@ gha-creds-*.json
 lib/model_downloader.dart
 
 .vscode
+# Midscene.js dump files
+midscene_run/dump
+midscene_run/report
+midscene_run/tmp
+midscene_run/log
